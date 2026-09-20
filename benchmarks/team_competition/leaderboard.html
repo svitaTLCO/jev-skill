@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🏆 MULTI-TEAM SWARM + JEV COMPETITION LEADERBOARD</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050811;
+      --card-bg: rgba(11, 16, 30, 0.85);
+      --green: #00ff88;
+      --cyan: #00f3ff;
+      --pink: #ff007f;
+      --dim: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      background-image: radial-gradient(circle at 50% 0%, rgba(0, 255, 136, 0.08) 0%, transparent 70%);
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2rem;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.2rem;
+      letter-spacing: 3px;
+      color: #fff;
+      text-shadow: 0 0 25px rgba(0, 255, 136, 0.4);
+    }
+    .sub { color: var(--dim); margin-top: 0.5rem; font-size: 0.95rem; }
+    .winner-banner {
+      max-width: 820px;
+      margin: 1.5rem auto 0;
+      background: rgba(0, 255, 136, 0.08);
+      border: 1px solid var(--green);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.15);
+      font-size: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 1.5rem;
+    }
+    .team-card {
+      background: var(--card-bg);
+      border: 2px solid var(--cyan);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      backdrop-filter: blur(10px);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .rank-tag { font-size: 0.8rem; font-weight: 800; letter-spacing: 1px; }
+    .team-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem;
+      color: #fff;
+      margin-top: 3px;
+    }
+    .team-meta { font-size: 0.75rem; color: var(--dim); margin-top: 2px; }
+    .score-box { text-align: right; }
+    .score-val {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.25rem;
+      color: var(--green);
+      font-weight: 900;
+    }
+    .noul-val { font-size: 0.8rem; color: var(--cyan); margin-top: 2px; }
+    .gates-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.35);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+    }
+    .game-frame {
+      height: 480px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #060913;
+    }
+    iframe { width: 100%; height: 100%; border: none; }
+    .play-link {
+      text-align: center;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid var(--green);
+      color: var(--green);
+      padding: 0.65rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .play-link:hover {
+      background: var(--green);
+      color: #050811;
+      box-shadow: 0 0 16px rgba(0,255,136,0.4);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏆 SWARM + JEV MULTI-TEAM ARENA</h1>
+    <div class="sub">Identical Challenge: Space Invaders Deluxe &bull; Autonomous Swarm + Jev Gating per Team</div>
+    <div class="winner-banner">
+      🥇 <strong>Grand Champion:</strong> Team Delta | 
+      Jev Quality Score: <strong>1.01 / 3.0</strong> | 
+      Playable Probability (Noul): <strong>0.09</strong>
+    </div>
+  </header>
+
+  <div class="grid">
+    
+        <div class="team-card" style="border-color: #00ff88;">
+          <div class="card-top">
+            <div>
+              <div class="rank-tag" style="color: #00ff88;">👑 1st PLACE (WINNER)</div>
+              <div class="team-name">Team Delta</div>
+              <div class="team-meta">Time: 329.59s &bull; Tokens: 4167 &bull; Jev Overhead: 4.34s</div>
+            </div>
+            <div class="score-box">
+              <div class="score-val">1.01 / 3.0</div>
+              <div class="noul-val">Noul: 0.09</div>
+            </div>
+          </div>
+          
+          <div class="gates-row">
+            <span>Player: <strong>0.98</strong></span>
+            <span>Fleet: <strong>0.11</strong></span>
+            <span>Bullets: <strong>0.39</strong></span>
+            <span>Renderer: <strong>0.03</strong></span>
+          </div>
+
+          <div class="game-frame">
+            <iframe src="team_4_delta/space_invaders.html" scrolling="no"></iframe>
+          </div>
+
+          <a href="team_4_delta/space_invaders.html" target="_blank" class="play-link">🎮 PLAY FULLSCREEN</a>
+        </div>
+        
+        <div class="team-card" style="border-color: #00f3ff;">
+          <div class="card-top">
+            <div>
+              <div class="rank-tag" style="color: #00f3ff;">#2 PLACE</div>
+              <div class="team-name">Team Gamma</div>
+              <div class="team-meta">Time: 331.83s &bull; Tokens: 4973 &bull; Jev Overhead: 4.29s</div>
+            </div>
+            <div class="score-box">
+              <div class="score-val">0.51 / 3.0</div>
+              <div class="noul-val">Noul: 0.07</div>
+            </div>
+          </div>
+          
+          <div class="gates-row">
+            <span>Player: <strong>0.94</strong></span>
+            <span>Fleet: <strong>0.18</strong></span>
+            <span>Bullets: <strong>0.12</strong></span>
+            <span>Renderer: <strong>0.04</strong></span>
+          </div>
+
+          <div class="game-frame">
+            <iframe src="team_3_gamma/space_invaders.html" scrolling="no"></iframe>
+          </div>
+
+          <a href="team_3_gamma/space_invaders.html" target="_blank" class="play-link">🎮 PLAY FULLSCREEN</a>
+        </div>
+        
+        <div class="team-card" style="border-color: #00f3ff;">
+          <div class="card-top">
+            <div>
+              <div class="rank-tag" style="color: #00f3ff;">#3 PLACE</div>
+              <div class="team-name">Team Alpha</div>
+              <div class="team-meta">Time: 273.63s &bull; Tokens: 5084 &bull; Jev Overhead: 4.40s</div>
+            </div>
+            <div class="score-box">
+              <div class="score-val">0.34 / 3.0</div>
+              <div class="noul-val">Noul: 0.05</div>
+            </div>
+          </div>
+          
+          <div class="gates-row">
+            <span>Player: <strong>0.95</strong></span>
+            <span>Fleet: <strong>0.04</strong></span>
+            <span>Bullets: <strong>0.35</strong></span>
+            <span>Renderer: <strong>0.02</strong></span>
+          </div>
+
+          <div class="game-frame">
+            <iframe src="team_1_alpha/space_invaders.html" scrolling="no"></iframe>
+          </div>
+
+          <a href="team_1_alpha/space_invaders.html" target="_blank" class="play-link">🎮 PLAY FULLSCREEN</a>
+        </div>
+        
+        <div class="team-card" style="border-color: #00f3ff;">
+          <div class="card-top">
+            <div>
+              <div class="rank-tag" style="color: #00f3ff;">#4 PLACE</div>
+              <div class="team-name">Team Beta</div>
+              <div class="team-meta">Time: 319.15s &bull; Tokens: 4507 &bull; Jev Overhead: 4.30s</div>
+            </div>
+            <div class="score-box">
+              <div class="score-val">0.07 / 3.0</div>
+              <div class="noul-val">Noul: 0.05</div>
+            </div>
+          </div>
+          
+          <div class="gates-row">
+            <span>Player: <strong>0.98</strong></span>
+            <span>Fleet: <strong>0.24</strong></span>
+            <span>Bullets: <strong>0.33</strong></span>
+            <span>Renderer: <strong>0.54</strong></span>
+          </div>
+
+          <div class="game-frame">
+            <iframe src="team_2_beta/space_invaders.html" scrolling="no"></iframe>
+          </div>
+
+          <a href="team_2_beta/space_invaders.html" target="_blank" class="play-link">🎮 PLAY FULLSCREEN</a>
+        </div>
+        
+  </div>
+</body>
+</html>

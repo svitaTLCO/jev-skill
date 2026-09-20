@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Neon Vector Asteroids (Heterogeneous Swarm)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #030712;
+      color: #f3f4f6;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    h1 { color: #38bdf8; font-size: 1.7rem; letter-spacing: 2px; text-shadow: 0 0 15px rgba(56,189,248,0.5); margin-bottom: 6px; }
+    .sub { color: #94a3b8; font-size: 0.85rem; margin-bottom: 10px; }
+    canvas {
+      background: #020617;
+      border: 3px solid #38bdf8;
+      border-radius: 12px;
+      box-shadow: 0 0 40px rgba(56,189,248,0.25);
+    }
+    .footer { margin-top: 10px; font-size: 0.85rem; color: #cbd5e1; display: flex; gap: 15px; }
+    .badge { background: rgba(56,189,248,0.15); border: 1px solid #38bdf8; color: #38bdf8; padding: 2px 8px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <h1>⚡ NEON VECTOR ASTEROIDS</h1>
+  <div class="sub">Heterogeneous Swarm: Huihui-Qwen3.5-0.8B + Huihui-Qwen3.5-2B (Abliterated) &bull; Governed by TypeSafe Jev</div>
+
+  <canvas id="c" width="500" height="500"></canvas>
+
+  <div class="footer">
+    <span>&larr; &rarr; / A D Rotate &bull; &uarr; / W Thrust &bull; SPACE Shoot</span>
+    <span class="badge">Multi-Tier Swarm</span>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let score = 0;
+    let lives = 3;
+    let gameState = 'START';
+    let lastShot = 0;
+
+    // --- TIER 1: SHIP PHYSICS ---
+    let ship = {
+  x: 250,
+  y: 250,
+  angle: -Math.PI/2,
+  vx: 0,
+  vy: 0,
+  r: 12,
+}
+
+    // --- TIER 1: LASERS & PARTICLES ---
+    // Laser Ballistics and Particle System
+
+// Ship position (x, y)
+const shipPosition = {
+  x: 0,
+  y: 0,
+  width: 100,
+  height: 100,
+};
+
+// Laser system
+let lasers = [];
+
+// Particle system
+let particles = [];
+
+// Function to create a laser
+function fireLaser() {
+  // Create a new laser object
+  const laser = {
+    id: Date.now(),
+    x: shipPosition.x,
+    y: shipPosition.y,
+    width: 10,
+    height: 10,
+    color: '#00ff00',
+    speed: 10,
+    angle: 0,
+  };
+
+  // Add to the lasers array
+  lasers.push(laser);
+}
+
+// Function to spawn particle debris
+function spawnDust(x, y, color) {
+  // Create a particle object
+  const particle = {
+    id: Date.now(),
+    x,
+    y,
+    color,
+    size: 2,
+    speed: 2,
+    life: 100,
+    lifeTimer: 0,
+  };
+
+  // Add to the particles array
+  particles.push(particle);
+}
+
+// Function to update lasers and particles
+function updateLasersAndFX(w, h) {
+  // Update lasers
+  for (let i = 0; i < lasers.length; i++) {
+    // Move the laser
+    lasers[i].x += lasers[i].speed;
+    lasers[i].angle += 0.01;
+
+    // Update the visual position
+
+
+    ctx.fillStyle = lasers[i].color;
+    ctx.fillRect(0, 0, w, h);
+    ctx.beginPath();
+}}
+
+    // --- TIER 1: CHIPTUNE AUDIO ---
+    // Initialize audio context
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+// Beep function
+function beep(freq, duration, type) {
+    if (!audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type || 'sawtooth';
+    o.frequency.setValueAtTime
+}
+
+    // --- TIER 2 BRAIN: PROCEDURAL ASTEROID ENGINE ---
+    function spawnAsteroid(x, y, radius, level) {
+}
+
+    // --- TIER 2 BRAIN: HUNTER DRONE VECTOR AI ---
+    class VectorHunterDrone {
+  constructor() {
+    this.x = -50;
+    this.y = -50;
+    this.vx = 0;
+    this.vy = 0;
+    this.r = 10;
+    this.active = false;
+    this.targetX = 0;
+    this.targetY = 0;
+    this.acceleration = 0.5;
+    this.maxVelocity = 5;
+    this.speed = 0;
+    this.angle = 0;
+    this.history = [];
+  }
+
+  maybeSpawnDrone(w, h) {
+    const edge = Math.floor(Math.random() * 4);
+    const spawnX = edge === 0 ? w : edge === 1 ? w - 10 : edge === 2 ? w - 20 : w - 30;
+    const spawnY = edge === 0 ? h : edge === 1 ? h - 10 : edge === 2 ? h - 20 : h - 30;
+
+    this.x = spawnX;
+    this.y = spawnY;
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = (Math.random() - 0.5) * 2;
+    this.active = true;
+    this.targetX = spawnX;
+    this.targetY = spawnY;
+  }
+
+  updateHunterAI(targetX, targetY) {
+    this.targetX = targetX;
+    this.targetY = targetY;
+
+    const dx = this.x - targetX;
+    const dy = this.y - targetY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > this.r) {
+      const angle = Math.atan2(dy, dx);
+      this.vx = Math.cos(angle) * this.speed;
+      this.vy = Math.sin(angle) * this.speed;
+    } else {
+      this.vx = 0;
+      this.vy = 0;
+    }
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    if (distance < this.r)
+}}
+
+    const keys = {};
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      initAudio();
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (gameState !== 'PLAYING') {
+          initGame();
+        } else {
+          const now = Date.now();
+          if (now - lastShot > 180) {
+            fireLaser();
+            sndLaser();
+            lastShot = now;
+          }
+        }
+      }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    function initGame() {
+      ship.x = canvas.width/2;
+      ship.y = canvas.height/2;
+      ship.vx = 0;
+      ship.vy = 0;
+      ship.angle = -Math.PI/2;
+      lasers = [];
+      particles = [];
+      asteroids = [];
+      hunterDrone.active = false;
+      score = 0;
+      lives = 3;
+      for(let i=0; i<4; i++) {
+        const ax = Math.random() < 0.5 ? 40 : canvas.width - 40;
+        const ay = Math.random() * canvas.height;
+        spawnAsteroid(ax, ay, 32, 1);
+      }
+      gameState = 'PLAYING';
+    }
+
+    // Master Interactions
+    function checkCollisions() {
+      // Lasers hit Asteroids
+      lasers.forEach(l => {
+        asteroids.forEach(a => {
+          if (Math.hypot(l.x - a.x, l.y - a.y) < a.r) {
+            l.life = 0;
+            score += (4 - a.level) * 50;
+            spawnDust(a.x, a.y, '#f59e0b');
+            sndBoom();
+            splitAsteroid(a);
+            a.dead = true;
+          }
+        });
+        // Lasers hit Hunter Drone
+        if (hunterDrone.active && Math.hypot(l.x - hunterDrone.x, l.y - hunterDrone.y) < hunterDrone.r + 4) {
+          l.life = 0;
+          hunterDrone.active = false;
+          score += 300;
+          spawnDust(hunterDrone.x, hunterDrone.y, '#ef4444');
+          sndBoom();
+        }
+      });
+      asteroids = asteroids.filter(a => !a.dead);
+
+      // Ship hits Asteroids
+      asteroids.forEach(a => {
+        if (Math.hypot(ship.x - a.x, ship.y - a.y) < ship.r + a.r) {
+          lives--;
+          spawnDust(ship.x, ship.y, '#38bdf8');
+          sndBoom();
+          ship.x = canvas.width/2;
+          ship.y = canvas.height/2;
+          ship.vx = 0; ship.vy = 0;
+          if (lives <= 0) gameState = 'GAMEOVER';
+        }
+      });
+
+      // Ship hits Hunter Drone
+      if (hunterDrone.active && Math.hypot(ship.x - hunterDrone.x, ship.y - hunterDrone.y) < ship.r + hunterDrone.r) {
+        lives--;
+        hunterDrone.active = false;
+        spawnDust(ship.x, ship.y, '#ef4444');
+        sndBoom();
+        if (lives <= 0) gameState = 'GAMEOVER';
+      }
+
+      if (asteroids.length === 0 && !hunterDrone.active) {
+        gameState = 'WIN';
+      }
+    }
+
+    // Render Procedural Asteroid
+    function drawAsteroid(ctx, a) {
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      ctx.rotate(a.rot);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#f59e0b';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      const n = a.offsets.length;
+      for(let i=0; i<n; i++) {
+        const ang = (i / n) * Math.PI * 2;
+        const rad = a.r * a.offsets[i];
+        const px = Math.cos(ang) * rad;
+        const py = Math.sin(ang) * rad;
+        if(i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Render Ship
+    function drawShip(ctx, s) {
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.angle);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(s.r + 4, 0);
+      ctx.lineTo(-s.r, -s.r + 3);
+      ctx.lineTo(-s.r * 0.6, 0);
+      ctx.lineTo(-s.r, s.r - 3);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Render Hunter Drone
+    function drawDrone(ctx, d) {
+      if(!d.active) return;
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      ctx.fillStyle = '#ef4444';
+      ctx.strokeStyle = '#ff6b6b';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#ef4444';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(0, 0, d.r, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (gameState === 'PLAYING') {
+        if (keys['ArrowLeft'] || keys['KeyA']) ship.angle -= ship.rotSpeed;
+        if (keys['ArrowRight'] || keys['KeyD']) ship.angle += ship.rotSpeed;
+        if (keys['ArrowUp'] || keys['KeyW']) {
+          ship.vx += Math.cos(ship.angle) * ship.thrust;
+          ship.vy += Math.sin(ship.angle) * ship.thrust;
+          sndThrust();
+          spawnDust(ship.x - Math.cos(ship.angle)*12, ship.y - Math.sin(ship.angle)*12, '#38bdf8');
+        }
+
+        ship.update(canvas.width, canvas.height);
+        updateLasersAndFX(canvas.width, canvas.height);
+        updateAsteroids(canvas.width, canvas.height);
+        maybeSpawnDrone(canvas.width, canvas.height);
+        updateHunterAI(ship.x, ship.y);
+        checkCollisions();
+      }
+
+      // RENDER
+      asteroids.forEach(a => drawAsteroid(ctx, a));
+      drawDrone(ctx, hunterDrone);
+
+      // Lasers
+      ctx.fillStyle = '#f43f5e';
+      lasers.forEach(l => ctx.fillRect(l.x - 2, l.y - 2, 4, 4));
+
+      // Particles
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+        ctx.fillRect(p.x, p.y, 2, 2);
+      });
+      ctx.globalAlpha = 1.0;
+
+      // Ship
+      drawShip(ctx, ship);
+
+      // HUD
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '14px system-ui';
+      ctx.fillText(`SCORE: ${score}`, 16, 26);
+      ctx.fillText(`LIVES: ${lives > 0 ? '🔺'.repeat(lives) : '💀'}`, canvas.width - 100, 26);
+
+      // Overlays
+      if (gameState === 'START') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 24px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('NEON VECTOR ASTEROIDS', canvas.width/2, 220);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '14px system-ui';
+        ctx.fillText('Press SPACEBAR to Engage Audio & Fly', canvas.width/2, 260);
+        ctx.textAlign = 'left';
+      } else if (gameState === 'WIN') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 24px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('SECTOR CLEARED! YOU WIN!', canvas.width/2, 220);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px system-ui';
+        ctx.fillText(`FINAL SCORE: ${score}`, canvas.width/2, 260);
+        ctx.textAlign = 'left';
+      } else if (gameState === 'GAMEOVER') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 24px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('SHIP DESTROYED!', canvas.width/2, 220);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px system-ui';
+        ctx.fillText(`SCORE: ${score}`, canvas.width/2, 260);
+        ctx.textAlign = 'left';
+      }
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

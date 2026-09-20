@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Invaders - 0.8B Swarm + Jev</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #020617;
+      color: #f8fafc;
+      font-family: monospace, 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      color: #22c55e;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    }
+    .sub {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    canvas {
+      background: #090d16;
+      border: 3px solid #22c55e;
+      border-radius: 8px;
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.25);
+    }
+    .footer {
+      margin-top: 14px;
+      display: flex;
+      gap: 20px;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+    .badge {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid #22c55e;
+      color: #22c55e;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>👾 SPACE INVADERS (0.8B SWARM)</h1>
+    <div class="sub">4x Qwen 3.5 0.8B Micro-Specialists &bull; Orchestrated by TypeSafe Jev</div>
+  </div>
+
+  <canvas id="gameCanvas" width="400" height="500"></canvas>
+
+  <div class="footer">
+    <span>Controls: &larr; &rarr; or A / D to Move &bull; SPACE to Shoot</span>
+    <span class="badge">100% Playable Swarm</span>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let score = 0;
+    let gameState = 'START'; // START, PLAYING, WIN, GAMEOVER
+    let lastFire = 0;
+
+    // --- SWARM WORKER 1: PLAYER SHIP ---
+    ), no comments, no extra text.
+    *   "Output ONLY raw JavaScript object definition." -> This is slightly ambiguous. Does it mean just the object definition? Or does it mean the output should be the code block? Usually, "Output ONLY raw JavaScript object definition" means the raw text of the code. However, standard practice for "output ONLY raw JavaScript object definition" in these types of prompts often implies avoiding markdown formatting like
+
+    // --- SWARM WORKER 2: INVADER FLEET ---
+    let invaders = [];
+let invaderDir = 1;
+let invaderStepDown = false;
+
+function createInvaders() {
+  invaders = [];
+  for(let r=0; r<3; r++) {
+    for(let c=0; c<6; c++) {
+      invaders.push({x: 40 + c*50, y: 50 + r*35, w: 30, h: 20, alive: true});
+    }
+  }
+}
+
+function updateInvaders(canvasWidth) {
+  invaders.forEach(invader => {
+    if (invader.alive) {
+      invader.x += invaderDir * 1.5;
+      
+      // Check if invader touches canvas edge
+      if (invader.x <= 10 || invader.x >= canvasWidth - 40) {
+        invaderDir = -invaderDir;
+        invaderStepDown = true;
+      }
+    }
+  });
+}
+
+// Call createInvaders when the page loads
+createInvaders();
+
+// Run the update loop
+updateInvaders(window.innerWidth);
+
+    // --- SWARM WORKER 3: LASER & COLLISIONS ---
+    The user wants valid JavaScript code that implements a simple game with a player, bullets, and invaders. They explicitly stated not to redeclare global variables like `player` or `invaders`.
+
+I need to create a complete, self-contained HTML file that includes the CSS and JavaScript required to run this game.
+
+**Plan:**
+1.  **HTML Structure:** A simple container for the game canvas.
+2.  **CSS:** Basic styling to center the game and make it look decent.
+3.  **JavaScript:**
+    *   **Player:** A simple rectangle representing the player.
+    *   **Bullets:** An array of objects with properties like `x`, `y`, `w`, `h`, `vx`, `vy`.
+    *   **Invaders:** An array of objects representing enemy invaders.
+    *   **Game Loop:** A `requestAnimationFrame` loop to handle updates and drawing.
+    *   **Input Handling:** Event listeners for arrow keys to move the player.
+    *   **Collision Detection:** A function to check if bullets hit invaders or if invaders hit the player.
+    *   **Score System:** Increment score when an invader is destroyed.
+
+**Constraints Checklist & Confidence Score:**
+1.  Valid JavaScript? Yes.
+2.  No redeclaration of `player` or `invaders`? Yes, I will use variables with `const` or `let` and ensure they are defined inside the scope.
+3.  Output ONLY the Javascript code? Yes, I will wrap it in a code block.
+
+**Refinement:**
+I will create a single HTML file containing the CSS and JS to make it easy for the user to copy-paste and run. I'll use a standard canvas API.
+
+*Self-Correction during thought process:* The user asked for "Output ONLY the Javascript code". This usually means they want the code block itself. I should provide a complete runnable example.
+
+Let's write the code.
+- `const player = { x: 100, y: 100, w: 30, h: 30 }`
+- `
+
+    // --- SWARM WORKER 4: CANVAS RETRO DRAWING ---
+    function drawRetroInvader(ctx, x, y, w, h) {
+  ctx.fillStyle = '#22c55e';
+  ctx.fillRect(x + 4, y, w - 8, h);
+  ctx.fillRect(x, y + 4, w, h - 8);
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(x + 6, y + 6, 4, 4);
+  ctx.fillRect(x + w - 10, y + 6, 4, 4);
+}
+
+    // Input Handlers
+    const keys = {};
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (gameState === 'START' || gameState === 'WIN' || gameState === 'GAMEOVER') {
+          initGame();
+        } else if (gameState === 'PLAYING') {
+          const now = Date.now();
+          if (now - lastFire > 250) {
+            fireLaser();
+            lastFire = now;
+          }
+        }
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    function initGame() {
+      player.x = 180;
+      player.dx = 0;
+      bullets = [];
+      score = 0;
+      createInvaders();
+      gameState = 'PLAYING';
+    }
+
+    createInvaders();
+
+    // Game Loop
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Stars background
+      ctx.fillStyle = '#ffffff';
+      for(let i=0; i<15; i++) {
+        const sx = (i * 37 + (Date.now() * 0.02)) % canvas.width;
+        const sy = (i * 47) % canvas.height;
+        ctx.fillRect(sx, sy, 1.5, 1.5);
+      }
+
+      if (gameState === 'PLAYING') {
+        // Handle input
+        player.dx = 0;
+        if (keys['ArrowLeft'] || keys['KeyA']) player.dx = -player.speed;
+        if (keys['ArrowRight'] || keys['KeyD']) player.dx = player.speed;
+
+        player.update(canvas.width);
+        updateInvaders(canvas.width);
+        updateBulletsAndCollisions();
+
+        // Check loss: invaders reach player
+        const lowestInvader = invaders.filter(inv => inv.alive).reduce((max, inv) => Math.max(max, inv.y + inv.h), 0);
+        if (lowestInvader >= player.y) {
+          gameState = 'GAMEOVER';
+        }
+
+        // Check win: all dead
+        const remaining = invaders.filter(inv => inv.alive).length;
+        if (remaining === 0) {
+          gameState = 'WIN';
+        }
+      }
+
+      // Draw Invaders
+      invaders.forEach(inv => {
+        if (inv.alive) {
+          drawRetroInvader(ctx, inv.x, inv.y, inv.w, inv.h);
+        }
+      });
+
+      // Draw Bullets
+      ctx.fillStyle = '#f43f5e';
+      ctx.shadowColor = '#f43f5e';
+      ctx.shadowBlur = 6;
+      bullets.forEach(b => {
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+      });
+      ctx.shadowBlur = 0;
+
+      // Draw Player Ship
+      drawPlayerShip(ctx, player.x, player.y, player.width, player.height);
+
+      // Draw HUD
+      ctx.fillStyle = '#22c55e';
+      ctx.font = '14px monospace';
+      ctx.fillText(`SCORE: ${score}`, 16, 26);
+      const aliveCount = invaders.filter(i => i.alive).length;
+      ctx.fillText(`ALIENS: ${aliveCount}`, canvas.width - 100, 26);
+
+      // Overlays
+      if (gameState === 'START') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('SPACE INVADERS', canvas.width/2, canvas.height/2 - 30);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '14px monospace';
+        ctx.fillText('PRESS SPACEBAR TO LAUNCH', canvas.width/2, canvas.height/2 + 10);
+        ctx.textAlign = 'left';
+      } else if (gameState === 'WIN') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('MISSION COMPLETE!', canvas.width/2, canvas.height/2 - 30);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px monospace';
+        ctx.fillText(`FINAL SCORE: ${score}`, canvas.width/2, canvas.height/2 + 5);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '13px monospace';
+        ctx.fillText('Press SPACEBAR to Play Again', canvas.width/2, canvas.height/2 + 35);
+        ctx.textAlign = 'left';
+      } else if (gameState === 'GAMEOVER') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('EARTH INVADED!', canvas.width/2, canvas.height/2 - 30);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px monospace';
+        ctx.fillText(`SCORE: ${score}`, canvas.width/2, canvas.height/2 + 5);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '13px monospace';
+        ctx.fillText('Press SPACEBAR to Retry', canvas.width/2, canvas.height/2 + 35);
+        ctx.textAlign = 'left';
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

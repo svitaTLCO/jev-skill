@@ -1,0 +1,23 @@
+{
+  "api_contract_soundness": {
+    "type": "noul",
+    "noul": 0.73
+  },
+  "fullstack_quality_score": {
+    "type": "score",
+    "score": 1.44,
+    "confidence": 0.42,
+    "legend": {
+      "0": "Broken code",
+      "1": "Fragile / syntax errors",
+      "2": "Functional prototype",
+      "3": "Clean production-grade"
+    },
+    "probabilities": {
+      "0": 0.08,
+      "1": 0.41,
+      "2": 0.5,
+      "3": 0.01
+    }
+  }
+}

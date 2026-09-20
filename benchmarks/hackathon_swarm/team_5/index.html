@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyberpunk Breakout - Team 5 (Quantum-Core)</title>
+  <style>
+    body {
+      background: #050811;
+      color: #00f3ff;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    .title { font-size: 1.3rem; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }
+    .badge { font-size: 0.75rem; color: #ff007f; margin-bottom: 10px; }
+    canvas {
+      background: #070b14;
+      border: 2px solid #00f3ff;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+    }
+    .controls { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="title">⚡ CYBER-BREAKOUT // QUANTUM-CORE</div>
+  <div class="badge">Team #5 &bull; Architecture: Grid-Array Micro-Entity Architecture</div>
+  <canvas id="c" width="480" height="500"></canvas>
+  <div class="controls">&larr; &rarr; or A / D to Move Paddle &bull; ESC to Restart</div>
+
+  <script>
+  
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let paddle = { x: 200, y: 460, width: 80, height: 12, speed: 7 };
+let ball = { x: 240, y: 300, vx: 4, vy: -4, radius: 6 };
+
+// Initialize the brick grid with rows=4, cols=8
+const rows = 4;
+const cols = 8;
+let bricks = [];
+
+for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c
+
+The user wants me to write JavaScript update and physics functions for a Breakout game based on the provided state variables (`canvas`, `ctx`, `paddle`, `ball`, `rows`, `cols`).
+
+**Requirements:**
+1.  **`function updatePaddle(keys)`**: Move paddle within canvas boundaries (0 to 480). It needs to handle keyboard input.
+2.  **`function updateBall()`**: Update ball position, bounce off walls, bounce off paddle, lose life if falling below bottom.
+3.  **`function checkBrickCollisions()`**: Check collision with alive bricks, set alive=false, increment score.
+
+**Context:**
+-   `canvas` is an HTML5 canvas element.
+-   `ctx` is the 2D context of that canvas.
+-   `paddle` has x/y coordinates and speed.
+-   `ball` has position (x,y), velocity vectors, radius, and life.
+-   `bricks` are initialized with rows=4, cols=8.
+
+**Logic Breakdown:**
+
+1.  **`updatePaddle(keys)`**:
+    -   Needs to listen for key presses (likely 'ArrowLeft', 'ArrowRight', or WASD).
+    -   Update paddle's x position based on the keys pressed.
+    -   Clamp `x` between 0 and canvas width (480).
+
+2.  **`updateBall()`**:
+    -   Update ball's x position by adding velocity (`vx`).
+    -   Update ball's y position by adding velocity (`vy`).
+    -   Wall collisions: Check if `ball.x + radius > canvas.width` or `ball.x - radius < 0`. Flip `vx` and reset to original speed.
+    -   Paddle collision: This is the tricky part. The paddle moves every frame, so I need a way to check for collision between ball and paddle. Since the user asked specifically for this function, it implies checking if the ball hits the paddle *during* the update loop or perhaps at specific intervals. However, usually in these games, we might want to handle the paddle movement logic inside `updatePaddle` and then use that position to check collisions.
+    -   Wait, looking at the prompt structure: "Provide 1. `function updatePaddle(keys)`, 2. `function updateBall()`, 3. `function checkBrickCollisions()`". This suggests these are separate functions called in a game loop (likely `requestAnimationFrame`).
+    -   *Correction*: The paddle movement usually happens via an event listener or keydown handler, but the prompt asks for a specific function named `updatePaddle(keys)`. I will implement it to handle the logic of moving the paddle based on keys.
+
+3.  **`checkBrickCollisions()`**:
+
+The user wants me to write JavaScript rendering functions for a game called "Cyberpunk Neon Breakout". I need to create two main functions: `draw()` which handles the canvas clearing and drawing elements, and `drawHUD()` which displays the HUD (Heads-Up Display) with score and lives.
+
+Let's break down the requirements:
+1.  **Canvas**: 480x500 pixels.
+2.  **Background**: Dark color `#070b14`.
+3.  **Elements to draw in `draw()`**:
+    *   Glowing neon paddle.
+    *   Ball.
+    *   Colored brick grid (bright cyan, magenta, neon green).
+4.  **HUD in `drawHUD()`**: Score and lives using retro monospace font.
+
+I'll need to implement a simple game loop structure or at least the rendering logic. Since I'm only asked for the specific functions requested (`draw` and `drawHUD`), I should probably include a basic setup function (like initializing canvas context) but keep it focused on what was explicitly requested. The user specifically asked for "Output ONLY JavaScript functions", so I will provide just those two, perhaps wrapped in a minimal class or module structure to make them self-contained if needed, but the core request is clear.
+
+Let's plan the code:
+1.  **Setup**: Define canvas context `ctx`.
+2.  **`draw()` function**:
+    *   Clear canvas with `#070b14`.
+    *   Draw Brick Grid (using a loop or pattern).
+    *   Draw Paddle (glowing effect using `shadowBlur`).
+    *   Draw Ball (ball bounce logic, glowing effect).
+3.  **`drawHUD()` function**:
+    *   Clear canvas again? Or just draw text on top? The prompt says "showing score and lives", implying it's part of the rendering flow. I'll probably clear the screen or at least make sure the HUD is visible over the game elements, but since `draw()` clears the canvas, `drawHUD` should likely be called after `draw()`.
+    *   Actually, looking at standard game loops: usually, you draw everything in a loop (like `requestAnimationFrame`). The prompt asks for specific functions. I will write them as standalone functions that can be used within an animation loop context.
+
+**Refining the "Glowing" effect:**
+*   Use `ctx.shadowBlur` and `ctx.shadowColor`.
+*   For the paddle: Cyan or Magenta? Let's go with a gradient or just a
+
+// Key listeners & Main Loop
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key] = true; keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.key] = false; keys[e.code] = false; });
+
+function loop() {
+  if (!gameOver && !gameWon) {
+    if (typeof updatePaddle === 'function') updatePaddle(keys);
+    if (typeof updateBall === 'function') updateBall();
+    if (typeof checkBrickCollisions === 'function') checkBrickCollisions();
+  }
+  if (typeof draw === 'function') draw();
+  if (typeof drawHUD === 'function') drawHUD();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+  </script>
+</body>
+</html>

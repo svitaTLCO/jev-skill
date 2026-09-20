@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Palio di Siena 3D - Benchmark Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #090604;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 2.8rem;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #fcd34d, #d97706);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .subtitle {
+      color: #9ca3af;
+      font-size: 1.05rem;
+      margin-bottom: 30px;
+      text-align: center;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 28px;
+      width: 100%;
+      max-width: 980px;
+      margin-bottom: 36px;
+    }
+    .card {
+      background: #14100c;
+      border-radius: 20px;
+      padding: 26px;
+      border: 2px solid #2b2017;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .card:hover {
+      transform: translateY(-4px);
+    }
+    .card.baseline {
+      border-color: #4b3624;
+    }
+    .card.deluxe {
+      border-color: #d97706;
+      background: linear-gradient(180deg, #1f140a 0%, #361f09 100%);
+      box-shadow: 0 10px 40px rgba(217, 119, 6, 0.25);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      width: fit-content;
+    }
+    .badge.gray { background: #332418; color: #d4a373; }
+    .badge.gold { background: #d97706; color: #fff; }
+    h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+      color: #fef3c7;
+    }
+    p {
+      color: #9ca3af;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+    .metrics {
+      background: rgba(0,0,0,0.4);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 22px;
+      font-size: 0.85rem;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-val {
+      font-weight: 600;
+      color: #f59e0b;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .btn {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      font-family: 'Cinzel', serif;
+      font-size: 1.15rem;
+      padding: 14px 20px;
+      border-radius: 14px;
+      font-weight: 700;
+      transition: opacity 0.2s;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      color: #111;
+    }
+    .btn.secondary {
+      background: #372517;
+      color: #fde68a;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Telemetry box */
+    .benchmark-section {
+      width: 100%;
+      max-width: 980px;
+      background: #120d08;
+      border: 1px solid #291a0f;
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .benchmark-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #291a0f;
+      padding-bottom: 12px;
+    }
+    .benchmark-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fde68a;
+      font-family: 'Cinzel', serif;
+    }
+    .log-box {
+      background: #050302;
+      border: 1px solid #24160c;
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+    .gold { color: #f59e0b; }
+    .green { color: #34d399; }
+    .blue { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <h1>🏇 PALIO DI SIENA 3D BENCHMARK</h1>
+  <div class="subtitle">"Create a full playable 3D game of Palio di Siena in Piazza del Campo. Real physics, real rules, 60 fps on browser."</div>
+
+  <div class="grid">
+    <!-- Run 1 Card -->
+    <div class="card baseline">
+      <div>
+        <div class="badge gray">Run 1: Pure LLM Baseline</div>
+        <h2>Standard 3D Palio</h2>
+        <p>Single-prompt one-shot generation. Fixed spline progress rail, basic box buildings, simple arrow key controls. No San Martino danger, no Nerbo stamina, no Cavallo Scosso.</p>
+        
+        <div class="metrics">
+          <div class="metric-row"><span>Physics Model</span><span class="metric-val">Fixed Spline Rail</span></div>
+          <div class="metric-row"><span>San Martino Danger</span><span class="metric-val" style="color:#ef4444;">None (Rail bound)</span></div>
+          <div class="metric-row"><span>Palio Rules</span><span class="metric-val">Simple 3 laps</span></div>
+          <div class="metric-row"><span>Cavallo Scosso</span><span class="metric-val" style="color:#ef4444;">No</span></div>
+          <div class="metric-row"><span>Sunto Bell Audio</span><span class="metric-val" style="color:#ef4444;">No</span></div>
+          <div class="metric-row"><span>Jev Decision Latency</span><span class="metric-val">0.0 ms</span></div>
+        </div>
+      </div>
+      <a href="run_1_baseline/index.html" class="btn secondary">Gioca Run 1 (Baseline) 🎮</a>
+    </div>
+
+    <!-- Run 2 Card -->
+    <div class="card deluxe">
+      <div>
+        <div class="badge gold">Run 2: Jev-Guided Development</div>
+        <h2>Palio di Siena 3D Deluxe</h2>
+        <p>Architected via Jev System One. Step 1: Jev selected Centrifugal Tufo Drift & Authentic Rules. Step 2: Implemented San Martino mattresses, stamina/Nerbo, dirt particles, and Cavallo Scosso. Step 3: Jev Pre-flight verification passed.</p>
+        
+        <div class="metrics">
+          <div class="metric-row"><span>Physics Model</span><span class="metric-val green">Centrifugal Tufo Drift</span></div>
+          <div class="metric-row"><span>San Martino Danger</span><span class="metric-val green">Real crash & mattress wall</span></div>
+          <div class="metric-row"><span>Palio Rules</span><span class="metric-val green">Nerbo + Stamina + Contrade AI</span></div>
+          <div class="metric-row"><span>Cavallo Scosso</span><span class="metric-val green">Yes (Horse races if jockey falls)</span></div>
+          <div class="metric-row"><span>Sunto Bell Audio</span><span class="metric-val green">Yes (Mangia tower tolling)</span></div>
+          <div class="metric-row"><span>Jev Latency Overhead</span><span class="metric-val gold">1,674.8 ms (1.67s)</span></div>
+        </div>
+      </div>
+      <a href="run_2_jev_guided/index.html" class="btn primary">Gioca Run 2 Deluxe 🏇</a>
+    </div>
+  </div>
+
+  <div class="benchmark-section">
+    <div class="benchmark-header">
+      <div class="benchmark-title">⚡ Live Jev Telemetry Log (Complex 3D Game)</div>
+      <span style="font-size: 0.8rem; color: #9ca3af;">Model: jev-1.13.0 • Keychain Authentication</span>
+    </div>
+    <div class="log-box">
+<span class="blue">[Step 2.1] Architectural & Rules Decision</span> (Latency: 695.9ms | Tokens: 709 in, 118 out)
+- <span class="gold">physics_architecture:</span> 'centrifugal_tufo_drift' (P=1.00, confidence=1.00)
+  -> Selected custom raycast vehicle kinematics with slope acceleration and Curva di San Martino centrifugal slip.
+- <span class="gold">palio_rules_fidelity:</span> 'authentic_palio_mechanics' (P=1.00, confidence=1.00)
+  -> Selected authentic 3 laps, San Martino mattress barriers, Nerbo whip stamina, and Cavallo Scosso riderless continuation.
+
+<span class="blue">[Step 2.2] Implementation Built to Specification</span>
+- Built Piazza del Campo 3D track with San Martino drop, Palazzo Pubblico, Torre del Mangia, tufo dust particles, and Sunto bell audio.
+
+<span class="blue">[Step 2.3] Jev Pre-Flight Quality & Rules Verification</span> (Latency: 978.9ms | Tokens: 10,210 in, 84 out)
+- <span class="green">maintainability:</span> 1.91 / 3.0 (confidence=0.88)
+- <span class="green">authenticity_of_palio_rules:</span> Noul = 0.780 (Passed Palio authentic rules threshold)
+- <span class="green">achieves_stable_60fps:</span> Noul = 0.850 (Passed 60 FPS WebGL stability verification)
+
+<span class="green">TOTAL JEV API OVERHEAD: 1,674.8 ms (1.67 seconds) across 2 parallel decision gates</span>
+    </div>
+  </div>
+</body>
+</html>

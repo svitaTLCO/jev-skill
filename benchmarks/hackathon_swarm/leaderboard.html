@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>⚡ SWARM HACKATHON ARENA // 24-AGENT SQUAD COMPETITION</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050811;
+      --card-bg: rgba(10, 15, 26, 0.85);
+      --cyan: #00f3ff;
+      --pink: #ff007f;
+      --green: #00ff88;
+      --dim: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(0,243,255,0.1) 0%, transparent 70%);
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2rem;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 3px;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+    }
+    .sub { color: var(--dim); font-size: 0.9rem; margin-top: 0.5rem; }
+    .jury-box {
+      max-width: 800px;
+      margin: 1.5rem auto 0;
+      background: rgba(255, 0, 127, 0.08);
+      border: 1px solid var(--pink);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.15);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 2px solid var(--cyan);
+      border-radius: 10px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-3px); }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .badge { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; }
+    .team-title { font-family: 'Orbitron', sans-serif; font-size: 1.15rem; color: #fff; margin-top: 2px; }
+    .theme-tag { font-size: 0.75rem; color: var(--dim); }
+    .score-pill {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      color: var(--green);
+      background: rgba(0,255,136,0.1);
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(0,255,136,0.3);
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      background: rgba(0,0,0,0.35);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+    }
+    .preview-box {
+      height: 380px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #000;
+    }
+    iframe { width: 100%; height: 100%; border: none; }
+    .play-btn {
+      text-align: center;
+      background: rgba(0,243,255,0.12);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      padding: 0.6rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .play-btn:hover { background: var(--cyan); color: #050811; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚡ SWARM HACKATHON ARENA</h1>
+    <div class="sub">24 Autonomous Specialists &bull; 6 Competing Teams &bull; Governed by TypeSafe AI System One</div>
+    <div class="jury-box">
+      🏆 <strong>Grand Champion:</strong> Team 6 - Hyper-Drive (Event-Driven Autonomous Pipeline) |
+      Jev Score: <strong>0.89 / 3.0</strong> | Noul Soundness: <strong>0.05</strong>
+    </div>
+  </header>
+
+  <div class="grid">
+    
+        <div class="card" style="border-color: #ff007f;">
+          <div class="card-header">
+            <div>
+              <div class="badge" style="color: #ff007f;">👑 GRAND CHAMPION</div>
+              <div class="team-title">Hyper-Drive</div>
+              <div class="theme-tag">Event-Driven Autonomous Pipeline</div>
+            </div>
+            <div class="score-pill">0.89 / 3.0</div>
+          </div>
+          <div class="meta-row">
+            <span>Noul: <strong>0.05</strong></span>
+            <span>Time: <strong>184.07s</strong></span>
+            <span>Tokens: <strong>2450</strong></span>
+            <span>Syntax: <strong style="color: #00ff88;">PASS</strong></span>
+          </div>
+          <div class="preview-box">
+            <iframe src="team_6/index.html" scrolling="no"></iframe>
+          </div>
+          <a href="team_6/index.html" target="_blank" class="play-btn">🎮 LAUNCH FULLSCREEN</a>
+        </div>
+        
+        <div class="card" style="border-color: #ef4444;">
+          <div class="card-header">
+            <div>
+              <div class="badge" style="color: #ef4444;">TEAM #5</div>
+              <div class="team-title">Quantum-Core</div>
+              <div class="theme-tag">Grid-Array Micro-Entity Architecture</div>
+            </div>
+            <div class="score-pill">0.72 / 3.0</div>
+          </div>
+          <div class="meta-row">
+            <span>Noul: <strong>0.04</strong></span>
+            <span>Time: <strong>194.55s</strong></span>
+            <span>Tokens: <strong>2450</strong></span>
+            <span>Syntax: <strong style="color: #ef4444;">FAIL</strong></span>
+          </div>
+          <div class="preview-box">
+            <iframe src="team_5/index.html" scrolling="no"></iframe>
+          </div>
+          <a href="team_5/index.html" target="_blank" class="play-btn">🎮 LAUNCH FULLSCREEN</a>
+        </div>
+        
+        <div class="card" style="border-color: #ef4444;">
+          <div class="card-header">
+            <div>
+              <div class="badge" style="color: #ef4444;">TEAM #4</div>
+              <div class="team-title">Vector-Viper</div>
+              <div class="theme-tag">Particle Physics & Vector Momentum</div>
+            </div>
+            <div class="score-pill">0.41 / 3.0</div>
+          </div>
+          <div class="meta-row">
+            <span>Noul: <strong>0.03</strong></span>
+            <span>Time: <strong>191.59s</strong></span>
+            <span>Tokens: <strong>2450</strong></span>
+            <span>Syntax: <strong style="color: #ef4444;">FAIL</strong></span>
+          </div>
+          <div class="preview-box">
+            <iframe src="team_4/index.html" scrolling="no"></iframe>
+          </div>
+          <a href="team_4/index.html" target="_blank" class="play-btn">🎮 LAUNCH FULLSCREEN</a>
+        </div>
+        
+        <div class="card" style="border-color: #ef4444;">
+          <div class="card-header">
+            <div>
+              <div class="badge" style="color: #ef4444;">TEAM #1</div>
+              <div class="team-title">Neon-Pulse</div>
+              <div class="theme-tag">Functional Reactive Architecture</div>
+            </div>
+            <div class="score-pill">0.38 / 3.0</div>
+          </div>
+          <div class="meta-row">
+            <span>Noul: <strong>0.02</strong></span>
+            <span>Time: <strong>158.19s</strong></span>
+            <span>Tokens: <strong>2450</strong></span>
+            <span>Syntax: <strong style="color: #ef4444;">FAIL</strong></span>
+          </div>
+          <div class="preview-box">
+            <iframe src="team_1/index.html" scrolling="no"></iframe>
+          </div>
+          <a href="team_1/index.html" target="_blank" class="play-btn">🎮 LAUNCH FULLSCREEN</a>
+        </div>
+        
+        <div class="card" style="border-color: #ef4444;">
+          <div class="card-header">
+            <div>
+              <div class="badge" style="color: #ef4444;">TEAM #3</div>
+              <div class="team-title">Retro-Arcade</div>
+              <div class="theme-tag">Double-Buffered Classic Loop</div>
+            </div>
+            <div class="score-pill">0.31 / 3.0</div>
+          </div>
+          <div class="meta-row">
+            <span>Noul: <strong>0.02</strong></span>
+            <span>Time: <strong>214.55s</strong></span>
+            <span>Tokens: <strong>2450</strong></span>
+            <span>Syntax: <strong style="color: #ef4444;">FAIL</strong></span>
+          </div>
+          <div class="preview-box">
+            <iframe src="team_3/index.html" scrolling="no"></iframe>
+          </div>
+          <a href="team_3/index.html" target="_blank" class="play-btn">🎮 LAUNCH FULLSCREEN</a>
+        </div>
+        
+        <div class="card" style="border-color: #ef4444;">
+          <div class="card-header">
+            <div>
+              <div class="badge" style="color: #ef4444;">TEAM #2</div>
+              <div class="team-title">Cyber-Matrix</div>
+              <div class="theme-tag">Object-Oriented Component State</div>
+            </div>
+            <div class="score-pill">0.29 / 3.0</div>
+          </div>
+          <div class="meta-row">
+            <span>Noul: <strong>0.02</strong></span>
+            <span>Time: <strong>186.44s</strong></span>
+            <span>Tokens: <strong>2450</strong></span>
+            <span>Syntax: <strong style="color: #ef4444;">FAIL</strong></span>
+          </div>
+          <div class="preview-box">
+            <iframe src="team_2/index.html" scrolling="no"></iframe>
+          </div>
+          <a href="team_2/index.html" target="_blank" class="play-btn">🎮 LAUNCH FULLSCREEN</a>
+        </div>
+        
+  </div>
+</body>
+</html>

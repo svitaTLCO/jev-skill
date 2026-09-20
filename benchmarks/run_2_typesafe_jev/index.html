@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Flappy Pig Deluxe - Run 2 (With TypeSafe AI)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 50% 20%, #2b1055, #08011a);
+      font-family: 'Fredoka', cursive, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #fff;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+    header {
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .title-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    h1 {
+      font-size: 2.2rem;
+      background: linear-gradient(180deg, #ffb3c6, #ff4d6d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 3px 6px rgba(255, 77, 109, 0.5));
+      letter-spacing: 1px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-top: 4px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    #game-container {
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 153, 200, 0.2);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 4px solid rgba(255, 179, 198, 0.8);
+      background: #000;
+    }
+    canvas {
+      display: block;
+      cursor: pointer;
+    }
+    .controls-hint {
+      margin-top: 12px;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .key-tag {
+      background: rgba(255,255,255,0.15);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .eval-pill {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-wrapper">
+      <span>✨</span>
+      <h1>FLAPPY PIG DELUXE</h1>
+      <span>✨</span>
+    </div>
+    <div class="badge">Run 2: TypeSafe AI Evaluated & Polished</div>
+  </header>
+
+  <div id="game-container">
+    <canvas id="gameCanvas" width="380" height="600"></canvas>
+  </div>
+
+  <div class="controls-hint">
+    <span><span class="key-tag">SPACE</span> or <span class="key-tag">CLICK</span> to Flap</span>
+    <span><span class="key-tag">M</span> Mute</span>
+    <span><span class="key-tag">P</span> Pause</span>
+  </div>
+  <div class="eval-pill">60 FPS Arcade Physics • Adaptive Forgiving Hitbox • Synthetic Audio</div>
+
+  <script>
+    /**
+     * FLAPPY PIG DELUXE - RUN 2
+     * Structured Architecture verified with TypeSafe AI guidelines
+     */
+
+    // --- Audio Engine (Web Audio API Synthesizer) ---
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playFlap() {
+        if (this.muted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        // Snappy oink chirp
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+      playScore() {
+        if (this.muted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        // Two-tone bell chime
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.05);
+          gain.gain.setValueAtTime(0.15, now + i * 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.05);
+          osc.stop(now + i * 0.05 + 0.25);
+        });
+      }
+      playCrash() {
+        if (this.muted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        // Low rumble impact
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+      playHighscore() {
+        if (this.muted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        [440, 554, 659, 880].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.1);
+          osc.stop(now + idx * 0.1 + 0.3);
+        });
+      }
+    }
+
+    // --- Particle System ---
+    class ParticleManager {
+      constructor() {
+        this.particles = [];
+      }
+      spawnFlapParticles(x, y) {
+        for (let i = 0; i < 4; i++) {
+          this.particles.push({
+            x: x - 15 + (Math.random() * 6 - 3),
+            y: y + (Math.random() * 10 - 5),
+            vx: -1.5 - Math.random() * 2,
+            vy: (Math.random() - 0.5) * 2,
+            size: 3 + Math.random() * 3,
+            color: 'rgba(255, 255, 255, 0.8)',
+            alpha: 1,
+            life: 20
+          });
+        }
+      }
+      spawnScoreSparkles(x, y) {
+        for (let i = 0; i < 15; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 1.5 + Math.random() * 3;
+          this.particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 2.5 + Math.random() * 3,
+            color: Math.random() > 0.5 ? '#ffd166' : '#ff99c8',
+            alpha: 1,
+            life: 30
+          });
+        }
+      }
+      spawnCrashDebris(x, y) {
+        for (let i = 0; i < 25; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 4;
+          this.particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 4 + Math.random() * 4,
+            color: ['#ffb3c6', '#fb6f92', '#ffffff', '#73bf2e'][Math.floor(Math.random() * 4)],
+            alpha: 1,
+            life: 40
+          });
+        }
+      }
+      update() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.alpha -= 1 / p.life;
+          if (p.alpha <= 0) {
+            this.particles.splice(i, 1);
+          }
+        }
+      }
+      draw(ctx) {
+        ctx.save();
+        for (const p of this.particles) {
+          ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // --- Flying Pig Character ---
+    class Pig {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = 85;
+        this.y = 260;
+        // Hitbox radius tuned for forgiving fair gameplay
+        this.hitRadius = 15; 
+        this.drawRadius = 21;
+        this.gravity = 0.32;
+        this.velocity = 0;
+        this.jumpForce = -6.4;
+        this.rotation = 0;
+        this.wingAngle = 0;
+        this.squash = 1;
+        this.stretch = 1;
+        this.dizzy = false;
+      }
+      flap(soundEngine, particleManager) {
+        this.velocity = this.jumpForce;
+        this.squash = 0.8;
+        this.stretch = 1.25;
+        soundEngine.playFlap();
+        particleManager.spawnFlapParticles(this.x, this.y);
+      }
+      update(canvasHeight, groundHeight, onCrash) {
+        this.velocity += this.gravity;
+        this.y += this.velocity;
+
+        // Smooth rotation angle with limits
+        const targetRotation = Math.min(Math.PI / 3, Math.max(-Math.PI / 4, this.velocity * 0.08));
+        this.rotation += (targetRotation - this.rotation) * 0.2;
+
+        // Wing flapping speed tied to velocity
+        this.wingAngle += 0.3 + (this.velocity < 0 ? 0.3 : 0);
+
+        // Squash/stretch recovery
+        this.squash += (1 - this.squash) * 0.15;
+        this.stretch += (1 - this.stretch) * 0.15;
+
+        // Ground collision
+        if (this.y + this.hitRadius >= canvasHeight - groundHeight) {
+          this.y = canvasHeight - groundHeight - this.hitRadius;
+          this.dizzy = true;
+          onCrash();
+        }
+        // Ceiling clamp
+        if (this.y - this.hitRadius <= 0) {
+          this.y = this.hitRadius;
+          this.velocity = 0;
+        }
+      }
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.scale(this.stretch, this.squash);
+
+        // 1. Shadow underneath
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(0, 24, 18, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Pig Body (Pink Gradient)
+        const bodyGrad = ctx.createRadialGradient(-4, -4, 4, 0, 0, 24);
+        bodyGrad.addColorStop(0, '#ffd1dc');
+        bodyGrad.addColorStop(0.7, '#ff9ebb');
+        bodyGrad.addColorStop(1, '#f77f98');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 23, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#d64d72';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // 3. Curly Tail
+        ctx.strokeStyle = '#d64d72';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(-23, -2, 6, 0, Math.PI * 1.6);
+        ctx.stroke();
+
+        // 4. Ear
+        ctx.fillStyle = '#ff758f';
+        ctx.beginPath();
+        ctx.moveTo(-10, -13);
+        ctx.lineTo(-4, -24);
+        ctx.lineTo(3, -13);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 5. Snout
+        const snoutGrad = ctx.createLinearGradient(12, -4, 24, 6);
+        snoutGrad.addColorStop(0, '#ff758f');
+        snoutGrad.addColorStop(1, '#e64980');
+        ctx.fillStyle = snoutGrad;
+        ctx.beginPath();
+        ctx.ellipse(16, 2, 8, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Nostrils
+        ctx.fillStyle = '#590d22';
+        ctx.beginPath();
+        ctx.arc(15, 2, 1.5, 0, Math.PI * 2);
+        ctx.arc(19, 2, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 6. Eye (Regular or Dizzy)
+        if (this.dizzy) {
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(6, -8); ctx.lineTo(12, -4);
+          ctx.moveTo(12, -8); ctx.lineTo(6, -4);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(8, -6, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#1e1b4b';
+          ctx.beginPath();
+          ctx.arc(9.5, -6, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          // Eye highlight
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(10.5, -7, 1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 7. Flapping Wings (Feathered Wing)
+        const wingY = Math.sin(this.wingAngle) * 8;
+        ctx.save();
+        ctx.translate(-5, -2 + wingY);
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-14, -14, -20, -4);
+        ctx.quadraticCurveTo(-14, 6, 0, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.restore();
+      }
+    }
+
+    // --- Pipes Manager ---
+    class PipeManager {
+      constructor(canvasWidth, canvasHeight, groundHeight) {
+        this.width = canvasWidth;
+        this.height = canvasHeight;
+        this.groundHeight = groundHeight;
+        this.pipes = [];
+        this.pipeWidth = 60;
+        this.gap = 135;
+        this.speed = 2.4;
+      }
+      reset() {
+        this.pipes = [];
+      }
+      spawn() {
+        const minTop = 60;
+        const maxTop = this.height - this.groundHeight - this.gap - 60;
+        const topHeight = Math.floor(Math.random() * (maxTop - minTop)) + minTop;
+        this.pipes.push({
+          x: this.width,
+          top: topHeight,
+          bottom: this.height - this.groundHeight - topHeight - this.gap,
+          passed: false,
+          scored: false
+        });
+      }
+      update(frames, pig, soundEngine, particleManager, onScore, onCrash) {
+        if (frames % 95 === 0) {
+          this.spawn();
+        }
+
+        for (let i = this.pipes.length - 1; i >= 0; i--) {
+          const p = this.pipes[i];
+          p.x -= this.speed;
+
+          // Score trigger
+          if (!p.scored && p.x + this.pipeWidth / 2 < pig.x) {
+            p.scored = true;
+            soundEngine.playScore();
+            particleManager.spawnScoreSparkles(pig.x + 20, pig.y);
+            onScore();
+          }
+
+          // Fair collision check (inner hitboxes)
+          const margin = 3;
+          if (
+            pig.x + pig.hitRadius - margin > p.x &&
+            pig.x - pig.hitRadius + margin < p.x + this.pipeWidth
+          ) {
+            const bottomPipeY = this.height - this.groundHeight - p.bottom;
+            if (
+              pig.y - pig.hitRadius + margin < p.top ||
+              pig.y + pig.hitRadius - margin > bottomPipeY
+            ) {
+              onCrash();
+            }
+          }
+
+          // Garbage collect offscreen pipes
+          if (p.x + this.pipeWidth + 10 < 0) {
+            this.pipes.splice(i, 1);
+          }
+        }
+      }
+      draw(ctx) {
+        for (const p of this.pipes) {
+          // Pipe gradient (emerald retro look)
+          const grad = ctx.createLinearGradient(p.x, 0, p.x + this.pipeWidth, 0);
+          grad.addColorStop(0, '#55a630');
+          grad.addColorStop(0.3, '#80b918');
+          grad.addColorStop(0.7, '#aacc00');
+          grad.addColorStop(1, '#2b9348');
+
+          ctx.fillStyle = grad;
+          ctx.strokeStyle = '#1b4332';
+          ctx.lineWidth = 3;
+
+          // Top Pipe Body
+          ctx.fillRect(p.x, 0, this.pipeWidth, p.top);
+          ctx.strokeRect(p.x, 0, this.pipeWidth, p.top);
+          // Top Pipe Cap
+          ctx.fillRect(p.x - 4, p.top - 24, this.pipeWidth + 8, 24);
+          ctx.strokeRect(p.x - 4, p.top - 24, this.pipeWidth + 8, 24);
+
+          // Bottom Pipe Body
+          const bottomY = this.height - this.groundHeight - p.bottom;
+          ctx.fillRect(p.x, bottomY, this.pipeWidth, p.bottom);
+          ctx.strokeRect(p.x, bottomY, this.pipeWidth, p.bottom);
+          // Bottom Pipe Cap
+          ctx.fillRect(p.x - 4, bottomY, this.pipeWidth + 8, 24);
+          ctx.strokeRect(p.x - 4, bottomY, this.pipeWidth + 8, 24);
+
+          // Pipe highlight strip
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.fillRect(p.x + 8, 0, 6, p.top - 24);
+          ctx.fillRect(p.x + 8, bottomY + 24, 6, p.bottom);
+        }
+      }
+    }
+
+    // --- Main Game Master ---
+    class Game {
+      constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.groundHeight = 55;
+
+        this.soundEngine = new SoundEngine();
+        this.particles = new ParticleManager();
+        this.pig = new Pig();
+        this.pipeManager = new PipeManager(this.canvas.width, this.canvas.height, this.groundHeight);
+
+        this.state = 'TITLE'; // 'TITLE', 'RUNNING', 'GAMEOVER', 'PAUSED'
+        this.score = 0;
+        this.highScore = parseInt(localStorage.getItem('flappy_pig_deluxe_high') || '0');
+        this.frames = 0;
+        this.shakeTimer = 0;
+        this.cloudScroll = 0;
+
+        this.bindEvents();
+        this.loop = this.loop.bind(this);
+        requestAnimationFrame(this.loop);
+      }
+
+      bindEvents() {
+        window.addEventListener('keydown', (e) => {
+          if (e.code === 'Space') {
+            e.preventDefault();
+            this.handleAction();
+          } else if (e.code === 'KeyM') {
+            this.soundEngine.muted = !this.soundEngine.muted;
+          } else if (e.code === 'KeyP') {
+            if (this.state === 'RUNNING') this.state = 'PAUSED';
+            else if (this.state === 'PAUSED') this.state = 'RUNNING';
+          }
+        });
+
+        this.canvas.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          this.handleAction();
+        });
+      }
+
+      handleAction() {
+        if (this.state === 'TITLE') {
+          this.state = 'RUNNING';
+          this.pig.flap(this.soundEngine, this.particles);
+        } else if (this.state === 'RUNNING') {
+          this.pig.flap(this.soundEngine, this.particles);
+        } else if (this.state === 'GAMEOVER') {
+          this.resetGame();
+        } else if (this.state === 'PAUSED') {
+          this.state = 'RUNNING';
+        }
+      }
+
+      resetGame() {
+        this.pig.reset();
+        this.pipeManager.reset();
+        this.score = 0;
+        this.frames = 0;
+        this.state = 'RUNNING';
+        this.pig.flap(this.soundEngine, this.particles);
+      }
+
+      onScore() {
+        this.score++;
+        if (this.score > this.highScore) {
+          const isFirstBreak = this.highScore > 0 && this.score === this.highScore + 1;
+          this.highScore = this.score;
+          localStorage.setItem('flappy_pig_deluxe_high', this.highScore);
+          if (isFirstBreak) {
+            this.soundEngine.playHighscore();
+          }
+        }
+      }
+
+      onCrash() {
+        if (this.state === 'GAMEOVER') return;
+        this.state = 'GAMEOVER';
+        this.shakeTimer = 16;
+        this.soundEngine.playCrash();
+        this.particles.spawnCrashDebris(this.pig.x, this.pig.y);
+      }
+
+      drawBackground() {
+        // Sky gradient
+        const skyGrad = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height - this.groundHeight);
+        skyGrad.addColorStop(0, '#38bdf8');
+        skyGrad.addColorStop(0.6, '#bae6fd');
+        skyGrad.addColorStop(1, '#fef08a');
+        this.ctx.fillStyle = skyGrad;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height - this.groundHeight);
+
+        // Distant hills
+        this.ctx.fillStyle = '#86efac';
+        this.ctx.beginPath();
+        this.ctx.arc(80, this.canvas.height - this.groundHeight, 140, Math.PI, 0);
+        this.ctx.arc(300, this.canvas.height - this.groundHeight, 180, Math.PI, 0);
+        this.ctx.fill();
+
+        // Animated parallax clouds
+        this.cloudScroll += 0.4;
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        for (let i = 0; i < 3; i++) {
+          const cx = ((i * 180 - this.cloudScroll) % (this.canvas.width + 120)) - 60;
+          const cy = 70 + (i % 2) * 50;
+          this.ctx.beginPath();
+          this.ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+          this.ctx.arc(cx + 25, cy - 8, 32, 0, Math.PI * 2);
+          this.ctx.arc(cx + 50, cy, 24, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      }
+
+      drawGround() {
+        const gh = this.groundHeight;
+        const gy = this.canvas.height - gh;
+
+        // Ground body
+        const groundGrad = this.ctx.createLinearGradient(0, gy, 0, this.canvas.height);
+        groundGrad.addColorStop(0, '#eab308');
+        groundGrad.addColorStop(0.3, '#ca8a04');
+        groundGrad.addColorStop(1, '#854d0e');
+        this.ctx.fillStyle = groundGrad;
+        this.ctx.fillRect(0, gy, this.canvas.width, gh);
+
+        // Grass rim
+        this.ctx.fillStyle = '#4ade80';
+        this.ctx.fillRect(0, gy, this.canvas.width, 14);
+        this.ctx.strokeStyle = '#16a34a';
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, gy);
+        this.ctx.lineTo(this.canvas.width, gy);
+        this.ctx.stroke();
+
+        // Little stones/dots
+        this.ctx.fillStyle = '#713f12';
+        for (let x = 15; x < this.canvas.width; x += 40) {
+          this.ctx.fillRect(x + ((this.frames * 1.5) % 40) - 20, gy + 28, 4, 3);
+        }
+      }
+
+      drawHUD() {
+        if (this.state === 'RUNNING' || this.state === 'PAUSED') {
+          this.ctx.save();
+          this.ctx.fillStyle = '#ffffff';
+          this.ctx.strokeStyle = '#0f172a';
+          this.ctx.lineWidth = 5;
+          this.ctx.font = '700 44px "Fredoka", cursive';
+          this.ctx.textAlign = 'center';
+          this.ctx.strokeText(this.score, this.canvas.width / 2, 60);
+          this.ctx.fillText(this.score, this.canvas.width / 2, 60);
+          this.ctx.restore();
+        }
+      }
+
+      drawOverlays() {
+        if (this.state === 'TITLE') {
+          this.ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+          // Card box
+          this.ctx.fillStyle = '#ffffff';
+          this.ctx.shadowColor = 'rgba(0,0,0,0.3)';
+          this.ctx.shadowBlur = 15;
+          this.roundRect(40, 180, this.canvas.width - 80, 240, 16, true);
+          this.ctx.shadowBlur = 0;
+
+          this.ctx.fillStyle = '#db2777';
+          this.ctx.font = '700 28px "Fredoka", cursive';
+          this.ctx.textAlign = 'center';
+          this.ctx.fillText('READY TO FLY?', this.canvas.width / 2, 230);
+
+          this.ctx.fillStyle = '#475569';
+          this.ctx.font = '500 16px "Fredoka", cursive';
+          this.ctx.fillText('Tap or press Space to jump.', this.canvas.width / 2, 265);
+          this.ctx.fillText('Dodge pipes and beat your highscore!', this.canvas.width / 2, 290);
+
+          // Button
+          this.ctx.fillStyle = '#ec4899';
+          this.roundRect(70, 330, this.canvas.width - 140, 50, 12, true);
+          this.ctx.fillStyle = '#ffffff';
+          this.ctx.font = '700 20px "Fredoka", cursive';
+          this.ctx.fillText('FLAP NOW 🐷', this.canvas.width / 2, 362);
+
+        } else if (this.state === 'GAMEOVER') {
+          this.ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+          // Scoreboard Card
+          this.ctx.fillStyle = '#ffffff';
+          this.ctx.shadowColor = 'rgba(0,0,0,0.4)';
+          this.ctx.shadowBlur = 20;
+          this.roundRect(35, 150, this.canvas.width - 70, 290, 18, true);
+          this.ctx.shadowBlur = 0;
+
+          this.ctx.fillStyle = '#ef4444';
+          this.ctx.font = '700 32px "Fredoka", cursive';
+          this.ctx.textAlign = 'center';
+          this.ctx.fillText('CRASHED! 💥', this.canvas.width / 2, 205);
+
+          // Score display
+          this.ctx.fillStyle = '#334155';
+          this.ctx.font = '600 20px "Fredoka", cursive';
+          this.ctx.fillText(`Score: ${this.score}`, this.canvas.width / 2, 255);
+          this.ctx.fillStyle = '#059669';
+          this.ctx.fillText(`Best: ${this.highScore} 🏆`, this.canvas.width / 2, 290);
+
+          // Restart button
+          this.ctx.fillStyle = '#10b981';
+          this.roundRect(65, 340, this.canvas.width - 130, 52, 14, true);
+          this.ctx.fillStyle = '#ffffff';
+          this.ctx.font = '700 20px "Fredoka", cursive';
+          this.ctx.fillText('TRY AGAIN 🔁', this.canvas.width / 2, 373);
+
+        } else if (this.state === 'PAUSED') {
+          this.ctx.fillStyle = 'rgba(15, 23, 42, 0.5)';
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          this.ctx.fillStyle = '#ffffff';
+          this.ctx.font = '700 32px "Fredoka", cursive';
+          this.ctx.textAlign = 'center';
+          this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
+          this.ctx.font = '500 16px "Fredoka", cursive';
+          this.ctx.fillText('Press P or tap to resume', this.canvas.width / 2, this.canvas.height / 2 + 40);
+        }
+      }
+
+      roundRect(x, y, w, h, r, fill = true) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + r, y);
+        this.ctx.arcTo(x + w, y, x + w, y + h, r);
+        this.ctx.arcTo(x + w, y + h, x, y + h, r);
+        this.ctx.arcTo(x, y + h, x, y, r);
+        this.ctx.arcTo(x, y, x + w, y, r);
+        this.ctx.closePath();
+        if (fill) this.ctx.fill();
+      }
+
+      loop() {
+        this.ctx.save();
+
+        // Screen shake on crash
+        if (this.shakeTimer > 0) {
+          const shakeX = (Math.random() - 0.5) * this.shakeTimer * 0.8;
+          const shakeY = (Math.random() - 0.5) * this.shakeTimer * 0.8;
+          this.ctx.translate(shakeX, shakeY);
+          this.shakeTimer--;
+        }
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.drawBackground();
+
+        if (this.state === 'RUNNING') {
+          this.frames++;
+          this.pig.update(this.canvas.height, this.groundHeight, () => this.onCrash());
+          this.pipeManager.update(
+            this.frames,
+            this.pig,
+            this.soundEngine,
+            this.particles,
+            () => this.onScore(),
+            () => this.onCrash()
+          );
+        }
+
+        this.pipeManager.draw(this.ctx);
+        this.drawGround();
+        this.particles.update();
+        this.particles.draw(this.ctx);
+        this.pig.draw(this.ctx);
+        this.drawHUD();
+        this.drawOverlays();
+
+        this.ctx.restore();
+        requestAnimationFrame(this.loop);
+      }
+    }
+
+    // Launch game
+    window.addEventListener('DOMContentLoaded', () => {
+      new Game();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+1.  **Analyze the Request:**
+    *   **Topic:** Retro Space Invaders game.
+    *   **Format:** Single HTML5 file (HTML, CSS, JS).
+    *   **Features:**
+        *   Player ship (Left/Right arrows, A/D keys, Spacebar for lasers).
+        *   Grid of alien invaders (horizontal marching, shifting down on screen edges).
+        *   Laser-invader collision detection.
+        *   Score tracking.
+        *   Alien count tracking.
+        *   Win/Loss states.
+    *   **Constraint:** Output ONLY the complete HTML5 document. No conversational filler or markdown.
+
+2.  **Architecture & Design:**
+    *   **HTML:** A simple container for the canvas.
+    *   **CSS:** Styling to center the canvas, give it a retro look (black background, green text, maybe a slight border).
+    *   **JavaScript:**
+        *   **Game Loop:** `requestAnimationFrame` or `setInterval`. I'll use `requestAnimationFrame` for smoother movement, but keep it simple enough for a single file.
+        *   **Entities:**
+            *   `Player`: X, Y, width, height, color, speed, velocity.
+            *   `Laser`: X, Y, width, height, color, speed.
+            *   `Invader`: X, Y, width, height, color, speed, velocity.
+            *   `Grid`: Array of objects representing the alien rows.
+        *   **Input Handling:** Event listeners for `keydown` and `keyup`.
+        *   **Collision Detection:**
+            *   *Laser vs Invader:* Simple AABB (Axis-Aligned Bounding Box) collision. If the laser hits an invader, spawn a new invader or kill it.
+            *   *Invader vs Grid Edge:* If an invader hits the bottom or top of the screen, spawn a new invader.
+            *   *Player vs Invader:* Simple collision.
+        *   **State Management:** `gameState` (playing, winning, losing).
+
+3.  **Drafting the Code (Mental or Scratchpad):**
+
+    *   *Canvas Setup:* `canvas.width = window.innerWidth`, `canvas.height = window.innerHeight`.
+    *   *Player:* Needs to move left/right. If it hits the edge, it bounces back.
+    *   *Laser:* Needs to move left/right. If it hits the edge, it bounces back.
+    *   *Invaders:* They need to move down. If they hit the top, they spawn a new one. If they hit the bottom, they spawn a new one.
+    *   *Laser Invader Collision:* This is the tricky part.
+        *   *Scenario A:* Laser hits an invader. The invader dies.
+        *   *Scenario B:* Laser hits the edge of the screen. The invader dies.
+        *   *Scenario C:* Laser hits a player. Player dies.
+        *   *Scenario D:* Player hits an invader. Player dies.
+    *   *Win/Loss:* If `invaderCount > 0` and `gameState === 'playing'`, game over.
+
+4.  **Refining the Logic (Self-Correction during drafting):**
+    *   *Issue:* If I spawn a new invader every time the player dies, the game might get too fast.
+    *   *Fix:* I need a "spawn rate" or a "cooldown" mechanism. Let's use a cooldown timer. If the player dies, wait 100ms before spawning a new invader.
+    *   *Issue:* How do I handle the "shifting down" logic?
+    *   *Fix:* When an invader hits the bottom, spawn a new one. When an invader hits the top, spawn a new one.
+
+5.  **Writing the Code (

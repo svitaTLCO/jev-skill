@@ -1,0 +1,44 @@
+[
+  {
+    "test": "Python SQLite Data Handler (2B)",
+    "model": "hf.co/mradermacher/Huihui-Qwen3.5-2B-abliterated-GGUF:Q4_K_M",
+    "lang": "python",
+    "round_0": {
+      "valid": false,
+      "error": "SyntaxError at line 94: unterminated string literal (detected at line 94)",
+      "time": 27.541947290999815,
+      "tokens": 650,
+      "code_sample": "import sqlite3\nfrom typing import Optional, Dict, Any\nfrom datetime import datetime\n\n\nclass GameTelemetryStore:\n    def __init__(self, db_path: str = \"telemetry_logs.db\"):\n        self.db_path = db_path\n        self._init_database()\n    \n    def _init_database(self):\n        \"\"\"Initialize the teleme"
+    },
+    "healed": false,
+    "round_1": {
+      "valid": false,
+      "error": "SyntaxError at line 30: expected ':'",
+      "time": 63.902150416979566,
+      "tokens": 850,
+      "jev_soundness_noul": 0.08,
+      "jev_quality_score": 0.11
+    }
+  },
+  {
+    "test": "JavaScript Particle Emitter (0.8B)",
+    "model": "hf.co/mradermacher/Huihui-Qwen3.5-0.8B-abliterated-GGUF:Q4_K_M",
+    "lang": "javascript",
+    "round_0": {
+      "valid": false,
+      "error": "JavaScript SyntaxError: Unexpected end of input",
+      "time": 23.086360624991357,
+      "tokens": 500,
+      "code_sample": "class ParticleEmitter {\n  constructor() {\n    this.particles = [];\n  }\n\n  // Create particles with random velocities\n  emit(x, y, count, color) {\n    for (let i = 0; i < count; i++) {\n      // Random velocity components\n      const velocityX = (Math.random() - 0.5) * 10;\n      const velocityY = (Mat"
+    },
+    "healed": false,
+    "round_1": {
+      "valid": false,
+      "error": "JavaScript SyntaxError: Unexpected end of input",
+      "time": 13.435187375172973,
+      "tokens": 700,
+      "jev_soundness_noul": 0.07,
+      "jev_quality_score": 0.07
+    }
+  }
+]

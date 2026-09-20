@@ -1,0 +1,59 @@
+{
+  "experiment": "Experiment 2: Heterogeneous Swarm Tiering (1.5B + 3B)",
+  "timestamp": "2026-09-20 03:52:19",
+  "total_wall_clock_seconds": 85.08,
+  "total_tokens": 3000,
+  "total_jev_overhead_seconds": 4.56,
+  "workers": {
+    "ship": {
+      "tier": "Tier 1",
+      "model": "hf.co/mradermacher/Huihui-Qwen3.5-0.8B-abliterated-GGUF:Q4_K_M",
+      "code": "let ship = {\n  x: 250,\n  y: 250,\n  angle: -Math.PI/2,\n  vx: 0,\n  vy: 0,\n  r: 12,\n}",
+      "time": 14.136395249981433,
+      "tokens": 600,
+      "noul": 0.11,
+      "jev_time": 0.7195095408242196
+    },
+    "lasers_fx": {
+      "tier": "Tier 1",
+      "model": "hf.co/mradermacher/Huihui-Qwen3.5-0.8B-abliterated-GGUF:Q4_K_M",
+      "code": "// Laser Ballistics and Particle System\n\n// Ship position (x, y)\nconst shipPosition = {\n  x: 0,\n  y: 0,\n  width: 100,\n  height: 100,\n};\n\n// Laser system\nlet lasers = [];\n\n// Particle system\nlet particles = [];\n\n// Function to create a laser\nfunction fireLaser() {\n  // Create a new laser object\n  const laser = {\n    id: Date.now(),\n    x: shipPosition.x,\n    y: shipPosition.y,\n    width: 10,\n    height: 10,\n    color: '#00ff00',\n    speed: 10,\n    angle: 0,\n  };\n\n  // Add to the lasers array\n  lasers.push(laser);\n}\n\n// Function to spawn particle debris\nfunction spawnDust(x, y, color) {\n  // Create a particle object\n  const particle = {\n    id: Date.now(),\n    x,\n    y,\n    color,\n    size: 2,\n    speed: 2,\n    life: 100,\n    lifeTimer: 0,\n  };\n\n  // Add to the particles array\n  particles.push(particle);\n}\n\n// Function to update lasers and particles\nfunction updateLasersAndFX(w, h) {\n  // Update lasers\n  for (let i = 0; i < lasers.length; i++) {\n    // Move the laser\n    lasers[i].x += lasers[i].speed;\n    lasers[i].angle += 0.01;\n\n    // Update the visual position\n\n\n    ctx.fillStyle = lasers[i].color;\n    ctx.fillRect(0, 0, w, h);\n    ctx.beginPath();\n}}",
+      "time": 11.484045958844945,
+      "tokens": 600,
+      "noul": 0.22,
+      "jev_time": 0.854716416914016
+    },
+    "audio": {
+      "tier": "Tier 1",
+      "model": "hf.co/mradermacher/Huihui-Qwen3.5-0.8B-abliterated-GGUF:Q4_K_M",
+      "code": "// Initialize audio context\nfunction initAudio() {\n    if (!audioCtx) {\n        audioCtx = new (window.AudioContext || window.webkitAudioContext)();\n    }\n}\n\n// Beep function\nfunction beep(freq, duration, type) {\n    if (!audioCtx) return;\n    const o = audioCtx.createOscillator();\n    const g = audioCtx.createGain();\n    o.type = type || 'sawtooth';\n    o.frequency.setValueAtTime\n}",
+      "time": 11.34614033298567,
+      "tokens": 600,
+      "noul": 0.05,
+      "jev_time": 0.7302517080679536
+    },
+    "asteroids": {
+      "tier": "Tier 2",
+      "model": "hf.co/mradermacher/Huihui-Qwen3.5-2B-abliterated-GGUF:Q4_K_M",
+      "code": "function spawnAsteroid(x, y, radius, level) {\n}",
+      "time": 24.234938999870792,
+      "tokens": 600,
+      "noul": 0.02,
+      "jev_time": 0.7178416249807924
+    },
+    "drone_ai": {
+      "tier": "Tier 2",
+      "model": "hf.co/mradermacher/Huihui-Qwen3.5-2B-abliterated-GGUF:Q4_K_M",
+      "code": "class VectorHunterDrone {\n  constructor() {\n    this.x = -50;\n    this.y = -50;\n    this.vx = 0;\n    this.vy = 0;\n    this.r = 10;\n    this.active = false;\n    this.targetX = 0;\n    this.targetY = 0;\n    this.acceleration = 0.5;\n    this.maxVelocity = 5;\n    this.speed = 0;\n    this.angle = 0;\n    this.history = [];\n  }\n\n  maybeSpawnDrone(w, h) {\n    const edge = Math.floor(Math.random() * 4);\n    const spawnX = edge === 0 ? w : edge === 1 ? w - 10 : edge === 2 ? w - 20 : w - 30;\n    const spawnY = edge === 0 ? h : edge === 1 ? h - 10 : edge === 2 ? h - 20 : h - 30;\n\n    this.x = spawnX;\n    this.y = spawnY;\n    this.vx = (Math.random() - 0.5) * 2;\n    this.vy = (Math.random() - 0.5) * 2;\n    this.active = true;\n    this.targetX = spawnX;\n    this.targetY = spawnY;\n  }\n\n  updateHunterAI(targetX, targetY) {\n    this.targetX = targetX;\n    this.targetY = targetY;\n\n    const dx = this.x - targetX;\n    const dy = this.y - targetY;\n    const distance = Math.sqrt(dx * dx + dy * dy);\n\n    if (distance > this.r) {\n      const angle = Math.atan2(dy, dx);\n      this.vx = Math.cos(angle) * this.speed;\n      this.vy = Math.sin(angle) * this.speed;\n    } else {\n      this.vx = 0;\n      this.vy = 0;\n    }\n\n    this.x += this.vx;\n    this.y += this.vy;\n\n    if (distance < this.r)\n}}",
+      "time": 19.316536624915898,
+      "tokens": 600,
+      "noul": 0.63,
+      "jev_time": 0.7375899581238627
+    }
+  },
+  "final_audit": {
+    "playable_noul": 0.05,
+    "quality_score": 0.26
+  },
+  "file": "benchmarks/heterogeneous_swarm/neon_asteroids.html"
+}

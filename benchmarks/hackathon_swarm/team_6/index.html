@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyberpunk Breakout - Team 6 (Hyper-Drive)</title>
+  <style>
+    body {
+      background: #050811;
+      color: #00f3ff;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    .title { font-size: 1.3rem; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }
+    .badge { font-size: 0.75rem; color: #ff007f; margin-bottom: 10px; }
+    canvas {
+      background: #070b14;
+      border: 2px solid #00f3ff;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+    }
+    .controls { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="title">⚡ CYBER-BREAKOUT // HYPER-DRIVE</div>
+  <div class="badge">Team #6 &bull; Architecture: Event-Driven Autonomous Pipeline</div>
+  <canvas id="c" width="480" height="500"></canvas>
+  <div class="controls">&larr; &rarr; or A / D to Move Paddle &bull; ESC to Restart</div>
+
+  <script>
+  // Cyberpunk Neon Breakout Arcade Game - State & Contracts
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let gameRunning = true;
+let score = 0;
+let highScore = localStorage.getItem('cyberpunk_highscore') || 0;
+let gameSpeed = 5;
+let brickRowCount = 4; // Rows of bricks
+let brickColumnCount = 8; // Columns of bricks
+
+// Paddle Object
+let paddle = { x: 200, y: 460, width: 80, height: 12, speed: 7 };
+
+// Ball Object
+let ball = { x: 240, y: 300, vx: 4, vy: -4, radius: 6 };
+
+// Brick Array (Grid Structure)
+const bricks = [];
+for (let row = 0; row < brickRowCount; row++) {
+    const rowBricks = [];
+    for (let col = 0; col < brickColumnCount; col++) {
+        // Create a simple brick object with random colors based on position
+        rowBricks.push({
+            color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+            active: true,
+            offsetX: Math.floor(Math.random() * (brickColumnCount - 2)) + 1,
+            offsetY: Math.floor(Math.random() * (brickRowCount - 2)) + 1
+        });
+    }
+    bricks.push(rowBricks);
+}
+
+// Game Loop &
+  </script>
+</body>
+</html>

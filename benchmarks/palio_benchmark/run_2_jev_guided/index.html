@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Palio di Siena 3D Deluxe - Run 2 (Jev Guided)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0a07;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+    #hud {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      background: rgba(20, 15, 10, 0.85);
+      backdrop-filter: blur(10px);
+      padding: 16px 22px;
+      border-radius: 12px;
+      border-left: 5px solid #d97706;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      min-width: 250px;
+    }
+    #hud h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      letter-spacing: 2px;
+      color: #fbbf24;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+    .contrada-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: #1e3a8a;
+      color: #93c5fd;
+      margin-bottom: 8px;
+    }
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+      font-size: 0.9rem;
+      color: #d1d5db;
+    }
+    .hud-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #f59e0b;
+    }
+    /* Stamina bar */
+    .stamina-container {
+      margin-top: 10px;
+    }
+    .stamina-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .stamina-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    #stamina-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+      transition: width 0.1s linear;
+    }
+    /* Warning banner */
+    #warning-badge {
+      display: none;
+      margin-top: 10px;
+      padding: 6px 10px;
+      background: rgba(220, 38, 38, 0.9);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 6px;
+      text-align: center;
+      animation: pulse 0.5s infinite alternate;
+    }
+    @keyframes pulse {
+      from { opacity: 0.8; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1.02); }
+    }
+    /* Controls hint */
+    #controls-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 12, 9, 0.8);
+      backdrop-filter: blur(8px);
+      padding: 10px 24px;
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex;
+      gap: 20px;
+      font-size: 0.85rem;
+      color: #e5e7eb;
+      pointer-events: none;
+    }
+    .key {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: bold;
+      color: #fbbf24;
+    }
+    /* Message overlay */
+    #overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba(20,15,10,0.85) 0%, rgba(5,3,2,0.96) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      text-align: center;
+      padding: 20px;
+    }
+    #overlay h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 3.2rem;
+      color: #f59e0b;
+      letter-spacing: 4px;
+      margin-bottom: 12px;
+      text-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    }
+    #overlay p {
+      max-width: 600px;
+      font-size: 1.05rem;
+      color: #d1d5db;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    #start-btn {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #111;
+      border: none;
+      padding: 16px 40px;
+      border-radius: 35px;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    #start-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.7);
+    }
+    .badge-jev {
+      background: linear-gradient(135deg, #ec4899, #be185d);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+    /* Scosso indicator */
+    #scosso-banner {
+      display: none;
+      position: absolute;
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(220, 38, 38, 0.95);
+      border: 2px solid #fbbf24;
+      padding: 10px 24px;
+      border-radius: 12px;
+      font-family: 'Cinzel', serif;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      z-index: 25;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- HUD -->
+  <div id="hud">
+    <h1>PALIO DI SIENA</h1>
+    <div class="contrada-tag">🦆 NOBILE CONTRADA DELL'OCA</div>
+    <div class="hud-row"><span>Giro (Lap):</span><span class="hud-val" id="lap-val">1 / 3</span></div>
+    <div class="hud-row"><span>Posizione:</span><span class="hud-val" id="pos-val">1°</span></div>
+    <div class="hud-row"><span>Velocità:</span><span class="hud-val" id="speed-val">0 km/h</span></div>
+    <div class="hud-row"><span>Drift Slittamento:</span><span class="hud-val" id="drift-val">0.0°</span></div>
+
+    <div class="stamina-container">
+      <div class="stamina-label"><span>Stamina Cavallo</span><span id="stamina-pct">100%</span></div>
+      <div class="stamina-bar"><div id="stamina-fill"></div></div>
+    </div>
+
+    <div id="warning-badge">⚠️ ATTENZIONE: CURVA SAN MARTINO! RALLENTA!</div>
+  </div>
+
+  <div id="scosso-banner">⚡ CAVALLO SCOSSO! (Il cavallo continua senza fantino!)</div>
+
+  <div id="controls-hint">
+    <span><span class="key">W</span> / <span class="key">▲</span> Galoppo</span>
+    <span><span class="key">S</span> / <span class="key">▼</span> Frena / Reins</span>
+    <span><span class="key">A</span> <span class="key">D</span> Piega / Steer</span>
+    <span><span class="key">SPACE</span> Nerbo (Whip Boost)</span>
+  </div>
+
+  <!-- Start / End Overlay -->
+  <div id="overlay">
+    <div class="badge-jev">Run 2: TypeSafe Jev Guided • Centrifugal Tufo Drift • Palio Rules</div>
+    <h2>IL PALIO DI SIENA</h2>
+    <p>
+      3 Giri leggendari in Piazza del Campo.<br>
+      <strong>Regole del Palio:</strong> Gestisci il Nerbo (frusta) e la stamina. 
+      Rallenta alla micidiale <em>Curva di San Martino</em> per non schiantarti sui materassi! 
+      Se cadi, il tuo cavallo diventa <em>Cavallo Scosso</em> e può ancora vincere il Palio!
+    </p>
+    <button id="start-btn">MOSSA: CORRI IL PALIO!</button>
+  </div>
+
+  <script>
+    // ==========================================
+    // AUDIO SYNTHESIS: WEB AUDIO API
+    // ==========================================
+    class PalioAudio {
+      constructor() {
+        this.ctx = null;
+        this.suntoTimer = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      // Tolling of the famous "Sunto" bell from Torre del Mangia
+      playSuntoBell() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(216, now); // Deep resonant bronze bell
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 3.0);
+      }
+      // Hoofbeats on dirt tufo
+      playHoofbeat(speedRatio) {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(90, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.06);
+        gain.gain.setValueAtTime(0.18 * speedRatio, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.07);
+      }
+      // Nerbo (Whip crack)
+      playNerbo() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        // White noise burst crack
+        const bufferSize = this.ctx.sampleRate * 0.08;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        noise.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(now);
+      }
+      // Crash onto San Martino mattresses
+      playCrash() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.5);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      }
+    }
+
+    const sound = new PalioAudio();
+
+    // ==========================================
+    // THREE.JS 3D SCENE SETUP
+    // ==========================================
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x7ec0ee); // Tuscan afternoon sky
+    scene.fog = new THREE.FogExp2(0x7ec0ee, 0.002);
+
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.2, 1200);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // Tuscan Sunlight
+    const ambientLight = new THREE.AmbientLight(0xffeedd, 0.65);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff7e6, 1.1);
+    sunLight.position.set(120, 180, 80);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 10;
+    sunLight.shadow.camera.far = 450;
+    sunLight.shadow.camera.left = -160;
+    sunLight.shadow.camera.right = 160;
+    sunLight.shadow.camera.top = 160;
+    sunLight.shadow.camera.bottom = -160;
+    scene.add(sunLight);
+
+    // ==========================================
+    // PIAZZA DEL CAMPO 3D ARCHITECTURE
+    // ==========================================
+    // Realistic curved spline with distinct San Martino & Casato corners
+    const trackCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-120, 2.0, 10),      // San Martino descent start
+      new THREE.Vector3(-145, 0.0, -50),     // CURVA DI SAN MARTINO (steep, sharp bend)
+      new THREE.Vector3(-90, 1.5, -125),     // Ascending out of San Martino
+      new THREE.Vector3(0, 3.2, -150),       // Top straight (Palazzo Sansedoni)
+      new THREE.Vector3(85, 2.2, -120),
+      new THREE.Vector3(135, 1.0, -50),      // CURVA DEL CASATO
+      new THREE.Vector3(115, 1.8, 30),
+      new THREE.Vector3(30, 2.8, 85),        // Front of Palazzo Pubblico
+      new THREE.Vector3(-45, 2.5, 75),       // Finish line / Mossa
+    ], true, 'catmullrom', 0.18);
+
+    const trackWidth = 26;
+    const trackPoints = trackCurve.getSpacedPoints(250);
+
+    // 1. Tufo Track Mesh with Specular Highlight
+    const tufoMat = new THREE.MeshStandardMaterial({
+      color: 0xba6831,
+      roughness: 0.88,
+      metalness: 0.05
+    });
+
+    const trackGeo = new THREE.BufferGeometry();
+    const trackVerts = [];
+    const trackUVs = [];
+
+    for (let i = 0; i < trackPoints.length; i++) {
+      const p1 = trackPoints[i];
+      const p2 = trackPoints[(i + 1) % trackPoints.length];
+      const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
+      const norm = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(trackWidth / 2);
+
+      const vL1 = new THREE.Vector3().addVectors(p1, norm);
+      const vR1 = new THREE.Vector3().subVectors(p1, norm);
+      const vL2 = new THREE.Vector3().addVectors(p2, norm);
+      const vR2 = new THREE.Vector3().subVectors(p2, norm);
+
+      trackVerts.push(vL1.x, vL1.y, vL1.z, vR1.x, vR1.y, vR1.z, vL2.x, vL2.y, vL2.z);
+      trackVerts.push(vR1.x, vR1.y, vR1.z, vR2.x, vR2.y, vR2.z, vL2.x, vL2.y, vL2.z);
+    }
+    trackGeo.setAttribute('position', new THREE.Float32BufferAttribute(trackVerts, 3));
+    trackGeo.computeVertexNormals();
+    const trackMesh = new THREE.Mesh(trackGeo, tufoMat);
+    trackMesh.receiveShadow = true;
+    scene.add(trackMesh);
+
+    // 2. San Martino Crash Mattresses (I Materassi di San Martino)
+    const mattressMat = new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.9 });
+    for (let angle = -0.4; angle <= 0.4; angle += 0.08) {
+      const mPoint = trackCurve.getPointAt((0.13 + angle * 0.05 + 1.0) % 1.0);
+      const tangent = trackCurve.getTangentAt((0.13 + angle * 0.05 + 1.0) % 1.0);
+      const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).multiplyScalar(-trackWidth / 2 - 1.2);
+      
+      const mattress = new THREE.Mesh(new THREE.BoxGeometry(2, 3.5, 5), mattressMat);
+      mattress.position.copy(mPoint).add(normal);
+      mattress.position.y += 1.75;
+      mattress.lookAt(mPoint);
+      mattress.castShadow = true;
+      scene.add(mattress);
+    }
+
+    // 3. Central Shell-shaped Campo with Historic 9 Segments
+    const centralCampo = new THREE.Mesh(
+      new THREE.CylinderGeometry(62, 62, 0.4, 48),
+      new THREE.MeshStandardMaterial({ color: 0xb95d36, roughness: 0.85 })
+    );
+    centralCampo.position.set(0, 0.5, -20);
+    centralCampo.receiveShadow = true;
+    scene.add(centralCampo);
+
+    // 4. Palazzo Pubblico & Torre del Mangia
+    const palazzoMat = new THREE.MeshStandardMaterial({ color: 0xa95e38, roughness: 0.8 });
+    const palazzo = new THREE.Mesh(new THREE.BoxGeometry(105, 42, 28), palazzoMat);
+    palazzo.position.set(0, 21, 125);
+    palazzo.castShadow = true;
+    palazzo.receiveShadow = true;
+    scene.add(palazzo);
+
+    // Torre del Mangia (88m Siena Landmark)
+    const tower = new THREE.Mesh(
+      new THREE.BoxGeometry(11, 105, 11),
+      new THREE.MeshStandardMaterial({ color: 0x934a26, roughness: 0.8 })
+    );
+    tower.position.set(45, 52.5, 120);
+    tower.castShadow = true;
+    scene.add(tower);
+
+    // White travertine crown of the tower
+    const towerCrown = new THREE.Mesh(
+      new THREE.BoxGeometry(15, 16, 15),
+      new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.6 })
+    );
+    towerCrown.position.set(45, 112, 120);
+    scene.add(towerCrown);
+
+    // Historic Perimeter Palazzi & Spectators
+    for (let i = 0; i < 22; i++) {
+      const angle = (i / 22) * Math.PI * 2;
+      const radius = 195;
+      const bWidth = 28;
+      const bHeight = 35 + Math.sin(i * 3) * 15;
+      const bColor = [0xc2855b, 0xad6a42, 0x965633, 0x824628][i % 4];
+      const building = new THREE.Mesh(
+        new THREE.BoxGeometry(bWidth, bHeight, 35),
+        new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.85 })
+      );
+      building.position.set(Math.cos(angle) * radius, bHeight / 2, Math.sin(angle) * radius);
+      building.lookAt(0, bHeight / 2, 0);
+      building.castShadow = true;
+      building.receiveShadow = true;
+      scene.add(building);
+    }
+
+    // Dirt particle system for galloping hooves
+    const particleCount = 120;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePos = new Float32Array(particleCount * 3);
+    const particleVel = [];
+    for (let i = 0; i < particleCount; i++) {
+      particlePos[i * 3] = 0;
+      particlePos[i * 3 + 1] = -100;
+      particlePos[i * 3 + 2] = 0;
+      particleVel.push({ vx: 0, vy: 0, vz: 0, life: 0 });
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: 0xba6831,
+      size: 0.8,
+      transparent: true,
+      opacity: 0.8
+    });
+    const dustParticles = new THREE.Points(particleGeo, particleMat);
+    scene.add(dustParticles);
+
+    function spawnDust(pos, dir) {
+      for (let i = 0; i < 3; i++) {
+        const idx = Math.floor(Math.random() * particleCount);
+        particlePos[idx * 3] = pos.x + (Math.random() - 0.5) * 1.5;
+        particlePos[idx * 3 + 1] = pos.y + 0.3;
+        particlePos[idx * 3 + 2] = pos.z + (Math.random() - 0.5) * 1.5;
+        particleVel[idx] = {
+          vx: -dir.x * 2 + (Math.random() - 0.5) * 1.5,
+          vy: 1.5 + Math.random() * 2,
+          vz: -dir.z * 2 + (Math.random() - 0.5) * 1.5,
+          life: 25
+        };
+      }
+      particleGeo.attributes.position.needsUpdate = true;
+    }
+
+    function updateDust() {
+      for (let i = 0; i < particleCount; i++) {
+        if (particleVel[i].life > 0) {
+          particlePos[i * 3] += particleVel[i].vx * 0.05;
+          particlePos[i * 3 + 1] += particleVel[i].vy * 0.05;
+          particlePos[i * 3 + 2] += particleVel[i].vz * 0.05;
+          particleVel[i].vy -= 0.1; // gravity
+          particleVel[i].life--;
+          if (particleVel[i].life <= 0) {
+            particlePos[i * 3 + 1] = -100;
+          }
+        }
+      }
+      particleGeo.attributes.position.needsUpdate = true;
+    }
+
+    // ==========================================
+    // CONTRADE & 3D HORSE CREATION
+    // ==========================================
+    function createHorseModel(horseColor, silkColor) {
+      const group = new THREE.Group();
+
+      const hMat = new THREE.MeshStandardMaterial({ color: horseColor, roughness: 0.65 });
+      // Torso
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.0, 4.4), hMat);
+      torso.position.y = 2.4;
+      torso.castShadow = true;
+      group.add(torso);
+
+      // Neck & Head
+      const neck = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.6, 1.5), hMat);
+      neck.position.set(0, 3.8, 1.8);
+      neck.rotation.x = -Math.PI / 6;
+      neck.castShadow = true;
+      group.add(neck);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.1, 1.8), hMat);
+      head.position.set(0, 4.6, 2.5);
+      head.castShadow = true;
+      group.add(head);
+
+      // Tail
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.4, 0.4), hMat);
+      tail.position.set(0, 2.4, -2.4);
+      tail.rotation.x = Math.PI / 8;
+      group.add(tail);
+
+      // Legs
+      const legs = [];
+      const legPositions = [
+        [-0.6, 0.9, 1.4], [0.6, 0.9, 1.4],
+        [-0.6, 0.9, -1.4], [0.6, 0.9, -1.4]
+      ];
+      legPositions.forEach(p => {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.0, 0.4), hMat);
+        leg.position.set(p[0], p[1], p[2]);
+        leg.castShadow = true;
+        group.add(leg);
+        legs.push(leg);
+      });
+      group.userData.legs = legs;
+
+      // Jockey (Fantino in Contrada silks)
+      const jockeyGroup = new THREE.Group();
+      const jMat = new THREE.MeshStandardMaterial({ color: silkColor, roughness: 0.4 });
+      const jBody = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.4, 1.1), jMat);
+      jBody.position.set(0, 3.9, 0.2);
+      jBody.castShadow = true;
+      jockeyGroup.add(jBody);
+
+      // Jockey cap / helmet
+      const jHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), jMat);
+      jHead.position.set(0, 4.8, 0.2);
+      jockeyGroup.add(jHead);
+      group.add(jockeyGroup);
+      group.userData.jockey = jockeyGroup;
+
+      return group;
+    }
+
+    const contradeData = [
+      { name: "Oca", horseColor: 0x3d2010, silk: 0x1d4ed8, isPlayer: true },
+      { name: "Torre (Rival)", horseColor: 0x1a0f08, silk: 0xdc2626, isPlayer: false },
+      { name: "Tartuca", horseColor: 0x80471c, silk: 0xeab308, isPlayer: false },
+      { name: "Istrice", horseColor: 0xd1c4b2, silk: 0x059669, isPlayer: false }
+    ];
+
+    const horses = contradeData.map((c, idx) => {
+      const mesh = createHorseModel(c.horseColor, c.silk);
+      scene.add(mesh);
+      return {
+        mesh: mesh,
+        info: c,
+        progress: 0.02 + idx * 0.015,
+        lane: (idx - 1.5) * 4.5,
+        targetLane: (idx - 1.5) * 4.5,
+        speed: 0,
+        maxSpeed: 0.85,
+        driftAngle: 0,
+        stamina: 100,
+        lap: 1,
+        isScosso: false,
+        gallopCycle: 0,
+        lastHoofbeat: 0
+      };
+    });
+
+    const player = horses[0];
+
+    // ==========================================
+    // CONTROLS & STATE
+    // ==========================================
+    const keys = { w: false, s: false, a: false, d: false, space: false };
+    window.addEventListener('keydown', e => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
+      if (e.key === 's' || e.key === 'ArrowDown') keys.s = true;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
+      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        keys.space = true;
+        sound.playNerbo();
+      }
+    });
+    window.addEventListener('keyup', e => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
+      if (e.key === 's' || e.key === 'ArrowDown') keys.s = false;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
+      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
+      if (e.code === 'Space') keys.space = false;
+    });
+
+    let state = 'START';
+    document.getElementById('start-btn').addEventListener('click', () => {
+      sound.init();
+      sound.playSuntoBell();
+      setInterval(() => sound.playSuntoBell(), 7000);
+      document.getElementById('overlay').style.display = 'none';
+      state = 'RACING';
+    });
+
+    // ==========================================
+    // PHYSICS & SIMULATION LOOP
+    // ==========================================
+    let lastFrameTime = performance.now();
+
+    function updateSimulation(dt) {
+      if (state !== 'RACING') return;
+
+      const normProg = player.progress % 1.0;
+      // San Martino curve is located roughly at progress 0.08 - 0.20
+      const inSanMartino = (normProg >= 0.08 && normProg <= 0.22);
+      document.getElementById('warning-badge').style.display = (inSanMartino && player.speed > 0.55) ? 'block' : 'none';
+
+      // 1. PLAYER INPUT & STAMINA
+      if (!player.isScosso) {
+        if (keys.space && player.stamina > 5) {
+          // Nerbo whip boost
+          player.speed = Math.min(player.maxSpeed * 1.15, player.speed + 0.025);
+          player.stamina = Math.max(0, player.stamina - 0.6);
+        } else if (keys.w) {
+          // Gallop
+          player.speed = Math.min(player.maxSpeed, player.speed + 0.012);
+          player.stamina = Math.max(0, player.stamina - 0.08);
+        } else if (keys.s) {
+          // Pull reins
+          player.speed = Math.max(0.1, player.speed - 0.03);
+          player.stamina = Math.min(100, player.stamina + 0.2);
+        } else {
+          // Gentle coast
+          player.speed = Math.max(0.2, player.speed - 0.006);
+          player.stamina = Math.min(100, player.stamina + 0.15);
+        }
+
+        // Steer / Lean
+        if (keys.a) player.targetLane = Math.min(trackWidth / 2 - 2, player.targetLane + 0.4);
+        if (keys.d) player.targetLane = Math.max(-trackWidth / 2 + 2, player.targetLane - 0.4);
+      } else {
+        // Cavallo Scosso autonomously races at constant gallop!
+        player.speed = 0.72;
+        player.targetLane = 0;
+      }
+
+      // Update stamina bar UI
+      document.getElementById('stamina-fill').style.width = `${Math.round(player.stamina)}%`;
+      document.getElementById('stamina-pct').textContent = `${Math.round(player.stamina)}%`;
+
+      // 2. SIMULATE ALL HORSES WITH CENTRIFUGAL DRIFT
+      horses.forEach(h => {
+        // AI Logic
+        if (!h.info.isPlayer) {
+          // Torre rivalry: tries to press against Oca
+          if (h.info.name.includes("Torre")) {
+            h.targetLane = THREE.MathUtils.lerp(h.targetLane, player.lane, 0.05);
+          }
+          h.speed = THREE.MathUtils.lerp(h.speed, h.maxSpeed * 0.94, 0.02);
+        }
+
+        h.lane = THREE.MathUtils.lerp(h.lane, h.targetLane, 0.08);
+
+        // San Martino downhill slope acceleration & centrifugal slip
+        const pMod = h.progress % 1.0;
+        if (pMod >= 0.06 && pMod <= 0.18) {
+          // Downhill boost
+          h.speed += 0.003;
+          // Centrifugal outward drift
+          const centrifugalForce = (h.speed * h.speed) * 0.9;
+          h.lane -= centrifugalForce;
+          h.driftAngle = THREE.MathUtils.lerp(h.driftAngle, -centrifugalForce * 1.8, 0.1);
+
+          // CRASH CHECK ON SAN MARTINO MATTRESSES!
+          if (h.lane < -trackWidth / 2 + 0.5 && h.speed > 0.65) {
+            if (h.info.isPlayer && !h.isScosso) {
+              // Eject jockey: Cavallo Scosso!
+              h.isScosso = true;
+              h.mesh.userData.jockey.visible = false;
+              sound.playCrash();
+              document.getElementById('scosso-banner').style.display = 'block';
+            }
+            h.speed *= 0.4;
+            h.lane = -trackWidth / 2 + 2.5;
+          }
+        } else {
+          h.driftAngle = THREE.MathUtils.lerp(h.driftAngle, 0, 0.1);
+        }
+
+        // Advance progress
+        h.progress += (h.speed / 900);
+        if (h.progress >= 1.0) {
+          h.progress -= 1.0;
+          h.lap++;
+          if (h.info.isPlayer) {
+            document.getElementById('lap-val').textContent = `${Math.min(3, h.lap)} / 3`;
+            if (h.lap > 3) {
+              state = 'FINISHED';
+              document.getElementById('overlay').style.display = 'flex';
+              const isWin = horses.every(other => other === player || other.lap <= player.lap);
+              document.getElementById('overlay').querySelector('h2').textContent = isWin ? 'VITTORIA AL PALIO!' : 'CORSA CONCLUSA!';
+              document.getElementById('overlay').querySelector('p').innerHTML = isWin 
+                ? 'L\'Oca trionfa in Piazza del Campo! Hai vinto il Drappellone!'
+                : 'Hai completato i 3 giri del Palio di Siena!';
+              document.getElementById('start-btn').textContent = 'CORRI ANCORA';
+            }
+          }
+        }
+
+        // Position on 3D track
+        const pos = trackCurve.getPointAt(h.progress % 1.0);
+        const tangent = trackCurve.getTangentAt(h.progress % 1.0).normalize();
+        const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+
+        h.mesh.position.copy(pos).addScaledVector(normal, h.lane);
+        h.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
+        h.mesh.rotateY(h.driftAngle);
+
+        // Galloping leg animation & sound
+        h.gallopCycle += h.speed * 2.8;
+        const swing = Math.sin(h.gallopCycle) * 0.75;
+        h.mesh.userData.legs[0].rotation.x = swing;
+        h.mesh.userData.legs[1].rotation.x = -swing;
+        h.mesh.userData.legs[2].rotation.x = -swing;
+        h.mesh.userData.legs[3].rotation.x = swing;
+
+        // Dust particles & hoofbeat audio
+        if (h.speed > 0.1) {
+          if (Math.sin(h.gallopCycle) > 0.8) {
+            spawnDust(h.mesh.position, tangent);
+            if (h.info.isPlayer && performance.now() - h.lastHoofbeat > 180) {
+              sound.playHoofbeat(h.speed / h.maxSpeed);
+              h.lastHoofbeat = performance.now();
+            }
+          }
+        }
+      });
+
+      // Update HUD
+      const kmh = Math.round(player.speed * 92);
+      document.getElementById('speed-val').textContent = `${kmh} km/h`;
+      document.getElementById('drift-val').textContent = `${(Math.abs(player.driftAngle) * 57.3).toFixed(1)}°`;
+
+      // Camera follow with dynamic speed pull-back
+      const camOffset = new THREE.Vector3(0, 7.5, -16 - (player.speed * 4));
+      camOffset.applyQuaternion(player.mesh.quaternion);
+      camera.position.lerp(player.mesh.position.clone().add(camOffset), 0.12);
+      camera.lookAt(player.mesh.position.clone().add(new THREE.Vector3(0, 3.2, 7)));
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const now = performance.now();
+      const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+      lastFrameTime = now;
+
+      updateSimulation(dt);
+      updateDust();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

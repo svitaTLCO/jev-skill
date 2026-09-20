@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SWARM REAL-TIME TELEMETRY // CYBER-CORE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Orbitron:wght@600;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(16, 21, 33, 0.75);
+      --bg-card-hover: rgba(22, 30, 48, 0.85);
+      --border-glow: rgba(0, 243, 255, 0.25);
+      --accent-cyan: #00f3ff;
+      --accent-magenta: #ff007f;
+      --accent-green: #00ff88;
+      --text-main: #e2e8f0;
+      --text-dim: #94a3b8;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-display: 'Orbitron', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(ellipse at top, rgba(0, 243, 255, 0.08) 0%, transparent 60%),
+        linear-gradient(to bottom, #07090e, #0a0e17);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Top Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 243, 255, 0.05);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-icon {
+      font-size: 2rem;
+      filter: drop-shadow(0 0 10px var(--accent-cyan));
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid rgba(0, 255, 136, 0.4);
+      color: var(--accent-green);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.45rem 1rem;
+      border-radius: 50px;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.15);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+      70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 8px rgba(0, 255, 136, 0); }
+      100% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+    }
+
+    /* Stats Ribbon */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-val {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* Main Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 0.75rem;
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      color: var(--accent-cyan);
+      letter-spacing: 1px;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.55rem 1.1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--accent-cyan);
+      color: #07090e;
+      box-shadow: 0 0 16px rgba(0, 243, 255, 0.4);
+    }
+
+    /* Scores Table */
+    .table-container {
+      overflow-y: auto;
+      max-height: 420px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    tr:hover td {
+      background: rgba(0, 243, 255, 0.03);
+    }
+
+    .score-cell {
+      color: var(--accent-green);
+      font-weight: 800;
+    }
+
+    /* Telemetry Feed */
+    .telemetry-feed {
+      overflow-y: auto;
+      max-height: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+    }
+
+    .telemetry-item {
+      background: rgba(0, 0, 0, 0.35);
+      border-left: 3px solid var(--accent-cyan);
+      padding: 0.65rem 0.9rem;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .telemetry-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+    }
+
+    .event-badge {
+      color: var(--accent-magenta);
+      font-weight: 700;
+    }
+
+    .telemetry-data {
+      color: #93c5fd;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🛰️</div>
+      <div>
+        <h1>SWARM REAL-TIME TELEMETRY</h1>
+        <div style="font-size: 0.8rem; color: var(--text-dim);">FastAPI + SQLite + TypeSafe Jev System One</div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span id="systemStatus">SYSTEM ONLINE</span>
+    </div>
+  </header>
+
+  <div class="metrics-bar">
+    <div class="stat-card">
+      <div class="stat-label">Total High Scores</div>
+      <div class="stat-val" id="totalScores">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Telemetry Events</div>
+      <div class="stat-val" id="totalEvents">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">API Latency</div>
+      <div class="stat-val" id="apiLatency">-- ms</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Top Score</div>
+      <div class="stat-val" style="color: var(--accent-cyan);" id="topScore">0</div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- Panel 1: High Scores -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🏆 GLOBAL LEADERBOARD</div>
+        <button onclick="postRandomScore()">+ SIMULATE SCORE</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Score</th>
+              <th>Wave</th>
+            </tr>
+          </thead>
+          <tbody id="scoresTableBody">
+            <tr><td colspan="4" style="text-align: center; color: var(--text-dim);">Loading leaderboard...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Panel 2: Live Telemetry Feed -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⚡ LIVE TELEMETRY STREAM</div>
+        <button onclick="postRandomTelemetry()">+ SIMULATE PULSE</button>
+      </div>
+      <div class="telemetry-feed" id="telemetryFeed">
+        <div style="text-align: center; color: var(--text-dim); padding: 1rem;">Awaiting telemetry stream...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.port === "8081" ? "" : "http://localhost:8081";
+
+    async function fetchScores() {
+      try {
+        const t0 = performance.now();
+        const res = await fetch(`${API_BASE}/api/scores`);
+        const latency = Math.round(performance.now() - t0);
+        document.getElementById('apiLatency').textContent = `${latency} ms`;
+
+        if (res.ok) {
+          const scores = await res.json();
+          document.getElementById('totalScores').textContent = scores.length;
+          
+          if (scores.length > 0) {
+            const top = Math.max(...scores.map(s => s.score));
+            document.getElementById('topScore').textContent = top.toLocaleString();
+          }
+
+          const tbody = document.getElementById('scoresTableBody');
+          if (scores.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-dim);">No scores recorded yet.</td></tr>';
+          } else {
+            tbody.innerHTML = scores.map((s, idx) => `
+              <tr>
+                <td>${idx + 1}</td>
+                <td><strong>${escapeHtml(s.player_name)}</strong></td>
+                <td class="score-cell">${s.score.toLocaleString()}</td>
+                <td>Wave ${s.wave}</td>
+              </tr>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.warn("Scores fetch error:", err);
+      }
+    }
+
+    async function fetchTelemetry() {
+      try {
+        const res = await fetch(`${API_BASE}/api/telemetry`);
+        if (res.ok) {
+          const events = await res.json();
+          document.getElementById('totalEvents').textContent = events.length;
+
+          const feed = document.getElementById('telemetryFeed');
+          if (events.length === 0) {
+            feed.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 1rem;">No telemetry recorded yet.</div>';
+          } else {
+            feed.innerHTML = events.slice(0, 30).map(e => `
+              <div class="telemetry-item">
+                <div class="telemetry-meta">
+                  <span class="event-badge">${escapeHtml(e.event_type)}</span>
+                  <span>${new Date((e.timestamp > 1e11 ? e.timestamp : e.timestamp * 1000)).toLocaleTimeString()}</span>
+                </div>
+                <div class="telemetry-data">${escapeHtml(typeof e.data === 'object' ? JSON.stringify(e.data) : e.data)}</div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.warn("Telemetry fetch error:", err);
+      }
+    }
+
+    async function postRandomScore() {
+      const pilots = ["ACE-HUNTER", "CYBER-VIPER", "NOVA-9", "PHANTOM-SLM", "NEO-ORBIT"];
+      const pilot = pilots[Math.floor(Math.random() * pilots.length)];
+      const payload = {
+        player_name: pilot,
+        score: Math.floor(Math.random() * 8000) + 1200,
+        wave: Math.floor(Math.random() * 8) + 1
+      };
+      await fetch(`${API_BASE}/api/scores`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      fetchScores();
+    }
+
+    async function postRandomTelemetry() {
+      const types = ["COLLISION_RESOLVED", "BEAM_DISCHARGED", "SWARM_AGENT_HEARTBEAT", "SUBAGENT_COMPLETED"];
+      const evt = types[Math.floor(Math.random() * types.length)];
+      const payload = {
+        event_type: evt,
+        timestamp: Date.now() / 1000,
+        data: {
+          subagent_id: "huihui-2b-" + Math.floor(Math.random() * 900 + 100),
+          fps: Math.floor(Math.random() * 10 + 55),
+          memory_mb: (Math.random() * 20 + 30).toFixed(1)
+        }
+      };
+      await fetch(`${API_BASE}/api/telemetry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      fetchTelemetry();
+    }
+
+    function escapeHtml(str) {
+      if (typeof str !== 'string') return str;
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Polling Loop
+    fetchScores();
+    fetchTelemetry();
+    setInterval(() => {
+      fetchScores();
+      fetchTelemetry();
+    }, 2500);
+  </script>
+</body>
+</html>

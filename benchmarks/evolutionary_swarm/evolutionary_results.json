@@ -1,0 +1,425 @@
+{
+  "architecture": "8-Team Evolutionary Task-by-Task Promotion Swarm",
+  "timestamp": "2026-09-20 14:03:18",
+  "total_wall_clock_s": 778.79,
+  "total_tokens": 20599,
+  "final_master_noul": 0.04,
+  "final_master_quality_score": 0.29,
+  "promoted_stages": [
+    {
+      "task": "Player Cannon & Global State",
+      "winning_team": 5,
+      "score": 1.67,
+      "noul": 0.74
+    },
+    {
+      "task": "Invader Fleet & Marching Vector Logic",
+      "winning_team": 7,
+      "score": 0.52,
+      "noul": 0.29
+    },
+    {
+      "task": "Projectiles, Ballistics & Collision Grid",
+      "winning_team": 8,
+      "score": 1.69,
+      "noul": 0.34
+    },
+    {
+      "task": "Retro Neon Canvas Renderer & Main Game Loop",
+      "winning_team": 8,
+      "score": 0.37,
+      "noul": 0.23
+    }
+  ],
+  "tasks_detail": [
+    {
+      "task_idx": 1,
+      "task_name": "Player Cannon & Global State",
+      "promoted_team_id": 5,
+      "promoted_score": 1.67,
+      "promoted_noul": 0.74,
+      "teams": [
+        {
+          "team_id": 1,
+          "code": "const canvas = document.getElementById('c');\nconst ctx = canvas.getContext('2d');\n\nlet player = { x: 180, y: 450, width: 36, height: 16, speed: 6 };\nlet score = 0;\nlet lives = 3;\nlet gameOver = false;\nlet gameWon = false;\n\nfunction updatePlayer(keys) {\n    const keysPressed = {};\n    \n    if (keysPressed['ArrowLeft'] || keysPressed['a']) player.x -= player.speed;\n    if (keysPressed['ArrowRight'] || keysPressed['d']) player.x += player.speed;\n    \n    // Clamp X position between 0 and canvas.width - player.width\n    if (player.x < 0) player.x = 0;\n    if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;\n}",
+          "elapsed": 33.24,
+          "tokens": 283,
+          "syntax_valid": true,
+          "syntax_error": null,
+          "noul": 0.33,
+          "score": 0.27,
+          "effective_score": 0.27
+        },
+        {
+          "team_id": 2,
+          "code": "const canvas = document.getElementById('c');\nconst ctx = canvas.getContext('2d');\n\nlet player = { x: 180, y: 450, width: 36, height: 16, speed: 6 };\nlet score = 0;\nlet lives = 3;\nlet gameOver = false;\nlet gameWon = false;\n\nfunction updatePlayer(keys) {\n    const keyLeft = keys['ArrowLeft'] || keys['a'];\n    const keyRight = keys['ArrowRight'] || keys['d'];\n    \n    if (keyLeft && player.x > 0) {\n        player.x -= player.speed;\n    } else if (keyRight && player.x < canvas.width - player.width) {\n        player.x += player.speed;\n    }\n}\n\nfunction resetGame() {\n    score = 0;\n    lives = 3;\n    gameOver = false;\n    gameWon = false;\n    player.x = 180;\n    player.y = 450;\n    updatePlayer({});\n}\n\ncanvas.addEventListener('keydown', (e) => {\n    if (!gameOver && !gameWon) {\n        const keyMap = {};\n        ['ArrowLeft', 'a', 'ArrowRight', 'd'].forEach(key => {\n            if (e.key === key || e.code === key) {\n                keyMap[key] = true;\n            }\n        });\n        \n        updatePlayer(keyMap);\n    }\n});\n\ncanvas.addEventListener('keyup', (e) => {\n    const keyMap = {};\n    ['ArrowLeft', 'a', 'ArrowRight', 'd'].forEach(key => {\n        if (e.key === key || e.code === key) {\n            keyMap[key] = false;\n        }\n    });\n    \n    updatePlayer(keyMap);\n});\n\ncanvas.addEventListener('click', () => {\n    if (!gameOver && !gameWon) {\n        player.y -= 20;\n    } else if (gameOver || gameWon) {\n        resetGame();\n    }\n});\n\nfunction drawPlayer() {\n    ctx.fillStyle = '#00ffcc';\n    ctx.fillRect(player.x, player.y, player.width, player.height);\n}\n\nfunction drawInvaders() {\n    const invaderWidth = 40;\n    const invaderHeight = 30;\n    \n    for (let i = 0; i < 5; i++) {\n        ctx.fillStyle = '#ffcc00';\n        let x = (i * invaderWidth) + 20;\n        ctx.fillRect(x, 180, invaderWidth, invaderHeight);\n    }\n}\n\nfunction drawScore() {\n    ctx.fillStyle = 'white';",
+          "elapsed": 78.28,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.52,
+          "score": 0.3,
+          "effective_score": 0.06
+        },
+        {
+          "team_id": 3,
+          "code": "const canvas = document.getElementById('c');\nconst ctx = canvas.getContext('2d');\n\nlet player = { x: 180, y: 450, width: 36, height: 16, speed: 6 };\nlet score = 0;\nlet lives = 3;\nlet gameOver = false;\nlet gameWon = false;\n\nfunction updatePlayer(keys) {\n    const keyLeft = keys['ArrowLeft'] || keys['a'];\n    const keyRight = keys['ArrowRight'] || keys['d'];\n    \n    if (keyLeft && player.x > 0) {\n        player.x -= player.speed;\n    } else if (keyRight && player.x < canvas.width - player.width) {\n        player.x += player.speed;\n    }\n}\n\nfunction drawPlayer() {\n    ctx.fillStyle = '#00ffcc';\n    ctx.fillRect(player.x, player.y, player.width, player.height);\n    \n    // Draw ship details\n    ctx.fillStyle = '#fff';\n    ctx.beginPath();\n    ctx.moveTo(player.x + 8, player.y + 6);\n    ctx.lineTo(player.x + 12, player.y + 10);\n    ctx.lineTo(player.x + 24, player.y + 10);\n    ctx.lineTo(player.x + 36, player.y + 6);\n    ctx.fill();\n}\n\nfunction drawInvaders() {\n    // Simple placeholder for invaders\n    ctx.fillStyle = '#ffccaa';\n    ctx.fillRect(50, 200, 180, 40);\n    \n    // Draw enemy ships\n    ctx.fillStyle = '#ff6699';\n    const invaderWidth = 30;\n    for (let i = 0; i < 5; i++) {\n        const x = 70 + i * 20;\n        const y = 180;\n        ctx.fillRect(x, y, invaderWidth, 16);\n    }\n}\n\nfunction checkCollision() {\n    if (gameOver) return;\n    \n    // Simple collision detection for player vs invaders\n    const invaderX = 70 + Math.floor(Math.random() * 5) * 20;\n    const invaderY = 180;\n    const invaderWidth = 30;\n    const invaderHeight = 16;\n    \n    if (player.x < invaderX && player.x + player.width > invaderX &&\n        player.y < invaderY && player.y + player.height > invaderY) {\n        lives--;\n        score++;\n        \n        // Reset game state\n        if (lives <= 0) {\n            gameOver = true;\n            alert('Game Over! Final",
+          "elapsed": 55.62,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Invalid or unexpected token",
+          "noul": 0.59,
+          "score": 0.7,
+          "effective_score": 0.14
+        },
+        {
+          "team_id": 4,
+          "code": "const canvas = document.getElementById('c');\nconst ctx = canvas.getContext('2d');\n\nlet player = { x: 180, y: 450, width: 36, height: 16, speed: 6 };\nlet score = 0;\nlet lives = 3;\nlet gameOver = false;\nlet gameWon = false;\n\nfunction updatePlayer(keys) {\n    const keyMap = { ArrowLeft: 'left', ArrowRight: 'right', w: 'w', a: 'a', s: 's', d: 'd' };\n    \n    if (keys.key === keyMap.left || keys.key === 'a') player.x -= player.speed;\n    if (keys.key === keyMap.right || keys.key === 'd') player.x += player.speed;\n    \n    // Clamp position between 0 and canvas.width - player.width\n    if (player.x < 0) player.x = 0;\n    if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;\n}\n\nfunction resetGame() {\n    score = 0;\n    lives = 3;\n    gameOver = false;\n    gameWon = false;\n    player.x = 180;\n    // Reset invaders if needed here\n}\n\nfunction startGame() {\n    resetGame();\n    gameWon = false;\n    gameOver = false;\n    \n    // Initialize invaders array and positions\n    const invaderCount = 4;\n    let invaders = [];\n    for (let i = 0; i < invaderCount; i++) {\n        invaders.push({ x: 120 + i * 36, y: 500, width: 36, height: 36 });\n    }\n    \n    // Initialize player position\n    player.x = 180;\n}\n\nfunction update() {\n    if (gameWon) return;\n    \n    requestAnimationFrame(update);\n    ctx.clearRect(0, 0, canvas.width, canvas.height);\n    \n    // Draw invaders\n    invaders.forEach(invader => {\n        ctx.fillStyle = '#FFD74A';\n        ctx.fillRect(invader.x, invader.y, invader.width, invader.height);\n        \n        if (gameWon) {\n            ctx.fillStyle = '#00BFFF';\n            ctx.font = '20px Arial';\n            ctx.fillText('YOU WIN!', invader.x + 15, invader.y - 10);\n        } else if (gameOver) {\n            ctx.fillStyle = '#F44336';\n            ctx.font = '20px Arial';\n            ctx.fillText('GAME OVER', invader.x + 15, invader.y - 10);",
+          "elapsed": 23.98,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.47,
+          "score": 0.64,
+          "effective_score": 0.13
+        },
+        {
+          "team_id": 5,
+          "code": "const canvas = document.getElementById('c');\nconst ctx = canvas.getContext('2d');\n\nlet player = { x: 180, y: 450, width: 36, height: 16, speed: 6 };\nlet score = 0;\nlet lives = 3;\nlet gameOver = false;\nlet gameWon = false;\n\nfunction updatePlayer(keys) {\n    const leftKey = keys['ArrowLeft'] || keys['a'];\n    const rightKey = keys['ArrowRight'] || keys['d'];\n\n    if (leftKey && player.x > 0) {\n        player.x -= player.speed;\n    } else if (rightKey && player.x < canvas.width - player.width) {\n        player.x += player.speed;\n    }\n}",
+          "elapsed": 75.71,
+          "tokens": 662,
+          "syntax_valid": true,
+          "syntax_error": null,
+          "noul": 0.74,
+          "score": 1.67,
+          "effective_score": 1.67
+        },
+        {
+          "team_id": 6,
+          "code": "const canvas = document.getElementById('c');\nconst ctx = canvas.getContext('2d');\n\nlet player = { x: 180, y: 450, width: 36, height: 16, speed: 6 };\nlet score = 0;\nlet lives = 3;\nlet gameOver = false;\nlet gameWon = false;\n\nfunction updatePlayer(keys) {\n    if (keys.left && player.x > 0) {\n        player.x -= player.speed;\n    } else if (keys.right && player.x < canvas.width - player.width) {\n        player.x += player.speed;\n    }\n}",
+          "elapsed": 74.22,
+          "tokens": 236,
+          "syntax_valid": true,
+          "syntax_error": null,
+          "noul": 0.74,
+          "score": 1.65,
+          "effective_score": 1.65
+        },
+        {
+          "team_id": 7,
+          "code": "const canvas = document.getElementById('c');\nconst ctx = canvas.getContext('2d');\n\nlet player = { x: 180, y: 450, width: 36, height: 16, speed: 6 };\nlet score = 0, lives = 3, gameOver = false, gameWon = false;\n\nfunction updatePlayer(keys) {\n    if (keys.left && player.x > 0) player.x -= player.speed;\n    if (keys.right && player.x < canvas.width - player.width) player.x += player.speed;\n}",
+          "elapsed": 58.78,
+          "tokens": 204,
+          "syntax_valid": true,
+          "syntax_error": null,
+          "noul": 0.72,
+          "score": 1.67,
+          "effective_score": 1.67
+        },
+        {
+          "team_id": 8,
+          "code": "const canvas = document.getElementById('c');\nconst ctx = canvas.getContext('2d');\n\nlet player = { x: 180, y: 450, width: 36, height: 16, speed: 6 };\nlet score = 0;\nlet lives = 3;\nlet gameOver = false;\nlet gameWon = false;\n\nfunction updatePlayer(keys) {\n    const keyLeft = keys['ArrowLeft'] || keys['a'];\n    const keyRight = keys['ArrowRight'] || keys['d'];\n    \n    if (keyLeft && player.x > 0) {\n        player.x -= player.speed;\n    } else if (keyRight && player.x < canvas.width - player.width) {\n        player.x += player.speed;\n    }\n}\n\nfunction resetGame() {\n    score = 0;\n    lives = 3;\n    gameOver = false;\n    gameWon = false;\n    player.x = 180;\n    updatePlayer({});\n}",
+          "elapsed": 46.56,
+          "tokens": 314,
+          "syntax_valid": true,
+          "syntax_error": null,
+          "noul": 0.73,
+          "score": 1.47,
+          "effective_score": 1.47
+        }
+      ]
+    },
+    {
+      "task_idx": 2,
+      "task_name": "Invader Fleet & Marching Vector Logic",
+      "promoted_team_id": 7,
+      "promoted_score": 0.52,
+      "promoted_noul": 0.29,
+      "teams": [
+        {
+          "team_id": 1,
+          "code": "...",
+          "elapsed": 92.75,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.26,
+          "score": 0.03,
+          "effective_score": 0.01
+        },
+        {
+          "team_id": 2,
+          "code": "let invaders = [];\nlet invaderDir = 1;\nlet invaderSpeed = 1.2;\n\nfunction initInvaders() {\n    const rows = 3;\n    const cols = 6;\n    let x, y;\n    \n    for (let i = 0; i < rows * cols; i++) {\n        // Generate random",
+          "elapsed": 23.2,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.19,
+          "score": 0.22,
+          "effective_score": 0.04
+        },
+        {
+          "team_id": 3,
+          "code": "let invaders = [];\nlet invaderDir = 1;\nlet invaderSpeed = 1.2;\n\nfunction initInvaders() {\n    const rows = 3;\n    const cols = 6;\n    invaders = [];\n    for (let i = 0; i < rows * cols; i++) {\n        invaders.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height });\n    }\n}\n\nfunction updateInvaders() {\n    const aliveCount = invaders.filter(inv => inv.alive).length;\n    \n    if (aliveCount > 0) {\n        for (let i = 0; i < aliveCount; i++) {\n            let invader = invaders[i];\n            \n            // Move\n            invader.y += invaderDir * invaderSpeed;\n            \n            // Check boundaries and reverse direction\n            if (invader.y > canvas.height + 14) {\n                invaderDir *= -1;\n                invader.alive = false; // Drop down logic handled in loop or here? Prompt says \"drop all invaders down by 14px\".\n            } else if (invader.y < 0) {\n                invaderDir *= -1;\n            }\n\n            // Check score/boundary conditions for reverse direction\n            if (invader.y > canvas.height + 14 && invader.alive) {\n                 // Logic to drop down by 14px when reaching bottom or top?\n                 // Prompt: \"If any alive invader reaches < 10 or > 360, reverse invaderDir and drop all invaders down by 14px.\"\n            }\n\n            // Wait, I need to be precise about the logic",
+          "elapsed": 69.25,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.12,
+          "score": 0.08,
+          "effective_score": 0.02
+        },
+        {
+          "team_id": 4,
+          "code": "The user wants me to output clean JavaScript code specifically for a \"Task 2\" requirement within a competitive game engine tournament context (Team #4).\n\n**Requirements:**\n1.  **Context:** Competitive game engine tournament. Output must be *only* the new functions/logic, not re-declaring existing variables (`player`, `score`, etc.).\n2.  **Specific Task 2 Requirement:** Implement an invader fleet system.\n3.  **Variables to introduce/declare:**\n    -   `let invaders = []` (Array of objects)\n    -   `let invaderDir = 1` (Direction indicator, likely for rotation or movement logic)\n    -   `let invaderSpeed = 1.2` (Movement speed multiplier)\n4.  **Functionality:**\n    -   `initInvaders()`: Create a grid of invaders.\n        -   Dimensions: 3 rows x 6 columns.\n        -   Properties per object: `x`, `y`, `width=28`, `height=18`, `alive=true`, `points=10`.\n    -   `updateInvaders()`:\n        -   Move alive invaders by `invaderDir * invaderSpeed`.\n        -   Collision logic check (reached < 10 or > 360).\n        -   If condition met: Reverse direction and drop all invaders down by 14px.\n\n**Plan:**\n-   Write the initialization function (`initInvaders`). It needs to generate an array of objects representing the grid.\n-   Write the update logic (`updateInvaders`). This requires checking boundaries (x coordinates) or perhaps a specific \"alive\" state check, but the prompt implies moving them and reversing direction if they hit edges. I will implement standard movement based on `invaderDir` and boundary checks.\n\n**Refining the Grid:**\n-   3 rows x 6 cols means roughly:\n    -   Row 0: y=180 (approx)\n    -   Row 1: y=250 (approx)\n    -   Row 2: y=320 (approx)\n-   Each invader needs `x` position.\n\n**Refining the Update Logic:**\n-   Standard movement logic usually involves updating x coordinates based on direction.\n-   The prompt mentions \"If any alive invader reaches < 10 or > 360\". This likely refers to a specific coordinate system (perhaps y-axis for vertical drop, but `invaderDir` suggests horizontal movement). Or it might refer to the *score* of an invader reaching a certain threshold.\n-   Actually, looking at standard Tetris-like or Space Invaders logic: \"reaches < 10\" usually refers to the Y position (dropping down) or X position (hitting left edge). Given `invaderDir` is likely for rotation or movement direction, I will assume it controls horizontal movement.\n-   Wait, standard Space Invaders logic often has a specific condition: if an invader hits the bottom or right wall, reverse direction and drop.\n-   The prompt says \"If any alive invader reaches < 10 or > 360\". This is slightly ambiguous without context of `x` vs `y`.",
+          "elapsed": 46.13,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected identifier 'user'",
+          "noul": 0.29,
+          "score": 0.29,
+          "effective_score": 0.06
+        },
+        {
+          "team_id": 5,
+          "code": "The user wants me to implement a specific task (Task 2) based on an existing baseline of code from Team #5.\n\n**Requirements:**\n1.  **Existing Baseline:** Keep `player`, `score`, `lives`, `gameOver`, `gameWon` variables and their update logic intact. Do not re-declare them.\n2.  **New Task:** Implement an invader fleet system.\n3.  **Specific Variables to Create/Use:**\n    *   `let invaders = [];`\n    *   `let invaderDir = 1;`\n    *   `let invaderSpeed = 1.2;`\n4.  **Function `initInvaders()`:**\n    *   Creates a grid of invaders (3 rows x 6 cols).\n    *   Properties: x, y, width=28, height=18, alive=true, points=10.\n5.  **Function `updateInvaders()`:**\n    *   Moves alive invaders by `invaderDir * invaderSpeed`.\n    *   Condition to reverse direction (`invaderDir = -1`) and drop all invaders down (by 14px) if:\n        *   Any alive invader reaches `< 10` OR `> 360`.\n\n**Plan:**\n1.  Copy the existing baseline code structure (imports, canvas setup).\n2.  Add the new variables at the top of the file scope or just after the initial player setup if they are global state. The prompt implies \"Do NOT re-declare variables that already exist in context\". Since `invaders` isn't mentioned as existing in the baseline code snippet provided, I should add them to the global scope before defining functions or right after the baseline constants.\n3.  Implement `initInvaders()`.\n4.  Implement `updateInvaders()`.\n\n**Refining the Baseline:**\nThe prompt says \"Do NOT re-declare variables that already exist in context\". The existing code defines `player`, `score`, `lives`, `gameOver`, `gameWon` and their update logic (`updatePlayer`). I should ensure my new functions don't shadow these unless necessary, but since they are separate tasks, adding them to the global scope is standard.\n\n**Refining Task 2 Logic:**\n*   **Grid:** 3 rows x 6 cols.\n    *   Row 0: y = 180 (approx)\n    *   Row 1: y = 450 - (height/rows) ? Or just start at bottom? Usually, invaders spawn below the player or scattered. Let's place them in a grid starting from `y=200` downwards to avoid collision with the player immediately, or simply spread out.\n    *   Standard pattern: x = i * 36 (or similar spacing). y = base_y + row_index * height.\n*   **Movement:** Update position based on direction.\n*   **Collision/Death Condition:** `y` coordinate check? The prompt says \"reaches < 10 or > 360\". This likely refers to the Y-coordinate of the invader's bottom edge (or center) relative to the canvas height, or just a simple vertical boundary check. Given it's an",
+          "elapsed": 91.6,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected identifier 'user'",
+          "noul": 0.23,
+          "score": 0.3,
+          "effective_score": 0.06
+        },
+        {
+          "team_id": 6,
+          "code": "The user wants me to generate a specific set of JavaScript code based on a \"Task 2\" requirement within an existing game engine context (Team #6).\n\n**Key Requirements:**\n1.  **Context:** Competitive game engine tournament. Output must be clean, valid JS inside triple backticks. No conversational prose outside the block.\n2.  **Existing Baseline:** I need to respect `player`, `score`, `lives`, `gameOver`, and `updatePlayer` from Task 1 (Team #5). I cannot re-declare them or introduce new global variables that shadow existing ones unless necessary, but the prompt specifically asks for *new* functions/logic.\n3.  **Specific Tasks:**\n    -   Create a fleet of invaders (`invaders`).\n    -   `let invaders = [];` (Array to store objects).\n    -   `let invaderDir = 1;` (Direction variable).\n    -   `let invaderSpeed = 1.2;` (Movement speed).\n    -   **`initInvaders()`**: Create a grid of invaders (3 rows x 6 cols), properties: x, y, width=28, height=18, alive=true, points=10.\n    -   **`updateInvaders()`**: Move them by `invaderDir * invaderSpeed`. Logic for reversing direction and dropping down if they hit bounds (< 10 or > 360).\n\n**Plan:**\n-   Define the variables at the top of the file (or implied scope) to match standard ES6 module patterns, but since this is a snippet, I will assume these are part of the global scope. However, looking at the baseline, `player` and `score` exist in the context. To be safe and clean, I should define them as well or ensure they don't conflict. The prompt says \"Do NOT re-declare variables that already exist\". It implies I can add new ones if needed for this specific task.\n-   **Structure:**\n    -   `let invaders = [];`\n    -   `let invaderDir = 1;`\n    -   `let invaderSpeed = 1.2;`\n    -   `initInvaders()` function.\n    -   `updateInvaders()` function.\n\n**Drafting the Logic:**\n-   *Grid:* 3 rows x 6 cols. Total invaders: 18.\n-   *Init:* Loop to create objects with specific properties.\n-   *Update:* Move them based on direction. Check boundaries (x < 0 or x > canvas.width). If a boundary is crossed, reverse `invaderDir` and drop them down by 14px (`y += 14`).\n\n**Refining the Baseline:**\nThe baseline has `player`, `score`, `lives`, `gameOver`. I should probably keep these in scope or ensure they are defined. Since the prompt asks for \"Output ONLY the new functions/logic\", I will provide the specific Task 2 code block, but to make it a complete snippet that fits the context, I'll include the variable declarations at the top of this specific section if needed, or just the function definitions as requested. The prompt says \"Write JavaScript for the invader fleet... Output ONLY the",
+          "elapsed": 91.13,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected identifier 'user'",
+          "noul": 0.27,
+          "score": 0.2,
+          "effective_score": 0.04
+        },
+        {
+          "team_id": 7,
+          "code": "let invaders = [];\nlet invaderDir = 1;\nlet invaderSpeed = 1.2;\n\nfunction initInvaders() {\n    const rows = 3;\n    const cols = 6;\n    const xOffset = (canvas.width - (cols * 40)) / 2; // Centering logic based on grid size\n    \n    invaders = [];\n    \n    for (let r = 0; r < rows; r++) {\n        for (let c = 0; c < cols; c++) {\n            const invader = {\n                x: xOffset + c * 40,\n                y: 150 + r * 30, // Starting Y position\n                width: 28,\n                height: 18,\n                alive: true,\n                points: 10\n            };\n            invaders.push(invader);\n        }\n    }\n}\n\nfunction updateInvaders() {\n    const aliveCount = invaders.filter(i => i.alive).length;\n    \n    if (aliveCount > 0) {\n        for (let invader of invaders) {\n            if (!invader.alive) continue;\n            \n            // Move by direction and speed\n            invader.y += invaderDir * invaderSpeed;\n\n            // Check",
+          "elapsed": 91.66,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.29,
+          "score": 0.52,
+          "effective_score": 0.1
+        },
+        {
+          "team_id": 8,
+          "code": "...",
+          "elapsed": 97.38,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.26,
+          "score": 0.03,
+          "effective_score": 0.01
+        }
+      ]
+    },
+    {
+      "task_idx": 3,
+      "task_name": "Projectiles, Ballistics & Collision Grid",
+      "promoted_team_id": 8,
+      "promoted_score": 1.69,
+      "promoted_noul": 0.34,
+      "teams": [
+        {
+          "team_id": 1,
+          "code": "function updateBullets() {\n    for (let i = 0; i < bullets.length; i++) {\n        const bullet = bullets[i];\n        if (bullet.y > 0) { // Remove off-screen logic\n            bullet.y -= bullet.speed;\n        } else {\n            bullets.splice(i, 1);\n            i--;\n        }\n    }\n}",
+          "elapsed": 94.31,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.32,
+          "score": 1.21,
+          "effective_score": 0.24
+        },
+        {
+          "team_id": 2,
+          "code": "// ===",
+          "elapsed": 119.52,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.07,
+          "score": 0.02,
+          "effective_score": 0.0
+        },
+        {
+          "team_id": 3,
+          "code": "// === TASK 3: BULLETS & COLLISIONS LOGIC (Team #9) ===\nlet bullets = []; // New variable for Task 3\nlet score = 0; // Reusing existing baseline variable, or just incrementing it. The prompt implies I should output the logic to add these functions.\n\nfunction shootBullet() {\n    const bullet",
+          "elapsed": 32.68,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Missing initializer in const declaration",
+          "noul": 0.08,
+          "score": 0.01,
+          "effective_score": 0.0
+        },
+        {
+          "team_id": 4,
+          "code": "// === TASK 3 REQUIREMENT",
+          "elapsed": 65.34,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.07,
+          "score": 0.02,
+          "effective_score": 0.0
+        },
+        {
+          "team_id": 5,
+          "code": "The user wants me to output clean JavaScript code specifically for \"Task 3\" within a competitive game engine tournament context.\n\nHere is what I need to do:\n1.  **Analyze the existing baseline:**\n    *   `canvas`, `ctx` are defined.\n    *   `player` object exists with x, y, width, height, speed.\n    *   `score`, `lives`, `gameOver`, `gameWon` exist as global state variables.\n    *   `updatePlayer(keys)` handles movement.\n\n2.  **Identify the missing components:**\n    *   `invaders` array is initialized in `initInvaders()`.\n    *   `updateInvaders()` exists but cuts off mid-sentence (\"Check\"). I need to complete this logic based on standard game patterns (usually checking for collision with bullets).\n    *   **New Requirement:** Bullets, Bullet creation, Bullet update, and Collision detection between bullets and invaders.\n\n3.  **Drafting the new functions:**\n    *   `shootBullet()`: Needs to push a new object into the `bullets` array. Based on the prompt: `{ x: player.x + player.width/2 - 2, y: player.y - 4, width: 4, height: 10, speed: 8 }`.\n    *   `updateBullets()`: Needs to loop through bullets, move them up by their speed, and remove those that go below the canvas.\n    *   `checkCollisions()`: This is the core logic requested for Task 3. It needs to iterate over `bullets` (or a specific bullet list) and check against `invaders`.\n\n4.  **Refining Collision Logic:**\n    *   The prompt asks to \"set invader.alive = false, remove bullet, add points...\".\n    *   I should probably also handle the invader movement logic (`updateInvaders`) to make it a complete loop, but strictly speaking, the prompt specifically asked for the Bullet/Collision functions. However, `initInvaders` and `updateInvaders` were already provided in Task 2 context. To be safe and clean, I will implement the collision check against the existing `invaders` array structure.\n    *   Wait, looking at the baseline, `invaders` is an array of objects. The prompt asks for \"Write JavaScript for bullets and collisions\".\n    *   So, I need to add a function that iterates through the `bullets` array and checks if any bullet intersects with any alive invader.\n\n5.  **Constructing the Code:**\n    *   `shootBullet()`: Add logic to push `{ x: player.x + player.width/2 - 2, y: player.y - 4, width: 4, height: 10, speed: 8 }` into `bullets`.\n    *   `updateBullets()`: Loop through `bullets`, update Y position, remove if < 0.\n    *   `checkCollisions()`: Iterate through `invaders` (alive ones) and check bounding box overlap with bullets. If hit: set alive to false, increment score, remove bullet from array.\n\n6.  **Reviewing against constraints:**\n    *   \"Output ONLY",
+          "elapsed": 111.17,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected identifier 'user'",
+          "noul": 0.24,
+          "score": 0.1,
+          "effective_score": 0.02
+        },
+        {
+          "team_id": 6,
+          "code": "// === TASK 3 REQUIREMENT ---\nlet bullets = [];\n\nfunction shootBullet() {\n    const newBullet = { x: player.x + player.width/2 - 2, y: player.y - 4, width: 4, height: 10",
+          "elapsed": 102.42,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.19,
+          "score": 0.1,
+          "effective_score": 0.02
+        },
+        {
+          "team_id": 7,
+          "code": "let bullets = []; // New bullet array\n\nfunction shootBullet() {\n    const newBullet = { x: player.x + player.width",
+          "elapsed": 98.5,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.17,
+          "score": 0.04,
+          "effective_score": 0.01
+        },
+        {
+          "team_id": 8,
+          "code": "function updateBullets() {\n    for (let i = bullets.length - 1; i >= 0; i--) {\n        let b = bullets[i];\n        if (b.y > canvas.height) {\n            bullets.splice(i, 1);\n            continue;\n        }\n        b.y -= b.speed;\n    }\n}",
+          "elapsed": 98.4,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.34,
+          "score": 1.69,
+          "effective_score": 0.34
+        }
+      ]
+    },
+    {
+      "task_idx": 4,
+      "task_name": "Retro Neon Canvas Renderer & Main Game Loop",
+      "promoted_team_id": 8,
+      "promoted_score": 0.37,
+      "promoted_noul": 0.23,
+      "teams": [
+        {
+          "team_id": 1,
+          "code": "...",
+          "elapsed": 83.96,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.23,
+          "score": 0.03,
+          "effective_score": 0.01
+        },
+        {
+          "team_id": 2,
+          "code": "? Yes.\n*   No re-declaration of existing variables (`player`, `score`, `lives`, `gameOver`)? Yes.\n*   No conversational prose? Yes.\n\n**Refining the Logic based on Baseline:**\n*   *Baseline Variables*: `canvas`, `ctx`, `player`, `score`, `lives`, `gameOver`, `invaders`, `invaderDir`, `invaderSpeed`, `bullets`.\n*   *New Functions needed*: `draw()`, `drawHUD()`, `shootBullet()`, `gameLoop()`.\n\n**Drafting the Code:**\n\n1.  **`draw()`**: Needs to handle the canvas clearing and drawing elements.\n    *   Clear canvas (400x500).\n    *   Draw Player: Since I can't re-declare `player.x/y`, I need to assume it's still accessible or pass coordinates if needed, but usually, in these loops, we draw relative to the player object. Let's stick to drawing the cannon itself (rectangles) based on `player` properties.\n    *   Draw Invaders: Iterate through `invaders` array and draw rects.\n    *   Draw Bullets: Iterate through `bullets` array and draw circles/lines.\n\n2.  **`drawHUD()`**: Top of canvas. Needs to update score/lives text based on global state, or just static drawing? The prompt says \"drawing Score and Lives\". Since I can't re-declare variables easily in the loop context without passing them, I will assume `score` and `lives` are still accessible globals (as per baseline).\n    *   Draw score/lives text.\n    *   Check conditions for 'GAME OVER' or 'VICTORY'.\n\n3.  **Event Listeners**: Need to attach listeners to keys.\n    *   `keys['ArrowLeft']`, etc.\n    *   Call `shootBullet()`.\n\n4.  **`gameLoop()`**: The heartbeat of the game.\n    *   Clear canvas (or just draw).",
+          "elapsed": 26.52,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected token '?'",
+          "noul": 0.18,
+          "score": 0.16,
+          "effective_score": 0.03
+        },
+        {
+          "team_id": 3,
+          "code": "... `).\nI must NOT re-declare variables that already exist (like `player`, `score`, `gameOver`, etc.).\nI must NOT add conversational prose.\n\n**Task 4 Requirements:**\n1.  **Function `draw()`**: Clear canvas (400x500), draw neon green player cannon, colored invader rectangles, yellow bullets.\n2.  **Function `drawHUD()`**: Draw Score and Lives at top, 'GAME OVER' / 'VICTORY'.\n3.  **Setup keyboard event listeners** for ArrowLeft/Right (and Spacebar) calling `shootBullet()`.\n4.  **Function `gameLoop()`**: Execute updaters (`updatePlayer`, `updateInvaders`, `updateBullets`), draw(), and `requestAnimationFrame(gameLoop)`.\n\n**Existing Variables to Avoid:**\n- `canvas`, `ctx` (already defined in baseline, though I should probably keep them or just focus on the new logic. The prompt says \"Do NOT re-declare variables that already exist\". Since `player` etc are global, I need to ensure I don't redefine them inside Task 4 unless necessary for scope, but usually, these tasks imply adding *new* functions).\n- `invaders`, `invaderDir`, `invaderSpeed`.\n- `bullets`.\n\n**Plan:**\n1.  Define the new function `draw()`: Needs to handle rendering the player (neon green), invaders (colored rects), and bullets (yellow). It needs to be inside the main game loop context or a separate draw call, but since `gameLoop` is requested as a specific function, I will structure it carefully.\n2.  Define the new function `drawHUD()`: Needs to render text on top of the canvas.\n3.  Add keyboard listeners: `keydown` and `keyup` logic for movement and shooting.\n4.  Integrate `gameLoop()`: This needs to call `updatePlayer`, `updateInvaders`, `updateBullets`, then `draw()` and `drawHUD()`.\n\n**Refining the Code Structure:**\nI will create a complete, self-contained snippet that fits into the existing context flow (likely replacing or augmenting the global scope). However, looking at the baseline, it has specific functions. I should output the new logic as requested: \"Output ONLY the new functions/logic for Task 4\".\n\nWait, the prompt says \"Output ONLY the new functions/logic for Task 4.\"\nThis implies I should provide the code block containing *only* what is needed to make this work, or perhaps a complete replacement of the baseline if it's meant to be the final state. Given the context of a tournament engine, usually, you want the full working script that implements these tasks.\n\nLet's look at the \"Task 4 Requirement\" again:\n- `draw()` clears canvas (400x500), draws player...\n- `drawHUD()` ...\n- Setup keyboard listeners for ArrowLeft/Right and Spacebar calling shootBullet().\n- Function `gameLoop()` executing updaters when playing, draw(), drawHUD(), and",
+          "elapsed": 111.36,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected token '...'",
+          "noul": 0.15,
+          "score": 0.22,
+          "effective_score": 0.04
+        },
+        {
+          "team_id": 4,
+          "code": "... `).\nI must NOT re-declare variables that already exist (like `player`, `score`, `lives`, etc., or the existing functions like `updatePlayer`).\nI must NOT add conversational prose.\n\nThe task is Task 4: Write JavaScript rendering and game loop.\nRequirements for `draw()`: clear canvas (400x500), draw neon green player cannon, colored invader rectangles, yellow bullets.\nRequirements for `drawHUD()`: Score and Lives at top, 'GAME OVER' / 'VICTORY'.\nSetup keyboard listeners: ArrowLeft/Right, Spacebar calling shootBullet().\nFunction `gameLoop()`: execute updaters when playing, draw(), drawHUD(), requestAnimationFrame(gameLoop).\n\nI need to check the existing code structure provided in the prompt.\n- `canvas` and `ctx` are defined at the top (Task 1/2 context). I should keep them or assume they exist as per \"Do NOT re-declare variables that already exist\". Since the baseline includes `const canvas = ...`, I will reuse those references to avoid redundancy, but strictly speaking, I need to output the *new* functions/logic for Task 4.\n- `player` object exists (Task 1).\n- `invaders` array and `updateInvaders` function exist (Task 2).\n- `bullets` array and `updateBullets` function exist (Task 3).\n\nSo, I need to write the specific Task 4 logic:\n1.  `draw()` function.\n    - Needs to clear canvas (400x500).\n    - Draw neon green player cannon.\n    - Draw colored invader rectangles.\n    - Draw yellow bullets.\n2.  `drawHUD()` function.\n3.  Setup keyboard listeners for ArrowLeft, ArrowRight, Spacebar calling shootBullet().\n4.  `gameLoop()` function.\n\nI need to ensure the code is clean and fits the context of a competitive game engine (likely Canvas API). I should probably include the existing logic (updatePlayer, initInvaders, updateInvaders, updateBullets) as they are part of the \"baseline\" provided in the prompt, but strictly speaking, the user asked for \"Output ONLY the new functions/logic for Task 4\". However, usually, in these coding tasks, you provide the complete runnable snippet or just the specific requested parts. The prompt says \"Write JavaScript rendering and game loop... Output ONLY the new functions/logic for Task 4.\"\n\nWait, looking closely at the instruction: \"Output ONLY clean JavaScript code inside",
+          "elapsed": 55.18,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected token '...'",
+          "noul": 0.22,
+          "score": 0.18,
+          "effective_score": 0.04
+        },
+        {
+          "team_id": 5,
+          "code": "The user wants me to act as a Team #5 specialist in a competitive game engine tournament. I need to output clean JavaScript code inside markdown code fences.\n\nI must adhere to these constraints:\n1.  **Output ONLY** the new functions/logic for Task 4, without conversational prose or re-declarations of existing variables (like `player`, `score`, etc.).\n2.  The context implies a game loop structure (`updatePlayer` from Task 1, `initInvaders`/`updateInvaders` from Task 2, `updateBullets` from Task 3).\n\n**Task 4 Requirements:**\n-   **Function `draw()`:** Needs to clear canvas (400x500), draw neon green player cannon, colored invader rectangles, and yellow bullets.\n-   **Function `drawHUD()`:** Needs to draw Score and Lives at top, and 'GAME OVER' / 'VICTORY' if finished.\n-   **Setup keyboard event listeners:** For ArrowLeft/Right (move) and Spacebar (shoot). Note: The prompt asks for \"Setup keyboard event listeners\", but the context implies I need to integrate this into the existing `gameLoop` or provide a function that can be called, likely within `updatePlayer` logic or as part of the main loop structure. However, looking at Task 1 (`updatePlayer`), it handles movement. To make it work in `draw()` and `gameLoop()`, I need to ensure inputs are processed. Since `updatePlayer` is already defined, I should probably add a function to handle the shooting logic or update the player state within the loop.\n-   **Function `gameLoop()`:** Needs to execute updaters (`updatePlayer`, `initInvaders`, `updateInvaders`, `updateBullets`) and call `draw()` and `drawHUD()`.\n\nWait, looking at the prompt: \"Setup keyboard event listeners for ArrowLeft, ArrowRight, and Spacebar calling shootBullet().\"\nI need to include this logic. Since I cannot re-declare existing variables or functions (implied by context of a single file), I will add these new functions directly into the code block provided in the baseline structure.\n\n**Plan:**\n1.  Add `initInvaders` and `updateInvaders` (Task 2) - Wait, the prompt says \"Do NOT re-declare variables that already exist\". The existing code has `invaders`, `invaderDir`. I should probably keep them or just add the new ones requested in Task 4.\n    *   Actually, usually, when asked to output \"ONLY clean JavaScript code\", it implies adding the missing pieces to complete the task.\n    *   However, strict adherence: \"Do NOT re-declare variables that already exist\". I should not redefine `player` or `score`.\n    *   The prompt asks for Task 4 requirements specifically: `draw()`, `drawHUD()`, keyboard listeners, and `gameLoop()`.\n\nLet's refine the specific functions to be added.\n-   `initInvaders`: Already exists in baseline. I should probably keep it or just ensure it runs.\n-   `updateBullets`: Already exists. Keep it.\n-   `updatePlayer` (Task 1): Already exists. Keep it.\n\nI need to",
+          "elapsed": 112.64,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected identifier 'user'",
+          "noul": 0.15,
+          "score": 0.11,
+          "effective_score": 0.02
+        },
+        {
+          "team_id": 6,
+          "code": "...",
+          "elapsed": 109.77,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected end of input",
+          "noul": 0.23,
+          "score": 0.03,
+          "effective_score": 0.01
+        },
+        {
+          "team_id": 7,
+          "code": "The user wants me to act as a Team #7 specialist in a competitive game engine tournament. I need to output clean JavaScript code inside markdown code fences based on specific requirements from \"Task 4\".\n\n**Requirements Breakdown:**\n1.  **Context:** The baseline includes existing variables (`player`, `score`, `lives`, etc.) and functions (`initInvaders`, `updateInvaders`, `updateBullets`). I must *not* re-declare these or add new ones that shadow them in a way that breaks the baseline, though the prompt implies \"Do NOT re-declare variables that already exist\".\n2.  **Task 4 Requirement:** Write rendering and game loop logic.\n3.  **Specific Functions Needed:**\n    *   `draw()`: Clears canvas (400x500), draws neon green player cannon, colored invader rectangles, yellow bullets.\n    *   `drawHUD()`: Draws Score/Lives at top, 'GAME OVER' / 'VICTORY'.\n    *   **Setup:** Keyboard listeners for ArrowLeft/Right and Spacebar calling `shootBullet()`.\n    *   `gameLoop()`: Executes updaters (`updatePlayer`, `updateInvaders`, `updateBullets`), `draw()`, `drawHUD()`, and `requestAnimationFrame(gameLoop)`.\n\n**Implementation Plan:**\n1.  **State Management:** I need to ensure the existing state variables are preserved in scope (though not re-declared). The baseline has `player`, `score`, `lives`, etc., so I'll keep them as is or reference them directly without re-assigning.\n2.  **`draw()` Logic:**\n    *   Clear canvas: `ctx.clearRect(0, 0, canvas.width, canvas.height)` (Note: The baseline mentions clearing the canvas in Task 4 requirement explicitly).\n    *   Draw Player Cannon: Needs to look like a cannon. I'll use `ctx.fillRect` with neon green colors (`#00ff00`).\n    *   Draw Invaders: Rectangles based on the existing `invaders` array logic (though I don't need to call `initInvaders` again, just draw them).\n    *   Draw Bullets: Yellow rectangles.\n3.  **`drawHUD()` Logic:**\n    *   Top position (e.g., y=20 or similar relative to canvas height).\n    *   Score/Lives display.\n    *   Text for Game Over/Won states.\n4.  **Event Listeners:** `keydown` and `keyup` listeners on the document/window to track keys pressed, triggering `shootBullet()`.\n5.  **`gameLoop()` Logic:**\n    *   Call `updatePlayer`, `updateInvaders`, `updateBullets`.\n    *   Call `draw()`.\n    *   Call `drawHUD()`.\n    *   Use `requestAnimationFrame`.\n\n**Refining the Baseline Constraints:**\n*   \"Do NOT re-declare variables that already exist in context.\" -> I will use existing names like `player`, `score`, etc. without changing their values or declaring them again as new top-level scopes.\n*   \"Output ONLY clean JavaScript code\". No conversational text outside the fences.\n\n**Drafting Code:**\n*   *",
+          "elapsed": 108.07,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected identifier 'user'",
+          "noul": 0.22,
+          "score": 0.18,
+          "effective_score": 0.04
+        },
+        {
+          "team_id": 8,
+          "code": "The user wants me to act as a Team #8 specialist in a competitive game engine tournament. I need to output clean JavaScript code inside markdown code fences.\n\n**Key Requirements:**\n1.  **Role:** Team #8 Specialist (Competitive Game Engine). This implies high-quality, robust, and efficient code suitable for a polished game loop.\n2.  **Constraints:**\n    *   Output ONLY the new functions/logic for Task 4.\n    *   Do NOT re-declare variables that already exist (`player`, `score`, `lives`, `gameOver`).\n    *   No conversational prose (just code).\n\n**Existing Code Analysis:**\n*   **Canvas:** `canvas` element exists, context `ctx` exists.\n*   **Player:** `x`, `y`, `width`, `height`, `speed`.\n*   **State:** `score`, `lives`, `gameOver`, `gameWon`.\n*   **Invaders:** `invaders` array, `invaderDir`, `invaderSpeed`.\n*   **Bullets:** `bullets` array (implied to exist from previous tasks).\n\n**Task 4 Requirements:**\n1.  **Functions needed:**\n    *   `draw()`: Clears canvas (400x500), draws neon green player cannon, colored invader rectangles, yellow bullets.\n    *   `drawHUD()`: Draws Score and Lives at top, 'GAME OVER' / 'VICTORY'.\n    *   **Event Listeners:** Keyboard listeners for ArrowLeft/Right (movement) and Spacebar (shoot).\n    *   **Game Loop:** Updates logic + draws everything.\n\n**Refining the Logic based on \"Team #8\" Persona:**\n*   I need to ensure `draw()` is robust enough to handle the specific visual requirements: neon green player, colored invaders, yellow bullets.\n*   I need to integrate the movement logic (`updatePlayer`) and shooting logic into the game loop context or as separate functions called within it. The prompt asks for \"Setup keyboard event listeners\" which implies adding them to the main structure, but since I am outputting *only* Task 4 requirements (which includes the loop), I should probably include the setup inside `gameLoop` or a dedicated function that gets called by the loop. However, standard practice is usually:\n    *   `updatePlayer()` / `shootBullet()` are often separate state functions.\n    *   The prompt asks for \"Function `drawHUD()`, Setup keyboard...\". It implies I should write these out clearly.\n\n**Drafting the Code:**\n\n*   **`draw()`**: Needs to clear canvas (400x500).\n    *   Draw Player: Neon green box.\n    *   Draw Invaders: Colored rectangles (maybe red/purple for invaders).\n    *   Draw Bullets: Yellow circles/rectangles.\n*   **`drawHUD()`**: Top center, Score and Lives. Win/Loss text overlay.\n*   **Event Listeners**: `document.addEventListener('keydown', ...)` handling Arrow keys and Spacebar.\n*   **Game Loop Integration**: The prompt asks for \"Function `gameLoop()` executing updaters...\". I need to make sure the loop calls these functions correctly.\n\n**Constraints",
+          "elapsed": 107.98,
+          "tokens": 700,
+          "syntax_valid": false,
+          "syntax_error": "Unexpected identifier 'user'",
+          "noul": 0.23,
+          "score": 0.37,
+          "effective_score": 0.07
+        }
+      ]
+    }
+  ],
+  "master_game_path": "benchmarks/evolutionary_swarm/master_game.html"
+}

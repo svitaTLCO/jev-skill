@@ -1,0 +1,83 @@
+{
+  "event": "24-Agent Competitive Teams Hackathon",
+  "timestamp": "2026-09-20 13:30:25",
+  "total_wall_clock_s": 403.51,
+  "total_tokens": 14700,
+  "pass_rate_percent": 16.666666666666664,
+  "grand_champion": {
+    "team_id": 6,
+    "team_name": "Hyper-Drive",
+    "theme": "Event-Driven Autonomous Pipeline",
+    "quality_score": 0.89,
+    "noul_compliance": 0.05
+  },
+  "scorecard": [
+    {
+      "team_id": 1,
+      "team_name": "Neon-Pulse",
+      "theme": "Functional Reactive Architecture",
+      "syntax_valid": false,
+      "noul_compliance": 0.02,
+      "quality_score": 0.38,
+      "wall_time_s": 158.19,
+      "tokens": 2450,
+      "artifact_path": "benchmarks/hackathon_swarm/team_1/index.html"
+    },
+    {
+      "team_id": 2,
+      "team_name": "Cyber-Matrix",
+      "theme": "Object-Oriented Component State",
+      "syntax_valid": false,
+      "noul_compliance": 0.02,
+      "quality_score": 0.29,
+      "wall_time_s": 186.44,
+      "tokens": 2450,
+      "artifact_path": "benchmarks/hackathon_swarm/team_2/index.html"
+    },
+    {
+      "team_id": 3,
+      "team_name": "Retro-Arcade",
+      "theme": "Double-Buffered Classic Loop",
+      "syntax_valid": false,
+      "noul_compliance": 0.02,
+      "quality_score": 0.31,
+      "wall_time_s": 214.55,
+      "tokens": 2450,
+      "artifact_path": "benchmarks/hackathon_swarm/team_3/index.html"
+    },
+    {
+      "team_id": 4,
+      "team_name": "Vector-Viper",
+      "theme": "Particle Physics & Vector Momentum",
+      "syntax_valid": false,
+      "noul_compliance": 0.03,
+      "quality_score": 0.41,
+      "wall_time_s": 191.59,
+      "tokens": 2450,
+      "artifact_path": "benchmarks/hackathon_swarm/team_4/index.html"
+    },
+    {
+      "team_id": 5,
+      "team_name": "Quantum-Core",
+      "theme": "Grid-Array Micro-Entity Architecture",
+      "syntax_valid": false,
+      "noul_compliance": 0.04,
+      "quality_score": 0.72,
+      "wall_time_s": 194.55,
+      "tokens": 2450,
+      "artifact_path": "benchmarks/hackathon_swarm/team_5/index.html"
+    },
+    {
+      "team_id": 6,
+      "team_name": "Hyper-Drive",
+      "theme": "Event-Driven Autonomous Pipeline",
+      "syntax_valid": true,
+      "noul_compliance": 0.05,
+      "quality_score": 0.89,
+      "wall_time_s": 184.07,
+      "tokens": 2450,
+      "artifact_path": "benchmarks/hackathon_swarm/team_6/index.html"
+    }
+  ],
+  "dashboard_path": "benchmarks/hackathon_swarm/leaderboard.html"
+}

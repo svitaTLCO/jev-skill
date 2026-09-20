@@ -1,0 +1,146 @@
+{
+  "huihui-qwen3.5:0.8b": [
+    {
+      "num_agents": 1,
+      "wall_clock_s": 2.29,
+      "success_rate": "1/1",
+      "avg_latency_s": 2.15,
+      "p95_latency_s": 2.15,
+      "total_tokens": 120,
+      "throughput_tok_s": 52.3,
+      "ram_mb": 2851.0
+    },
+    {
+      "num_agents": 2,
+      "wall_clock_s": 4.33,
+      "success_rate": "2/2",
+      "avg_latency_s": 3.17,
+      "p95_latency_s": 4.27,
+      "total_tokens": 240,
+      "throughput_tok_s": 55.49,
+      "ram_mb": 2961.0
+    },
+    {
+      "num_agents": 4,
+      "wall_clock_s": 8.29,
+      "success_rate": "4/4",
+      "avg_latency_s": 5.11,
+      "p95_latency_s": 8.19,
+      "total_tokens": 480,
+      "throughput_tok_s": 57.91,
+      "ram_mb": 3021.0
+    },
+    {
+      "num_agents": 8,
+      "wall_clock_s": 16.56,
+      "success_rate": "8/8",
+      "avg_latency_s": 9.26,
+      "p95_latency_s": 16.5,
+      "total_tokens": 960,
+      "throughput_tok_s": 57.96,
+      "ram_mb": 2950.0
+    },
+    {
+      "num_agents": 12,
+      "wall_clock_s": 25.33,
+      "success_rate": "12/12",
+      "avg_latency_s": 13.75,
+      "p95_latency_s": 25.3,
+      "total_tokens": 1440,
+      "throughput_tok_s": 56.84,
+      "ram_mb": 3010.0
+    },
+    {
+      "num_agents": 16,
+      "wall_clock_s": 36.41,
+      "success_rate": "16/16",
+      "avg_latency_s": 19.07,
+      "p95_latency_s": 36.35,
+      "total_tokens": 1920,
+      "throughput_tok_s": 52.73,
+      "ram_mb": 2852.0
+    },
+    {
+      "num_agents": 24,
+      "wall_clock_s": 56.06,
+      "success_rate": "24/24",
+      "avg_latency_s": 28.89,
+      "p95_latency_s": 53.65,
+      "total_tokens": 2880,
+      "throughput_tok_s": 51.38,
+      "ram_mb": 2815.0
+    }
+  ],
+  "huihui-qwen3.5:2b": [
+    {
+      "num_agents": 1,
+      "wall_clock_s": 3.87,
+      "success_rate": "1/1",
+      "avg_latency_s": 3.83,
+      "p95_latency_s": 3.83,
+      "total_tokens": 120,
+      "throughput_tok_s": 31.04,
+      "ram_mb": 2790.0
+    },
+    {
+      "num_agents": 2,
+      "wall_clock_s": 8.05,
+      "success_rate": "2/2",
+      "avg_latency_s": 6.1,
+      "p95_latency_s": 8.02,
+      "total_tokens": 240,
+      "throughput_tok_s": 29.8,
+      "ram_mb": 2690.0
+    },
+    {
+      "num_agents": 4,
+      "wall_clock_s": 16.03,
+      "success_rate": "4/4",
+      "avg_latency_s": 10.04,
+      "p95_latency_s": 16.0,
+      "total_tokens": 480,
+      "throughput_tok_s": 29.94,
+      "ram_mb": 2725.0
+    },
+    {
+      "num_agents": 8,
+      "wall_clock_s": 32.9,
+      "success_rate": "8/8",
+      "avg_latency_s": 18.49,
+      "p95_latency_s": 32.87,
+      "total_tokens": 960,
+      "throughput_tok_s": 29.18,
+      "ram_mb": 2710.0
+    },
+    {
+      "num_agents": 12,
+      "wall_clock_s": 48.02,
+      "success_rate": "12/12",
+      "avg_latency_s": 25.65,
+      "p95_latency_s": 47.97,
+      "total_tokens": 1440,
+      "throughput_tok_s": 29.99,
+      "ram_mb": 2745.0
+    },
+    {
+      "num_agents": 16,
+      "wall_clock_s": 59.33,
+      "success_rate": "16/16",
+      "avg_latency_s": 31.99,
+      "p95_latency_s": 59.3,
+      "total_tokens": 1920,
+      "throughput_tok_s": 32.36,
+      "ram_mb": 3007.0
+    },
+    {
+      "num_agents": 24,
+      "wall_clock_s": 89.78,
+      "success_rate": "24/24",
+      "avg_latency_s": 46.66,
+      "p95_latency_s": 85.89,
+      "total_tokens": 2880,
+      "throughput_tok_s": 32.08,
+      "ram_mb": 2755.0
+    }
+  ]
+}

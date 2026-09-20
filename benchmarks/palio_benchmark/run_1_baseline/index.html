@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Palio di Siena 3D - Run 1 (Baseline)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+    #hud {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 12px 18px;
+      border-radius: 8px;
+      border-left: 4px solid #d97706;
+    }
+    #hud h1 {
+      font-size: 1.3rem;
+      color: #f59e0b;
+      margin-bottom: 4px;
+    }
+    .hud-stat {
+      font-size: 0.95rem;
+      margin: 3px 0;
+    }
+    #instructions {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+    #message-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.65);
+      z-index: 20;
+    }
+    #message-overlay h2 {
+      font-size: 2.5rem;
+      color: #fbbf24;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+    #message-overlay button {
+      background: #f59e0b;
+      color: #000;
+      border: none;
+      padding: 12px 28px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: 0.2s;
+    }
+    #message-overlay button:hover {
+      background: #d97706;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="hud">
+    <h1>PALIO DI SIENA</h1>
+    <div class="hud-stat">Contrada: <strong style="color: #60a5fa;">Oca (You)</strong></div>
+    <div class="hud-stat">Lap: <span id="lap-display">1 / 3</span></div>
+    <div class="hud-stat">Position: <span id="pos-display">1st</span></div>
+    <div class="hud-stat">Speed: <span id="speed-display">0</span> km/h</div>
+  </div>
+
+  <div id="instructions">
+    [W] / [▲] Gallop | [S] / [▼] Slow Down | [A]/[D] or [◄]/[►] Steer
+  </div>
+
+  <div id="message-overlay">
+    <h2>PALIO DI SIENA 3D</h2>
+    <p>Race 3 laps around Piazza del Campo. Watch out for Curva di San Martino!</p>
+    <button id="start-btn">INIZIA LA CORSA</button>
+  </div>
+
+  <script>
+    // --- THREE.JS SCENE SETUP ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.fog = new THREE.FogExp2(0x87ceeb, 0.003);
+
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // Lights
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.7);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfffaed, 0.9);
+    dirLight.position.set(100, 150, 50);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    // --- TRACK: PIAZZA DEL CAMPO SHELL SHAPE ---
+    // Piazza del Campo track: curved trajectory with sharp San Martino and Casato bends
+    const trackCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-120, 0, 0),      // San Martino entrance
+      new THREE.Vector3(-140, 0, -60),    // Curva di San Martino (sharp bend)
+      new THREE.Vector3(-80, 0, -130),
+      new THREE.Vector3(0, 0, -150),      // Top straight along palazzi
+      new THREE.Vector3(80, 0, -130),
+      new THREE.Vector3(130, 0, -60),     // Curva del Casato
+      new THREE.Vector3(110, 0, 20),
+      new THREE.Vector3(40, 0, 80),       // Front of Palazzo Pubblico
+      new THREE.Vector3(-40, 0, 70),      // Finish line area
+    ], true, 'catmullrom', 0.15);
+
+    // Track Geometry (Tufo clay surface)
+    const trackPoints = trackCurve.getSpacedPoints(200);
+    const trackWidth = 24;
+
+    // Ground plane
+    const groundGeo = new THREE.PlaneGeometry(600, 600);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x997755, roughness: 0.9 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.1;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Clay track mesh (Tufo)
+    const tufoMat = new THREE.MeshStandardMaterial({ color: 0xb5652e, roughness: 0.85 });
+    const trackGeo = new THREE.BufferGeometry();
+    const trackVerts = [];
+    for (let i = 0; i < trackPoints.length; i++) {
+      const p1 = trackPoints[i];
+      const p2 = trackPoints[(i + 1) % trackPoints.length];
+      const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
+      const norm = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(trackWidth / 2);
+
+      const vL1 = new THREE.Vector3().addVectors(p1, norm);
+      const vR1 = new THREE.Vector3().subVectors(p1, norm);
+      const vL2 = new THREE.Vector3().addVectors(p2, norm);
+      const vR2 = new THREE.Vector3().subVectors(p2, norm);
+
+      trackVerts.push(vL1.x, 0.05, vL1.z, vR1.x, 0.05, vR1.z, vL2.x, 0.05, vL2.z);
+      trackVerts.push(vR1.x, 0.05, vR1.z, vR2.x, 0.05, vR2.z, vL2.x, 0.05, vL2.z);
+    }
+    trackGeo.setAttribute('position', new THREE.Float32BufferAttribute(trackVerts, 3));
+    trackGeo.computeVertexNormals();
+    const trackMesh = new THREE.Mesh(trackGeo, tufoMat);
+    trackMesh.receiveShadow = true;
+    scene.add(trackMesh);
+
+    // Inner central Campo (Piazza shell bricks)
+    const innerCampoGeo = new THREE.CylinderGeometry(60, 60, 0.2, 32);
+    const innerCampoMat = new THREE.MeshStandardMaterial({ color: 0xaa5533, roughness: 0.8 });
+    const innerCampo = new THREE.Mesh(innerCampoGeo, innerCampoMat);
+    innerCampo.position.set(0, 0, -20);
+    scene.add(innerCampo);
+
+    // --- MONUMENTS: PALAZZO PUBBLICO & TORRE DEL MANGIA ---
+    const palazzoMat = new THREE.MeshStandardMaterial({ color: 0xa86542, roughness: 0.85 });
+    const palazzo = new THREE.Mesh(new THREE.BoxGeometry(90, 35, 25), palazzoMat);
+    palazzo.position.set(0, 17.5, 120);
+    palazzo.castShadow = true;
+    palazzo.receiveShadow = true;
+    scene.add(palazzo);
+
+    // Torre del Mangia (Famous 88m tall tower)
+    const towerMat = new THREE.MeshStandardMaterial({ color: 0x945030, roughness: 0.85 });
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(10, 95, 10), towerMat);
+    tower.position.set(40, 47.5, 115);
+    tower.castShadow = true;
+    scene.add(tower);
+    // Tower top marble crown
+    const crown = new THREE.Mesh(new THREE.BoxGeometry(14, 12, 14), new THREE.MeshStandardMaterial({ color: 0xf5f5f4 }));
+    crown.position.set(40, 100, 115);
+    scene.add(crown);
+
+    // Surrounding medieval buildings
+    for (let i = 0; i < 16; i++) {
+      const angle = (i / 16) * Math.PI * 2;
+      const dist = 180;
+      const bHeight = 25 + Math.random() * 20;
+      const bColor = [0xc2855b, 0xa36843, 0x8b5a36, 0x7c4f30][i % 4];
+      const b = new THREE.Mesh(new THREE.BoxGeometry(30, bHeight, 25), new THREE.MeshStandardMaterial({ color: bColor }));
+      b.position.set(Math.cos(angle) * dist, bHeight / 2, Math.sin(angle) * dist);
+      b.lookAt(0, bHeight / 2, 0);
+      b.castShadow = true;
+      scene.add(b);
+    }
+
+    // --- 3D HORSE GENERATOR ---
+    function createHorseMesh(bodyColor, jockeyColor) {
+      const horseGroup = new THREE.Group();
+
+      // Horse body
+      const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.7 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.2, 4.2), bodyMat);
+      body.position.y = 2.4;
+      body.castShadow = true;
+      horseGroup.add(body);
+
+      // Neck & Head
+      const neck = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.5, 1.4), bodyMat);
+      neck.position.set(0, 3.8, 1.8);
+      neck.rotation.x = -Math.PI / 6;
+      neck.castShadow = true;
+      horseGroup.add(neck);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.2, 1.6), bodyMat);
+      head.position.set(0, 4.6, 2.5);
+      horseGroup.add(head);
+
+      // Jockey (Fantino in silk contrada colors)
+      const jockeyMat = new THREE.MeshStandardMaterial({ color: jockeyColor, roughness: 0.5 });
+      const jockeyBody = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.4, 1.0), jockeyMat);
+      jockeyBody.position.set(0, 3.9, 0.2);
+      horseGroup.add(jockeyBody);
+
+      const jockeyHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+      jockeyHead.position.set(0, 4.8, 0.2);
+      horseGroup.add(jockeyHead);
+
+      // Legs (for gallop animation)
+      const legs = [];
+      const legPositions = [
+        [-0.6, 0.9, 1.4], [0.6, 0.9, 1.4],
+        [-0.6, 0.9, -1.4], [0.6, 0.9, -1.4]
+      ];
+      legPositions.forEach(pos => {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.0, 0.4), bodyMat);
+        leg.position.set(pos[0], pos[1], pos[2]);
+        leg.castShadow = true;
+        horseGroup.add(leg);
+        legs.push(leg);
+      });
+      horseGroup.userData.legs = legs;
+
+      return horseGroup;
+    }
+
+    // --- CONTRADE COMPETITORS ---
+    const contrade = [
+      { name: "Oca (Player)", horseColor: 0x3d2314, silkColor: 0x2563eb, isPlayer: true },
+      { name: "Tartuca", horseColor: 0x1f140e, silkColor: 0xfacc15, isPlayer: false },
+      { name: "Torre", horseColor: 0x8b5a2b, silkColor: 0xdc2626, isPlayer: false },
+      { name: "Istrice", horseColor: 0xd4c2b2, silkColor: 0x059669, isPlayer: false }
+    ];
+
+    const horses = [];
+    contrade.forEach((c, idx) => {
+      const mesh = createHorseMesh(c.horseColor, c.silkColor);
+      scene.add(mesh);
+      horses.push({
+        mesh: mesh,
+        info: c,
+        progress: 0.05 + idx * 0.015,
+        lane: (idx - 1.5) * 4,
+        speed: 0,
+        maxSpeed: c.isPlayer ? 0.75 : 0.68 + Math.random() * 0.06,
+        lap: 1,
+        gallopTime: 0
+      });
+    });
+
+    const player = horses[0];
+
+    // --- CONTROLS ---
+    const keys = { w: false, s: false, a: false, d: false };
+    window.addEventListener('keydown', e => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
+      if (e.key === 's' || e.key === 'ArrowDown') keys.s = true;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
+      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
+    });
+    window.addEventListener('keyup', e => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
+      if (e.key === 's' || e.key === 'ArrowDown') keys.s = false;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
+      if (e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
+    });
+
+    let gameState = 'START';
+    document.getElementById('start-btn').addEventListener('click', () => {
+      document.getElementById('message-overlay').style.display = 'none';
+      gameState = 'RACING';
+    });
+
+    // --- GAME LOOP ---
+    let lastTime = performance.now();
+
+    function update() {
+      if (gameState !== 'RACING') return;
+
+      // 1. Player Physics & Input
+      if (keys.w) {
+        player.speed = Math.min(player.maxSpeed, player.speed + 0.012);
+      } else if (keys.s) {
+        player.speed = Math.max(0, player.speed - 0.02);
+      } else {
+        player.speed = Math.max(0, player.speed - 0.005);
+      }
+
+      if (keys.a) player.lane = Math.min(trackWidth / 2 - 2, player.lane + 0.25);
+      if (keys.d) player.lane = Math.max(-trackWidth / 2 + 2, player.lane - 0.25);
+
+      // 2. AI Horses & Position
+      horses.forEach((h, i) => {
+        if (!h.info.isPlayer) {
+          h.speed = THREE.MathUtils.lerp(h.speed, h.maxSpeed, 0.02);
+        }
+
+        const prevProg = h.progress;
+        h.progress += (h.speed / 1000);
+        if (h.progress >= 1.0) {
+          h.progress -= 1.0;
+          h.lap++;
+          if (h.info.isPlayer) {
+            document.getElementById('lap-display').textContent = `${Math.min(3, h.lap)} / 3`;
+            if (h.lap > 3) {
+              gameState = 'FINISHED';
+              document.getElementById('message-overlay').style.display = 'flex';
+              document.getElementById('message-overlay').querySelector('h2').textContent = 'CORSA FINITA!';
+              document.getElementById('message-overlay').querySelector('p').textContent = 'You completed the 3 laps of the Palio!';
+              document.getElementById('start-btn').textContent = 'GIOCA ANCORA';
+            }
+          }
+        }
+
+        // Get track coordinate & direction
+        const posOnCurve = trackCurve.getPointAt(h.progress % 1.0);
+        const tangent = trackCurve.getTangentAt(h.progress % 1.0).normalize();
+        const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+
+        h.mesh.position.copy(posOnCurve).addScaledVector(normal, h.lane);
+        h.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
+
+        // Animate legs
+        if (h.speed > 0.05) {
+          h.gallopTime += h.speed * 2.5;
+          const legSwing = Math.sin(h.gallopTime) * 0.7;
+          h.mesh.userData.legs[0].rotation.x = legSwing;
+          h.mesh.userData.legs[1].rotation.x = -legSwing;
+          h.mesh.userData.legs[2].rotation.x = -legSwing;
+          h.mesh.userData.legs[3].rotation.x = legSwing;
+        }
+      });
+
+      // Update HUD
+      const kmh = Math.round(player.speed * 85);
+      document.getElementById('speed-display').textContent = kmh;
+
+      // Camera follow player horse
+      const camOffset = new THREE.Vector3(0, 7, -15);
+      camOffset.applyQuaternion(player.mesh.quaternion);
+      camera.position.copy(player.mesh.position).add(camOffset);
+      camera.lookAt(player.mesh.position.clone().add(new THREE.Vector3(0, 3, 5)));
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

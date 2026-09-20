@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-09-20 02:21:16",
+  "model": "qwen2.5:1.5b",
+  "method_1_pure_local": {
+    "time_seconds": 37.15,
+    "tokens": 850,
+    "playable_noul": 0.01,
+    "quality_score": 0.22,
+    "file": "benchmarks/local_flappy/retry_baseline_game.html"
+  },
+  "method_2_jev_local": {
+    "time_seconds": 20.5,
+    "tokens": 215,
+    "playable_noul": 0.02,
+    "quality_score": 0.38,
+    "jev_overhead_seconds": 1.97,
+    "file": "benchmarks/local_flappy/retry_jev_game.html"
+  }
+}

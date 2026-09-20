@@ -1,0 +1,20 @@
+{
+  "game": "Space Invaders",
+  "timestamp": "2026-09-20 02:45:19",
+  "model": "hf.co/unsloth/Qwen3.5-0.8B-GGUF:Q4_K_M",
+  "method_1_single_08b": {
+    "time_seconds": 20.31,
+    "tokens": 850,
+    "playable_noul": 0.06,
+    "quality_score": 0.27,
+    "file": "benchmarks/space_invaders/space_invaders_monolith.html"
+  },
+  "method_2_swarm_08b_jev": {
+    "time_seconds": 69.84,
+    "tokens": 1799,
+    "playable_noul": 0.05,
+    "quality_score": 0.4,
+    "jev_overhead_seconds": 2.79,
+    "file": "benchmarks/space_invaders/space_invaders_swarm.html"
+  }
+}

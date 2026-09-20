@@ -1,0 +1,70 @@
+{
+  "benchmark": "Palio di Siena 3D Game",
+  "timestamp": "2026-09-20 01:35:32",
+  "run_1_baseline": {
+    "description": "Standard 3D Three.js generation without Jev assistance",
+    "jev_api_calls": 0,
+    "jev_latency_ms": 0.0,
+    "target_file": "benchmarks/palio_benchmark/run_1_baseline/index.html"
+  },
+  "run_2_jev_guided": {
+    "description": "Jev-driven physics & authentic Palio rules development",
+    "jev_api_calls": 2,
+    "total_jev_latency_ms": 1674.8,
+    "step_1_architecture": {
+      "latency_ms": 695.9,
+      "decisions": {
+        "physics_architecture": {
+          "type": "choice",
+          "choice": "centrifugal_tufo_drift",
+          "confidence": 1.0,
+          "probabilities": {
+            "rigid_spline_rail": 0.0,
+            "wasm_rigid_ragdoll": 0.0,
+            "centrifugal_tufo_drift": 1.0
+          }
+        },
+        "palio_rules_fidelity": {
+          "type": "choice",
+          "choice": "authentic_palio_mechanics",
+          "confidence": 1.0,
+          "probabilities": {
+            "arcade_laps_only": 0.0,
+            "authentic_palio_mechanics": 1.0
+          }
+        }
+      }
+    },
+    "step_2_verification": {
+      "latency_ms": 978.9,
+      "evaluations": {
+        "maintainability": {
+          "type": "score",
+          "score": 1.91,
+          "confidence": 0.88,
+          "legend": {
+            "0": "Level 0: Monolithic procedural mess, memory leaks, unoptimized loops.",
+            "1": "Level 1: Working but coupled, basic error handling.",
+            "2": "Level 2: Clean structure, clear separation of physics, audio, and Three.js scene, proper delta-time.",
+            "3": "Level 3: Production excellence, highly optimized 60fps rendering, elegant shader/particle management."
+          },
+          "probabilities": {
+            "0": 0.0,
+            "1": 0.1,
+            "2": 0.88,
+            "3": 0.02
+          }
+        },
+        "authenticity_of_palio_rules": {
+          "type": "noul",
+          "noul": 0.78
+        },
+        "achieves_stable_60fps": {
+          "type": "noul",
+          "noul": 0.85
+        }
+      }
+    },
+    "target_file": "benchmarks/palio_benchmark/run_2_jev_guided/index.html"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "experiment": "Experiment 3: Full-Stack Multi-File Architecture Swarm",
+  "timestamp": "2026-09-20 03:54:42",
+  "model": "hf.co/mradermacher/Huihui-Qwen3.5-2B-abliterated-GGUF:Q4_K_M",
+  "total_wall_clock_seconds": 73.35,
+  "total_tokens": 2195,
+  "total_jev_overhead_seconds": 3.51,
+  "results": {
+    "models": {
+      "code": "from pydantic import BaseModel\nfrom typing import Optional, Dict\nfrom datetime import datetime\n\n\nclass ScoreEntry(BaseModel):\n    \"\"\"Represents a player's score entry in a game.\"\"\"\n    player_name: str\n    score: int\n    wave: int\n\n\nclass TelemetryEvent(BaseModel):\n    \"\"\"Represents a telemetry event from the game.\"\"\"\n    event_type: str\n    timestamp: float\n    data: Dict[str, Any]",
+      "time": 6.9664928750135005,
+      "tokens": 195,
+      "noul": 0.11
+    },
+    "server": {
+      "code": "from fastapi import FastAPI, HTTPException\nfrom models import ScoreEntry, TelemetryEvent\nimport sqlite3\nimport json\nfrom typing import List, Dict, Any\n\napp = FastAPI(title='Swarm Telemetry API')\n\nDATABASE_PATH = 'swarm_telemetry.db'\n\n\ndef init_database():\n    conn = sqlite3.connect(DATABASE_PATH)\n    cursor = conn.cursor()\n    \n    # Create scores table\n    cursor.execute('''\n        CREATE TABLE IF NOT EXISTS scores (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            player_name TEXT NOT NULL,\n            score INTEGER NOT NULL,\n            wave INTEGER NOT NULL,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        )\n    ''')\n    \n    # Create telemetry table\n    cursor.execute('''\n        CREATE TABLE IF NOT EXISTS telemetry (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            event_type TEXT NOT NULL,\n            timestamp REAL NOT NULL,\n            data TEXT NOT NULL,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        )\n    ''')\n    \n    conn.commit()\n    conn.close()\n\n\ndef get_db_connection():\n    conn = sqlite3.connect(DATABASE_PATH)\n    return conn\n\n\n@app.get('/api/health')\nasync def health_check():\n    return {'status': 'ok'}\n\n\n@app.get('/api/scores')\nasync def get_scores():\n    conn = get_db_connection()\n    cursor = conn.cursor()\n    cursor.execute('SELECT * FROM scores ORDER BY created_at DESC')\n    rows = cursor.fetchall()\n    conn.close()\n    \n    return [\n        {\n            'id': row[0],\n            'player_name': row[1],\n            'score': row[2],\n            'wave': row[3],\n            'created_at': row[4]\n        }\n        for row in rows\n    ]\n\n\n@app.post('/api/scores', response_model=ScoreEntry)\nasync def create_score(score_entry: ScoreEntry):\n    conn = get_db_connection()\n    cursor = conn.cursor()\n    \n    cursor.execute('''\n        INSERT INTO scores (player_name, score, wave)\n        VALUES (?, ?, ?)\n    ''', (score_entry.player_name, score_entry.score, score_entry.wave))\n    \n    conn.commit()\n    conn.close()\n    \n    return score_entry\n\n\n@app.get('/api/telemetry')\nasync def get_telemetry():\n    conn = get_db_connection()\n    cursor = conn.cursor()\n    cursor.execute('SELECT * FROM telemetry ORDER BY timestamp DESC LIMIT 100')\n    rows = cursor.fetchall()\n    conn.close()\n    \n    return [\n        {\n            'id': row[0],\n            'event_type': row[1],\n            'timestamp': row[2],\n            'data': row[3]\n        }\n        for row in rows\n    ]\n\n\n@app.post('/api/telemetry', response_model=TelemetryEvent)\nasync def create_telemetry(telemetry_event: TelemetryEvent):\n    conn = get_db_connection()\n    cursor = conn.cursor()\n    \n    cursor.execute('''\n        INSERT INTO telemetry (event_type, timestamp, data)\n        VALUES (?, ?, ?)\n    ''', (telemetry_event.event_type, telemetry_event.timestamp, telemetry_event.data))\n    \n    conn.commit()\n    conn.close()\n    \n    return telemetry_event\n\n\n@app.get('/api/scores/{score_id}')\nasync def get_score_by_id(score_id: int):\n    conn = get_db_connection()\n    cursor = conn.cursor()\n    cursor.execute('SELECT * FROM scores WHERE id = ?', (score_id,))\n    row = cursor.fetchone()\n    conn.close()\n    \n    if row is None:\n        raise HTTPException(status_code=404, detail='Score not found')\n    \n    return {\n        'id",
+      "time": 31.00444804201834,
+      "tokens": 1000,
+      "noul": 0.52
+    },
+    "dashboard": {
+      "code": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>SWARM REAL-TIME TELEMETRY</title>\n    <style>\n        /* --- CSS STYLES",
+      "time": 31.7393323329743,
+      "tokens": 1000,
+      "noul": 0.07
+    }
+  },
+  "verification": {
+    "models_py_compile": true,
+    "server_py_compile": false
+  },
+  "final_audit": {
+    "contract_soundness_noul": 0.58,
+    "quality_score": 0.55
+  }
+}

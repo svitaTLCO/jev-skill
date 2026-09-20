@@ -1,0 +1,79 @@
+{
+  "experiment": "Experiment 1: Swarm Density Scaling (8 Agents)",
+  "timestamp": "2026-09-20 03:07:39",
+  "workers_count": 8,
+  "total_wall_clock_seconds": 81.89,
+  "total_tokens": 4000,
+  "total_jev_overhead_seconds": 6.38,
+  "workers": {
+    "1_player": {
+      "id": "1_player",
+      "code": "// Define the player object\nconst player = {\n  x: 200,\n  y: 460,\n  width: 36,\n  height: 18,\n  vx: 0,\n  speed: 5,\n  friction: 0.85\n};\n\n// Method to update the player position\nfunction update(canvasWidth) {\n  // Add velocity to x position\n  player.x += player.vx;\n  \n  // Apply friction\n  player.x -= player.speed * player.friction;\n  \n  // Clamp x position between 10 and canvasWidth - width - 10\n  // Note: The prompt says \"clamps x between 10 and canvasWidth - width - 10\"\n  // Wait, usually the clamp is applied to the *final* position or the *current* position.\n  // The prompt says \"clamps x between 10 and canvasWidth - width - 10\".\n  // Let's assume the clamp range is [10, canvasWidth - width - 10].\n  // Wait, usually the clamp is applied to the *final* position.\n  // Let's re-read: \"clamps x between 10 and canvasWidth - width - 10\".\n  // This implies the range is [10, canvasWidth - width -\n}",
+      "time": 10.942742709070444,
+      "tokens": 500,
+      "noul": 0.34,
+      "jev_time": 0.7382118331734091
+    },
+    "2_fleet": {
+      "id": "2_fleet",
+      "code": "The user wants a JavaScript implementation of an \"Invader\" game.\nKey requirements:\n1.  **Variables**: `let invaders = [];`, `let invaderDir = 1;`, `let invaderSpeed = 1.2`.\n2.  **Create Invaders**: A `createInvaders()` function that generates 4 rows of 6 aliens.\n    *   Dimensions: `x: 26`, `h: 18`.\n    *   Properties: `alive: true`, `scoreVal: (4-r)*10`.\n    *   Wait, the prompt says \"4 rows of 6 aliens\". Usually, this means 4 rows of 6 = 24 aliens.\n    *   Let's check the `scoreVal` formula: `(4-r)*10`. This looks like a typo in the prompt or a specific logic. It probably means `scoreVal = (4-r)*10`. Wait, `r` is likely the row index or something else? Or maybe `r` is the row number?\n    *   Let's re-read: \"scoreVal: (4-r)*10\". If `r` is the row index (0, 1, 2, 3), then `scoreVal` would be `4-r`.\n    *   Wait, the prompt says \"4 rows of 6 aliens\". That's 24 aliens.\n    *   Let's assume `r` is the row index.\n    *   Wait, the prompt says \"scoreVal: (4-r)*10\". If `r` is the row index, then `scoreVal` is `4-r`.\n    *   Wait, the prompt says \"4 rows of 6 aliens\". That means 24 aliens.\n    *   Wait, the prompt says \"scoreVal: (4-r)*10\".\n    *   Wait, the prompt says \"4 rows of 6 aliens\".\n    *   Wait, the prompt says \"scoreVal: (4-r)*10\".\n    *   Wait, the prompt says \"4 rows of 6 aliens\".\n    *   Wait, the prompt says \"scoreVal: (4-r)*10\".\n    *   Wait, the prompt says \"4 rows of 6 aliens\".\n    *   Wait, the prompt says \"score",
+      "time": 9.54767100000754,
+      "tokens": 500,
+      "noul": 0.17,
+      "jev_time": 0.6562942499294877
+    },
+    "3_ballistics": {
+      "id": "3_ballistics",
+      "code": "The user wants a JavaScript implementation of a game mechanic involving lasers and bombs.\nKey components:\n1.  **Ballistics variables**: `let lasers = []; let bombs = [];`\n2.  **FireLaser() function**: Spawns a laser from the player center.\n    *   `vy: -7` (This implies gravity or downward movement, but usually in a game like this, it might be a specific physics value. I'll stick to the prompt's `vy: -7`).\n3.  **MaybeAlienBomb() function**: Drops a bomb from a random living invader.\n    *   `vy: 3.5`\n    *   `3% chance per frame`\n4.  **updateBallistics() function**: Updates positions and filters out-of-bounds.\n\nI need to structure this so it's a single cohesive block of code.\nI'll need a `Player` object or just a generic `Player` class to define the \"living invader\" and the \"player center\".\nI'll need a `Game` loop or just a `requestAnimationFrame` loop to handle the \"per frame\" logic.\n\nLet's refine the \"living invader\" part. Usually, in these games, you spawn enemies. I'll assume a `livingInvader` object that has a position and a velocity.\n\nLet's write the code.\n-   **Setup**: Define the variables.\n-   **FireLaser**: Create a `laser` object. Set `vy` to -7.\n-   **MaybeAlienBomb**: Create a `bomb` object. Set `vy` to 3.5.\n-   **updateBallistics**: Loop through `lasers` and `bombs`. Check bounds. If out of bounds, remove. Update position.\n\nI will use a `requestAnimationFrame` loop to handle the \"per frame\" logic.\n\nLet's make sure the code is strictly inside the code block.\n\nOne detail: \"A fireLaser() function spawning a laser from player center with vy: -7.\"\nThis implies the laser starts at the player's position.\n\nOne detail: \"MaybeAlienBomb() function with 3% chance per frame of dropping bomb from a random living invader with vy: 3.5.\"\nThis implies a random spawn event.\n\nI'll create a `Player",
+      "time": 9.225993959000334,
+      "tokens": 500,
+      "noul": 0.55,
+      "jev_time": 0.6685277922078967
+    },
+    "4_particles": {
+      "id": "4_particles",
+      "code": "// Particle Engine Implementation\n// This example demonstrates the requested functionality:\n// 1. A state variable `particles` to hold the array of particles.\n// 2. A `spawnExplosion` function that creates 12 particles with random properties.\n// 3. An `updateAndDrawParticles` function that handles the physics and rendering.\n\nconst canvas = document.createElement('canvas');\nconst ctx = canvas.getContext('2d');\n\n// Initialize the particle engine\nlet particles = [];\n\n// Helper function to spawn a particle\nfunction spawnExplosion(x,",
+      "time": 9.107258416013792,
+      "tokens": 500,
+      "noul": 0.19,
+      "jev_time": 0.6802802081219852
+    },
+    "5_audio": {
+      "id": "5_audio",
+      "code": "`javascript",
+      "time": 9.374747708905488,
+      "tokens": 500,
+      "noul": 0.12,
+      "jev_time": 0.7634739158675075
+    },
+    "6_ufo": {
+      "id": "6_ufo",
+      "code": "`javascript",
+      "time": 9.33004729100503,
+      "tokens": 500,
+      "noul": 0.12,
+      "jev_time": 0.7408562500495464
+    },
+    "7_bunkers": {
+      "id": "7_bunkers",
+      "code": "`javascript",
+      "time": 9.036084874998778,
+      "tokens": 500,
+      "noul": 0.12,
+      "jev_time": 0.6912529168184847
+    },
+    "8_hud": {
+      "id": "8_hud",
+      "code": ".\n\nI will create a simple game context (like a simple \"Space Shooter\" or \"Clicker\" style) where the user can click to add points.\nI need to make sure the `drawHUD` function is robust. It needs to draw the score, hearts (lives), and high score.\nI will use a simple canvas or DOM element for the drawing. Since the prompt asks for a \"Game HUD\", a Canvas API approach is usually best for performance and drawing shapes, but DOM is easier for simple text. I'll stick to a simple Canvas context for the drawing to make it look like a game.\n\nLet's write the code.\n-   `let score = 0;`\n-   `let lives = 3;`\n-   `let highScore = parseInt(localStorage.getItem('si_highscore') || '0');`\n-   `addScore(pts)` -> `score += pts;` -> `saveHighScore(highScore);`\n-   `drawHUD(ctx, width)` -> `ctx.fillStyle = 'white'; ctx.font = 'bold'; ctx.textAlign = 'center'; ctx.fillText('Score: ' + score, 0, 0);` -> `ctx.fillStyle = 'red'; ctx.font = 'bold'; ctx.textAlign = 'center'; ctx.fillText('Lives: ' + lives, 0, 0);` -> `ctx.fillStyle = 'gold'; ctx.font = 'bold'; ctx.textAlign = 'center'; ctx.fillText('High Score: ' + highScore, 0, 0);`\n\nI'll wrap everything in a `Game` class or just a main function. Let's go with a main function that handles the game loop and drawing.\n\nWait, the prompt asks for \"Wrap the code strictly inside a",
+      "time": 8.936395040946081,
+      "tokens": 500,
+      "noul": 0.56,
+      "jev_time": 0.753442833898589
+    }
+  },
+  "final_audit": {
+    "playable_noul": 0.03,
+    "quality_score": 0.13
+  },
+  "file": "benchmarks/swarm_deluxe/space_invaders_deluxe.html"
+}

@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-09-20 01:27:55",
+  "run_1_baseline": {
+    "description": "Standard direct code generation without Jev assistance",
+    "jev_queries_count": 0,
+    "total_jev_latency_ms": 0,
+    "token_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "target_file": "benchmarks/run_1_baseline/index.html"
+  },
+  "run_2_jev_guided": {
+    "jev_queries": [
+      {
+        "step": "Architecture & Game-Feel Decision",
+        "latency_ms": 702.5,
+        "model": "jev-1.13.0",
+        "usage": {
+          "input_tokens": 621,
+          "output_tokens": 107
+        },
+        "decisions": {
+          "physics_profile": {
+            "type": "choice",
+            "choice": "arcade_forgiving",
+            "confidence": 0.95,
+            "probabilities": {
+              "punishing_retro": 0.0,
+              "floaty_casual": 0.03,
+              "arcade_forgiving": 0.97
+            }
+          },
+          "audio_strategy": {
+            "type": "choice",
+            "choice": "synthesized_web_audio",
+            "confidence": 0.37,
+            "probabilities": {
+              "single_oscillator_beeps": 0.17,
+              "synthesized_web_audio": 0.58,
+              "silent": 0.25
+            }
+          }
+        }
+      },
+      {
+        "step": "Pre-Flight Verification & Quality Gate",
+        "latency_ms": 846.4,
+        "model": "jev-1.13.0",
+        "usage": {
+          "input_tokens": 9071,
+          "output_tokens": 82
+        },
+        "evaluations": {
+          "code_maintainability": {
+            "type": "score",
+            "score": 2.11,
+            "confidence": 0.89,
+            "legend": {
+              "0": "Level 0: Monolithic procedural spaghetti, global variable pollution.",
+              "1": "Level 1: Working but coupled, difficult to maintain or extend.",
+              "2": "Level 2: Well-structured modular classes, clear responsibilities, idiomatic conventions.",
+              "3": "Level 3: Production excellence, highly decoupled, self-documenting."
+            },
+            "probabilities": {
+              "0": 0.0,
+              "1": 0.0,
+              "2": 0.89,
+              "3": 0.11
+            }
+          },
+          "hitbox_fairness": {
+            "type": "noul",
+            "noul": 0.89
+          },
+          "audio_safety": {
+            "type": "noul",
+            "noul": 0.74
+          },
+          "has_unhandled_edge_cases": {
+            "type": "noul",
+            "noul": 0.32
+          }
+        }
+      }
+    ],
+    "summary": {
+      "jev_queries_count": 2,
+      "total_jev_latency_ms": 1548.9,
+      "total_tokens": {
+        "input": 9692,
+        "output": 189
+      },
+      "target_file": "benchmarks/run_2_typesafe_jev/index.html"
+    }
+  }
+}

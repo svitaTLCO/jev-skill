@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Space Invaders Deluxe - Team 4 (Delta)</title>
+  <style>
+    body {
+      background: #060913;
+      color: #00ff88;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    h2 { margin: 0 0 6px 0; font-size: 1.3rem; letter-spacing: 2px; text-shadow: 0 0 10px #00ff88; }
+    .badge { font-size: 0.8rem; color: #00f3ff; margin-bottom: 10px; }
+    canvas {
+      background: #0a0e1a;
+      border: 2px solid #00ff88;
+      border-radius: 6px;
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.25);
+    }
+    .footer { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h2>👾 SPACE INVADERS // DELTA</h2>
+  <div class="badge">Team #4 &bull; Powered by Swarm + Jev Pipeline</div>
+  <canvas id="c" width="400" height="500"></canvas>
+  <div class="footer">&larr; &rarr; or A / D to Move &bull; SPACEBAR to Shoot</div>
+
+  <script>
+  // 4. Renderer & HUD
+function draw() {
+  const ctx = canvas.getContext('2d');
+  // ... lots of drawing code ...
+}
+
+// Initialize invaders
+if (typeof initInvaders === 'function') {
+  initInvaders();
+}
+
+// Keyboard Controls
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  keys[e.code] = true;
+  if (e.code === 'Space' && !gameOver && !gameWon) {
+    if (typeof shootBullet === 'function') shootBullet();
+  }
+});
+window.addEventListener('keyup', e => {
+  keys[e.key] = false;
+  keys[e.code] = false;
+});
+
+// Main Game Loop
+function gameLoop() {
+  if (!gameOver && !gameWon) {
+    // ...
+  }
+  if (typeof draw === 'function') draw();
+  requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>

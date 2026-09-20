@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Pig - Jev Micro-Stepped (Local 1.5B)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #ff99c8;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sub {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    canvas {
+      background: linear-gradient(180deg, #38bdf8 0%, #7dd3fc 60%, #bae6fd 100%);
+      border: 3px solid #ff99c8;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+    }
+    .footer {
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .badge {
+      background: rgba(255, 153, 200, 0.15);
+      border: 1px solid rgba(255, 153, 200, 0.4);
+      color: #ff99c8;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>🐷</span> FLAPPY PIG (JEV + LOCAL 1.5B)</h1>
+    <div class="sub">Orchestrated with TypeSafe Jev &bull; Coded by Qwen2.5:1.5b</div>
+  </div>
+
+  <canvas id="gameCanvas" width="360" height="520"></canvas>
+
+  <div class="footer">
+    <span>Tap / Click / Spacebar to Flap</span>
+    <span class="badge">100% Playable</span>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let score = 0;
+    let highScore = 0;
+    let gameState = 'START'; // START, PLAYING, GAMEOVER
+    let wingAngle = 0;
+
+    // --- COMPONENT 1: PIG (Local Model: Qwen 1.5B) ---
+    let pig = {
+    x: 60,
+    y: 200,
+    vy: 0,
+    gravity: 0.35,
+    jump: -6.0,
+    update() {
+        this.y += this.vy;
+        this.vy += this.gravity;
+    }
+};
+
+    // --- COMPONENT 2: PIPES (Local Model: Qwen 1.5B) ---
+    let pipes = [{x: 360, top: 120, gap: 115}];
+
+function updatePipes() {
+    pipes.forEach(pipe => {
+        pipe.x -= 2.2;
+        if (pipe.x < -50) {
+            pipes.pop();
+        }
+    });
+
+    if (pipes.length < 2) {
+        pipes.push({x: 360, top: Math.floor(Math.random() * 200) + 50, gap: 115});
+    }
+}
+
+    // --- COMPONENT 3: COLLISION (Local Model: Qwen 1.5B) ---
+    function checkCollision(canvasHeight) {
+    return pig.y > canvasHeight - 20;
+}
+
+    // Controls
+    function triggerJump() {
+      if (gameState === 'START') {
+        gameState = 'PLAYING';
+        pig.vy = pig.jump || -6.0;
+      } else if (gameState === 'PLAYING') {
+        pig.vy = pig.jump || -6.0;
+      } else if (gameState === 'GAMEOVER') {
+        // Reset
+        pig.x = 60;
+        pig.y = 200;
+        pig.vy = 0;
+        pipes = [{x: 360, top: 120, gap: 115}];
+        score = 0;
+        gameState = 'PLAYING';
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        triggerJump();
+      }
+    });
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      triggerJump();
+    });
+
+    // Draw Pig
+    function drawPig(x, y, vy) {
+      ctx.save();
+      ctx.translate(x, y);
+      const rot = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, vy * 0.06));
+      ctx.rotate(rot);
+
+      // Pig Body
+      ctx.fillStyle = '#ffb3c6';
+      ctx.strokeStyle = '#e6739f';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 20, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Snout
+      ctx.fillStyle = '#ff8fab';
+      ctx.beginPath();
+      ctx.ellipse(14, 2, 7, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Nostrils
+      ctx.fillStyle = '#b5179e';
+      ctx.beginPath();
+      ctx.arc(13, 2, 1.5, 0, Math.PI * 2);
+      ctx.arc(16, 2, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eye
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(6, -6, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(7.5, -6, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ear
+      ctx.fillStyle = '#ff8fab';
+      ctx.beginPath();
+      ctx.moveTo(-4, -12);
+      ctx.lineTo(2, -18);
+      ctx.lineTo(6, -11);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Angelic Wings (Animated)
+      wingAngle += 0.25;
+      const wingFlap = Math.sin(wingAngle) * 6;
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(-6, -10 + wingFlap, 11, 6, -Math.PI / 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Main Loop
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Clouds
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.arc(80, 70, 30, 0, Math.PI * 2);
+      ctx.arc(120, 60, 40, 0, Math.PI * 2);
+      ctx.arc(160, 70, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (gameState === 'PLAYING') {
+        pig.update();
+        updatePipes();
+
+        // Check if passed pipes for score
+        pipes.forEach(p => {
+          if (!p.scored && p.x < pig.x) {
+            p.scored = true;
+            score++;
+            if (score > highScore) highScore = score;
+          }
+        });
+
+        if (checkCollision(canvas.height)) {
+          gameState = 'GAMEOVER';
+        }
+      }
+
+      // Render Pipes
+      pipes.forEach(p => {
+        ctx.fillStyle = '#22c55e';
+        ctx.strokeStyle = '#15803d';
+        ctx.lineWidth = 3;
+
+        // Top pipe
+        ctx.fillRect(p.x, 0, 52, p.top);
+        ctx.strokeRect(p.x, -2, 52, p.top + 2);
+        // Top pipe rim
+        ctx.fillRect(p.x - 4, p.top - 16, 60, 16);
+        ctx.strokeRect(p.x - 4, p.top - 16, 60, 16);
+
+        // Bottom pipe
+        const bTop = p.top + p.gap;
+        const bHeight = canvas.height - bTop;
+        ctx.fillRect(p.x, bTop, 52, bHeight);
+        ctx.strokeRect(p.x, bTop, 52, bHeight);
+        // Bottom pipe rim
+        ctx.fillRect(p.x - 4, bTop, 60, 16);
+        ctx.strokeRect(p.x - 4, bTop, 60, 16);
+      });
+
+      // Render Pig
+      drawPig(pig.x, pig.y, pig.vy || 0);
+
+      // Render UI
+      if (gameState === 'START') {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('CLICK OR TAP TO FLY', canvas.width / 2, canvas.height / 2 - 20);
+
+        ctx.fillStyle = '#ff99c8';
+        ctx.font = '14px system-ui';
+        ctx.fillText('Guide the pig through the green pipes!', canvas.width / 2, canvas.height / 2 + 15);
+      } else if (gameState === 'PLAYING') {
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 4;
+        ctx.font = '900 38px system-ui';
+        ctx.textAlign = 'center';
+        ctx.strokeText(score, canvas.width / 2, 60);
+        ctx.fillText(score, canvas.width / 2, 60);
+      } else if (gameState === 'GAMEOVER') {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 28px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('OINK! GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px system-ui';
+        ctx.fillText(`Score: ${score}  Best: ${highScore}`, canvas.width / 2, canvas.height / 2);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '14px system-ui';
+        ctx.fillText('Click anywhere to restart', canvas.width / 2, canvas.height / 2 + 40);
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

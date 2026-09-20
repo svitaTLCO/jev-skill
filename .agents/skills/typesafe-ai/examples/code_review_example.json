@@ -1,0 +1,24 @@
+{
+  "state": "## Requirements\nImplement an asynchronous worker pool in Python that processes tasks concurrently with a maximum concurrency limit.\n\n## Implementation\n```python\nimport asyncio\n\nclass WorkerPool:\n    def __init__(self, max_concurrency: int = 5):\n        self.semaphore = asyncio.Semaphore(max_concurrency)\n        self.tasks = []\n\n    async def submit(self, coro, *args, **kwargs):\n        async with self.semaphore:\n            return await coro(*args, **kwargs)\n\n    async def run_batch(self, coros_with_args):\n        return await asyncio.gather(*(self.submit(c, *a) for c, a in coros_with_args))\n```",
+  "model": "jev-latest",
+  "questions": {
+    "maintainability": {
+      "type": "score",
+      "instructions": "Rate the code cleanliness, readability, and idiomatic quality.",
+      "criteria": [
+        "Unacceptable: poor naming, unidiomatic, buggy.",
+        "Fragile: working for basic cases but flawed structure.",
+        "Solid: clean, idiomatic, clear typing and structure.",
+        "Exemplary: production grade, elegant, robust."
+      ]
+    },
+    "satisfies_requirements": {
+      "type": "noul",
+      "instructions": "Does this implementation satisfy the requirement of limiting concurrent execution to max_concurrency?"
+    },
+    "handles_exceptions_gracefully": {
+      "type": "noul",
+      "instructions": "Does run_batch handle exceptions so that a failure in one coroutine does not abort or leak remaining tasks unhandled?"
+    }
+  }
+}

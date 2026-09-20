@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Space Invaders Deluxe - Team 1 (Alpha)</title>
+  <style>
+    body {
+      background: #060913;
+      color: #00ff88;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    h2 { margin: 0 0 6px 0; font-size: 1.3rem; letter-spacing: 2px; text-shadow: 0 0 10px #00ff88; }
+    .badge { font-size: 0.8rem; color: #00f3ff; margin-bottom: 10px; }
+    canvas {
+      background: #0a0e1a;
+      border: 2px solid #00ff88;
+      border-radius: 6px;
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.25);
+    }
+    .footer { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h2>👾 SPACE INVADERS // ALPHA</h2>
+  <div class="badge">Team #1 &bull; Powered by Swarm + Jev Pipeline</div>
+  <canvas id="c" width="400" height="500"></canvas>
+  <div class="footer">&larr; &rarr; or A / D to Move &bull; SPACEBAR to Shoot</div>
+
+  <script>
+  
+// --- Team 1 (Alpha) Game Implementation ---
+
+// 1. Player
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let player = { 
+    x: 180, 
+    y: 450, 
+    width: 40, 
+    height: 18, 
+    speed: 6,
+    dx: 0 // Velocity for movement
+};
+
+function updatePlayer(keys) {
+    const keyLeft = keys['ArrowLeft'] || keys['KeyA'];
+    const keyRight = keys['ArrowRight'] || keys['KeyD'];
+
+    if (keyLeft && !player.dx) player.dx = -player.speed;
+    else if (!keyLeft && player.dx) player.dx = -player.speed; // Reset velocity when not moving
+    
+    if (keyRight && !player.dx) player.dx = player.speed;
+    else if (!keyRight && player.dx) player.dx = player.speed;
+
+    player.x += player.dx;
+
+    // Clamp player position to canvas width (400px)
+    if (player.x < 0) {
+        player.x = 0;
+    } else if (player.x > canvas.width - player.width) {
+        player.x = canvas.width - player.width;
+    }
+}
+
+// Initialize movement logic on keydown events
+document.addEventListener('keydown', (e) => {
+    const keys = {};
+    // Add all keys to the object for easy access in updatePlayer
+    if(e.key === 'ArrowLeft' || e.key === 'a') keys['KeyA'] = true;
+    else if(e.key === 'ArrowRight' || e.key === 'd') keys['KeyD'] = true;
+
+    // Only trigger update if at least one key is pressed to avoid lag
+    if (keys['KeyA'] || keys['KeyD']) {
+        updatePlayer(keys);
+    }
+});
+
+// Initialize movement logic on keyup events
+document.addEventListener('keyup', (e) => {
+    const keys = {};
+    // Remove all keys from the object when released
+    if(e.key === 'ArrowLeft' || e.key === 'a') keys['KeyA'] = false;
+    else if(e.key === 'ArrowRight' || e.key === 'd') keys['KeyD'] = false;
+
+    updatePlayer(keys);
+});
+
+// 2. Invaders Fleet
+// Space Invaders Fleet System
+
+const INVADER_WIDTH = 28;
+const INVADER_HEIGHT = 18;
+const GRID_ROWS = 3;
+const GRID_COLS = 6;
+
+let invaderDir = 1; // 1 = right, -1 = left
+let invaderSpeed = 1.2;
+
+function initInvaders() {
+    const invaders = [];
+    
+    for (let row = 0; row < GRID_ROWS; row++) {
+        for (let col = 0; col < GRID_COLS; col++) {
+            // Create a new invader object with the specified properties
+            invaders.push({
+                x: col * INVADER_WIDTH + (col % 2 === 0 ? 0 : INVADER_WIDTH / 2),
+                y: row * (INVADER_HEIGHT + 4) + 16,
+                width: INVADER_WIDTH,
+                height: INVADER_HEIGHT,
+                alive: true,
+                points: 10,
+                color: `hsl(${row * 30}, ${col % 2 === 0 ? 50 : 80}, 70%)` // Alternating colors for each row/col
+            });
+        }
+    }
+    
+    return invaders;
+}
+
+function updateInvaders() {
+    const aliveInvaders = [];
+    
+    // Update all invaders' positions and check for edge cases
+    for (let i = 0; i < invaderDir * invaderSpeed; i++) {
+        if (!invaders[i].alive) continue;
+        
+        // Move horizontally based on direction
+        const newX = invaders[i].x + invaderDir * invaderSpeed;
+        
+        // Check for edge cases and reverse direction
+        if (newX < 10 || newX > 360) {
+            invaderDir *= -1;
+            
+            // Drop all invaders down by 14px when hitting an edge
+            const newY = invaders[i].y + 14;
+            
+            // Update position for next frame
+            if (invaders[i]) {
+                invaders[i].x = newX;
+                invaders[i].y = newY;
+                
+                // Add to aliveInvaders array
+                aliveInvaders.push({
+                    x: newX,
+                    y: newY,
+                    width: INVADER_WIDTH,
+                    height: INVADER_HEIGHT,
+                    alive: true,
+                    points: 10,
+                    color: `hsl(${row * 30}, ${col % 2 === 0 ? 50 : 80}, 70%)`
+                });
+            }
+        } else {
+            // Update position for next frame
+            invaders[i].x = newX;
+            
+            // Add to aliveInvaders array
+            aliveInvaders.push({
+                x: newX,
+                y: newY,
+                width: INVADER_WIDTH,
+                height: INVADER_HEIGHT,
+                alive: true,
+                points: 10,
+                color: `hsl(${row * 30}, ${col % 2 === 0 ? 50 : 80}, 70%)`
+            });
+        }
+    }
+    
+    return aliveInvaders;
+}
+
+// Helper function to create a new invader object with the specified properties
+function createInvader() {
+    const invaders = [];
+    
+    for (let row = 0; row < GRID_ROWS; row++) {
+        for (let col = 0; col < GRID_COLS; col++) {
+            // Create a new invader object with the specified properties
+            invaders.push({
+                x: col * INVADER_WIDTH + (col % 2 === 0 ? 0 : INVADER_WIDTH / 2),
+                y: row * (INVADER_HEIGHT + 4) + 16,
+                width: INVADER_WIDTH,
+                height: INVADER_HEIGHT,
+                alive: true,
+                points: 10,
+                color: `hsl(${row *
+
+// 3. Bullets & Collisions
+class SpaceInvaders {
+  constructor() {
+    this.bullets = [];
+    this.score = 0;
+    this.lives = 3;
+    this.gameOver = false;
+    this.gameWon = false;
+    this.invaders = [];
+    this.player = { x: 50, y: 100, width: 40, height: 20 };
+    this.invaderSpeedX = 1;
+    this.invaderSpeedY = 1;
+    this.invaderDirection = 'right';
+    this.invaderCount = 8;
+    this.invaderSize = 30;
+    this.invaderPoints = 10;
+    this.invaderAlive = true;
+    this.invaderDead = false;
+    this.invaderYOffset = 20;
+    this.invaderMoveInterval = setInterval(() => {
+      if (this.invaders.length > 0) {
+        const invader = this.invaders[0];
+        invader.x += this.invaderSpeedX * this.invaderDirection === 'right' ? 1 : -1;
+        if (invader.x + this.invaderSize >= window.innerWidth || invader.x <= 0) {
+          this.invaderDirection *= -1;
+        }
+      }
+    }, 50);
+  }
+
+  shootBullet() {
+    const bullet = {
+      x: this.player.x + this.player.width / 2 - 2,
+      y: this.player.y - 4,
+      width: 4,
+      height: 10,
+      speed: 8,
+      active: true
+    };
+    this.bullets.push(bullet);
+  }
+
+  updateBullets() {
+    for (let i = this.bullets.length - 1; i >= 0; i--) {
+      const bullet = this.bullets[i];
+      if (!bullet.active) continue;
+      bullet.y += bullet.speed;
+      
+      // Remove bullets that go off-screen
+      if (bullet.y > window.innerHeight || bullet.y < 0) {
+        this.bullets.splice(i, 1);
+        continue;
+      }
+
+      // Check collision with invaders
+      let hit = false;
+      for (let j = 0; j < this.invaders.length; j++) {
+        const invader = this.invaders[j];
+        
+        if (!invader.alive) continue;
+        
+        const dx = bullet.x - invader.x;
+        const dy = bullet.y - invader.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // AABB collision detection
+        if (distance < this.invaderSize / 2 + bullet.width / 2) {
+          hit = true;
+          
+          // Remove bullet and add points to score
+          this.bullets.splice(i, 1);
+          invader.alive = false;
+          this.score += invader.points;
+          
+          if (this.invaders.length === 0 && !this.gameWon) {
+            this.gameWon = true;
+          }
+        }
+      }
+
+      if (!hit) {
+        bullet.active = false;
+      }
+    }
+  }
+
+  checkCollisions() {
+    for (let i = this.bullets.length - 1; i >= 0; i--) {
+      const bullet = this.bullets[i];
+      
+      // Check collision with each alive invader
+      let hitInvaders = false;
+      for (
+
+// 4. Renderer & HUD
+function draw() {
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
+    
+    // Clear canvas
+    canvas.fillStyle = '#0a0a0a';
+    canvas.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw retro green player cannon
+    const cannonX = canvas.width / 2 - 15;
+    const cannonY = canvas.height - 40;
+    const cannonWidth = 30;
+    const cannonHeight = 60;
+    
+    canvas.fillStyle = '#00ff00';
+    // Draw retro green player cannon
+    for (let i = 0; i < cannonHeight; i++) {
+        const y = cannonY - i;
+        if (y >= 0) {
+            canvas.fillRect(cannonX + i, y, cannonWidth, 1);
+        }
+    }
+    
+    // Draw retro green player cannon turret
+    canvas.fillStyle = '#00ff00';
+    const turretHeight = 25;
+    for (let i = 0; i < turretHeight; i++) {
+        const y = cannonY - i;
+        if (y >= 0) {
+            canvas.fillRect(cannonX + 1, y, 3, 1);
+        }
+    }
+    
+    // Draw retro green player cannon barrel
+    canvas.fillStyle = '#00ff00';
+    const barrelHeight = 25;
+    for (let i = 0; i < barrelHeight; i++) {
+        const y = cannonY - i;
+        if (y >= 0) {
+            canvas.fillRect(cannonX + 1, y, 3, 1);
+        }
+    }
+    
+    // Draw retro green player cannon body
+    canvas.fillStyle = '#00ff00';
+    const bodyHeight = 25;
+    for (let i = 0; i < bodyHeight; i++) {
+        const y = cannonY - i;
+        if (y >= 0) {
+            canvas.fillRect(cannonX + 1, y, 3, 1);
+        }
+    }
+    
+    // Draw retro green player cannon barrel
+    canvas.fillStyle = '#00ff00';
+    const barrelHeight = 25;
+    for (let i = 0; i < barrelHeight; i++) {
+        const y = cannonY - i;
+        if (y >= 0) {
+            canvas.fillRect(cannonX + 1, y, 3, 1);
+        }
+    }
+    
+    // Draw retro green player cannon body
+    canvas.fillStyle = '#00ff00';
+    const bodyHeight = 25;
+    for (let i = 0; i < bodyHeight; i++) {
+        const y = cannonY - i;
+        if (y >= 0) {
+            canvas.fillRect(cannonX + 1, y, 3, 1);
+        }
+    }
+    
+    // Draw retro green player cannon barrel
+    canvas.fillStyle = '#00ff00';
+    const barrelHeight = 25;
+    for (let i = 0; i < barrelHeight; i++) {
+        const y = cannonY - i;
+        if (y >= 0) {
+            canvas.fillRect(cannonX + 1, y, 3, 1);
+        }
+    }
+    
+    // Draw retro green player cannon body
+    canvas.fillStyle = '#00ff00';
+    const bodyHeight = 25;
+    for (let i = 0; i < bodyHeight; i++) {
+        const y = cannonY - i;
+        if (y >= 0) {
+            canvas.fillRect
+
+// Initialize invaders
+if (typeof initInvaders === 'function') {
+  initInvaders();
+}
+
+// Keyboard Controls
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  keys[e.code] = true;
+  if (e.code === 'Space' && !gameOver && !gameWon) {
+    if (typeof shootBullet === 'function') shootBullet();
+  }
+});
+window.addEventListener('keyup', e => {
+  keys[e.key] = false;
+  keys[e.code] = false;
+});
+
+// Main Game Loop
+function gameLoop() {
+  if (!gameOver && !gameWon) {
+    if (typeof updatePlayer === 'function') updatePlayer(keys);
+    if (typeof updateInvaders === 'function') updateInvaders();
+    if (typeof updateBullets === 'function') updateBullets();
+    if (typeof checkCollisions === 'function') checkCollisions();
+  }
+  if (typeof draw === 'function') draw();
+  if (typeof drawHUD === 'function') drawHUD();
+  requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+
+  </script>
+</body>
+</html>

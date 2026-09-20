@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyberpunk Breakout - Team 1 (Neon-Pulse)</title>
+  <style>
+    body {
+      background: #050811;
+      color: #00f3ff;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    .title { font-size: 1.3rem; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }
+    .badge { font-size: 0.75rem; color: #ff007f; margin-bottom: 10px; }
+    canvas {
+      background: #070b14;
+      border: 2px solid #00f3ff;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+    }
+    .controls { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="title">⚡ CYBER-BREAKOUT // NEON-PULSE</div>
+  <div class="badge">Team #1 &bull; Architecture: Functional Reactive Architecture</div>
+  <canvas id="c" width="480" height="500"></canvas>
+  <div class="controls">&larr; &rarr; or A / D to Move Paddle &bull; ESC to Restart</div>
+
+  <script>
+  
+const canvas = document.getElementById('c'); const ctx = canvas.getContext('2d');
+let paddle = { x: 200, y: 460, width: 80, height: 12, speed: 7 };
+let ball = { x: 240, y: 300, vx: 4, vy: -4, radius: 6 };
+const rows = 4; const cols = 8;
+const brickWidth = 48; const brickHeight = 16;
+
+// Initialize the bricks array
+let bricks = [];
+for (let r = 0; r < rows; r++) {
+    let rowBricks = [];
+
+function updatePaddle(keys) {
+    const paddle = document.getElementById('p'); // Assuming 'p' exists or using canvas coordinates directly
+    
+    if (keys['ArrowUp'] || keys['w']) {
+        paddle.y -= 1;
+    } else if (keys['ArrowDown'] || keys['s']) {
+        paddle.y += 1;
+    }
+
+    // Clamp paddle to canvas boundaries (0-480)
+    const maxPaddleY = 460 - paddle.height;
+    if (paddle.y < 0) paddle.y = 0;
+    if (paddle.y > maxPaddleY) paddle.y = maxPaddleY;
+
+    // Center paddle on mouse click or key press
+    const center = Math.min(paddle.width / 2, canvas.width);
+    paddle.x = center - paddle.width / 2;
+}
+
+function updateBall() {
+    let x = ball.x + ball.vx;
+    let y = ball.y + ball.vy;
+
+    // Wall collisions (left/right)
+    if (x <= 0 || x >= canvas.width - ball.radius) {
+        ball.vx *= -1;
+        ball.x = Math.max(0, Math.min(x, canvas.width - ball.radius));
+    }
+
+    // Paddle collision
+    const paddleCenterX = paddle.x + paddle.width / 2;
+    if (y >= paddle.y && y <= paddle.y + paddle.height) {
+        if (x < paddleCenterX) {
+            ball.vx += 4; // Add speed on hit
+        } else {
+            ball.vx -= 4;
+        }
+        ball.x = paddleCenterX - ball.radius;
+    }
+
+    // Floor collision
+    if (y >= canvas.height - ball.radius) {
+        ball.vy *= -1;
+        ball.y = canvas.height - ball.radius
+
+The user wants me to write JavaScript rendering functions for a game called "Cyberpunk Neon Breakout".
+I need to create two main functions: `draw()` and `drawHUD()`.
+
+**Requirements:**
+1.  **Canvas Size**: 480x500 pixels.
+2.  **Background Color**: Dark `#070b14`.
+3.  **Elements to Draw in `draw()`**:
+    *   Glowing neon paddle.
+    *   Ball.
+    *   Colored brick grid (bright cyan, magenta, neon green).
+4.  **HUD in `drawHUD()`**: Score and lives using retro monospace font.
+
+**Implementation Details:**
+*   I'll need a basic game loop structure or at least the rendering logic. Since the prompt asks specifically for functions to render these elements, I should probably include a simple main loop context (like `requestAnimationFrame`) so they actually work as intended in a browser environment, but the core request is just the specific drawing functions.
+*   **Neon Paddle**: Needs a glow effect. This can be achieved using `ctx.shadowBlur` and `ctx.shadowColor`. The color should probably match one of the grid colors (e.g., cyan).
+*   **Brick Grid**: A classic breakout pattern. I'll need to draw lines or rectangles representing bricks. Using `ctx.strokeStyle` with a glow effect is good for the "neon" look, but standard neon usually implies a distinct color and maybe some transparency. The prompt asks for specific colors: cyan, magenta, green.
+*   **Ball**: Needs to bounce off walls and paddle. I'll need to draw it as well.
+*   **HUD**: A simple text element in the top-left or center.
+
+**Drafting the Code:**
+
+1.  **Setup**: `const canvas = document.getElementById('gameCanvas');` (I should probably assume a container exists, but since this is just the rendering functions, I'll focus on that).
+2.  **The `draw()` function**:
+    *   Clear canvas with `#070b14`.
+    *   Draw Bricks: A grid of rectangles. Let's make them glow using a semi-transparent fill and stroke.
+    *   Draw Paddle: A rectangle at the bottom, glowing cyan.
+    *   Draw Ball: A circle in the center, glowing white or yellow.
+3.  **The `drawHUD()` function**:
+    *   Get context (usually global).
+    *   Create a text element for score/lives.
+    *
+
+// Key listeners & Main Loop
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key] = true; keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.key] = false; keys[e.code] = false; });
+
+function loop() {
+  if (!gameOver && !gameWon) {
+    if (typeof updatePaddle === 'function') updatePaddle(keys);
+    if (typeof updateBall === 'function') updateBall();
+    if (typeof checkBrickCollisions === 'function') checkBrickCollisions();
+  }
+  if (typeof draw === 'function') draw();
+  if (typeof drawHUD === 'function') drawHUD();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+  </script>
+</body>
+</html>

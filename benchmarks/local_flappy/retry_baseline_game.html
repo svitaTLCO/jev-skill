@@ -1,0 +1,110 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Pig Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            background: #000;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const bird = {
+            x: 50,
+            y: 300,
+            width: 30,
+            height: 30,
+            speed: 5,
+            jump: 10,
+            score: 0,
+            isJumping: false,
+            isFlying: false,
+            draw: function() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.width / 2, 0, Math.PI * 2);
+                ctx.fillStyle = this.isFlying ? '#ff0000' : '#00ff00';
+                ctx.fill();
+                ctx.closePath();
+            },
+            update: function() {
+                if (this.isJumping) {
+                    this.y -= this.speed;
+                    if (this.y < 0) this.y = 0;
+                }
+                if (this.isFlying) {
+                    this.y += this.speed;
+                    if (this.y > 500) this.y = 500;
+                }
+                if (this.isFlying && this.y > 500) {
+                    this.isFlying = false;
+                    this.y = 500;
+                }
+            },
+            jump: function() {
+                if (!this.isFlying) {
+                    this.isJumping = true;
+                    this.speed = this.jump;
+                }
+            },
+            fly: function() {
+                this.isFlying = true;
+                this.speed = 0;
+                this.y = 300;
+            }
+        };
+        const pipes = [];
+        const pipesGap = 100;
+        const pipeHeight = 50;
+        const pipeSpeed = 5;
+        const score = 0;
+        const scoreDisplay = document.createElement('div');
+        scoreDisplay.style.position = 'absolute';
+        scoreDisplay.style.top = '10px';
+        scoreDisplay.style.left = '10px';
+        scoreDisplay.style.width = '100px';
+        scoreDisplay.style.height = '20px';
+        scoreDisplay.style.backgroundColor = '#00ff00';
+        scoreDisplay.style.color = '#000';
+        scoreDisplay.style.borderRadius = '5px';
+        scoreDisplay.style.padding = '5px';
+        scoreDisplay.textContent = score;
+        document.body.appendChild(scoreDisplay);
+
+        function createPipe() {
+            pipes.push({
+                x: canvas.width,
+                y: Math.random() * (canvas.height - pipeHeight - pipesGap) + pipesGap,
+                width: 100,
+                height: pipeHeight
+            });
+        }
+
+        function update() {
+            for (let i = 0; i < pipes.length; i++) {
+                pipes[i].x -= pipeSpeed;
+                if (pipes[i].x < -pipes[i].width) pipes.splice(i, 1);
+            }
+            if (pipes.length === 0) createPipe();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff00';
+            ctx.beginPath();
+            ctx.arc(bird.x, bird.y, bird.width / 2, 0, Math.PI * 2);
+            ctx.fill();

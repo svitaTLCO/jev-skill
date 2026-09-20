@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyberpunk Breakout - Team 2 (Cyber-Matrix)</title>
+  <style>
+    body {
+      background: #050811;
+      color: #00f3ff;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    .title { font-size: 1.3rem; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }
+    .badge { font-size: 0.75rem; color: #ff007f; margin-bottom: 10px; }
+    canvas {
+      background: #070b14;
+      border: 2px solid #00f3ff;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+    }
+    .controls { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="title">⚡ CYBER-BREAKOUT // CYBER-MATRIX</div>
+  <div class="badge">Team #2 &bull; Architecture: Object-Oriented Component State</div>
+  <canvas id="c" width="480" height="500"></canvas>
+  <div class="controls">&larr; &rarr; or A / D to Move Paddle &bull; ESC to Restart</div>
+
+  <script>
+  
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// Game State Initialization
+let paddle = { x: 200, y: 460, width: 80, height: 12, speed: 7 };
+let ball = { x: 240, y: 30
+
+function updatePaddle(keys) {
+  const paddle = document.getElementById('c');
+  let paddleX = paddle.offsetLeft;
+  
+  if (keys['ArrowRight'] || keys['KeyD']) {
+    paddleX += 5;
+  } else if (keys['ArrowLeft'] || keys['KeyA']) {
+    paddleX -= 5;
+  }
+  
+  // Boundary checks for paddle
+  if (paddleX < 0) paddleX = 0;
+  if (paddleX + paddle.width > canvas.width) paddleX = canvas.width - paddle.width;
+}
+
+function updateBall() {
+  const ball = document.getElementById('b');
+  let ballX = ball.offsetLeft;
+  let ballY = ball.offsetTop;
+  
+  // Move ball
+  if (keys['ArrowRight'] || keys['KeyD']) {
+    ballX += 4;
+  } else if (keys['ArrowLeft'] || keys['KeyA']) {
+    ballX -= 4;
+  }
+  
+  // Wall collisions
+  if (ballX <= 0) {
+    ballX = 0;
+    ballY += 2;
+  } else if (ballX >= canvas.width - ball.width) {
+    ballX = canvas.width - ball.width;
+    ballY -= 2;
+  }
+  
+  // Paddle collision
+  const paddleHeight = paddle.height;
+  const paddleTop = paddle.offsetTop;
+  const paddleBottom = paddle.offsetTop + paddleHeight;
+  
+  if (ballY >= paddleTop && ballY <= paddleBottom) {
+    let deltaY = ballY - (paddleTop + paddleHeight / 2);
+    let bounceAngle = Math.min(Math.abs(deltaY
+
+function draw() {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Clear canvas with dark background
+  ctx.fillStyle = '#070b14';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw glowing neon elements
+  drawNeonPaddle(ctx);
+  drawBall(ctx);
+  drawBrickGrid(ctx);
+}
+
+function drawHUD() {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Create retro monospace font style
+  ctx.font = '16px "Courier New", Courier, monospace';
+  
+  // Draw HUD elements
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  
+  // Score display
+  ctx.fillText('Score: 0', canvas.width / 2, 40);
+  
+  // Lives display
+  ctx.fillText(`Lives: ${player.lives}`, canvas.width / 2, 60);
+}
+
+// Helper functions for neon effects
+function drawNeonPaddle(ctx) {
+  const paddle = document.getElementById('paddle');
+  if (!paddle) return;
+  
+  // Neon glow effect
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#0ff';
+  
+  // Paddle drawing with neon border
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(20, 30, 40, 8);
+}
+
+function drawBall(ctx) {
+  const ball = document.getElementById('ball');
+  if (!ball) return;
+  
+  // Ball glow effect
+  ctx.shadowBlur = 15;
+
+// Key listeners & Main Loop
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key] = true; keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.key] = false; keys[e.code] = false; });
+
+function loop() {
+  if (!gameOver && !gameWon) {
+    if (typeof updatePaddle === 'function') updatePaddle(keys);
+    if (typeof updateBall === 'function') updateBall();
+    if (typeof checkBrickCollisions === 'function') checkBrickCollisions();
+  }
+  if (typeof draw === 'function') draw();
+  if (typeof drawHUD === 'function') drawHUD();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+  </script>
+</body>
+</html>

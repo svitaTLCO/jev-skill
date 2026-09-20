@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Pig</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="360" height="540"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const bird = {
+            x: 50,
+            y: 250,
+            width: 20,
+            height: 20,
+            speed: 5,
+            jump: 10,
+            gravity: 0.2,
+            jumpCount: 0,
+            isJumping: false,
+            isFlying: false,
+            score: 0,
+            lives: 3,
+            scoreText: '',
+            livesText: ''
+        };
+
+        const pipes = [];
+        const pipeGap = 200;
+        const pipeSpeed = 5;
+        const pipeHeight = 100;
+
+        function drawBird() {
+            ctx.beginPath();
+            ctx.arc(bird.x, bird.y, bird.width, 0, Math.PI * 2);
+            ctx.fillStyle = 'pink';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawPipes() {
+            pipes.forEach(pipe => {
+                ctx.beginPath();
+                ctx.rect(pipe.x, pipe.y, pipe.width, pipeHeight);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        function drawScore() {
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'white';
+            ctx.fillText(`Score: ${bird.score}`, 10, 40);
+        }
+
+        function drawLives() {
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'white';
+            ctx.fillText(`Lives: ${bird.lives}`, 10, 80);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBird();
+            drawPipes();
+            drawScore();
+            drawLives();
+
+            if (bird.isFlying) {
+                bird.y += bird.speed;
+                if (bird.y > canvas.height - bird.height) {
+                    bird.y = canvas.height - bird.height;
+                    bird.isFlying = false;
+                    bird.score = 0;
+                    bird.lives = 3;
+                }
+            }
+
+            if (bird.isJumping) {
+                bird.y -= bird.speed;
+                if (bird.y < 0) {
+                    bird.y = 0;
+                    bird.isJumping = false;
+                    bird.score = 0;
+                    bird.lives = 3;
+                }
+            }
+
+            if (bird.isFlying) {
+                bird.y += bird.gravity;
+            }
+
+            if (bird.isJumping) {
+                bird.y -= bird.gravity;
+            }
+
+            if (bird.y < 0) {
+                bird.y = 0;
+                bird.isFlying = false;
+                bird.score = 0;
+                bird.lives = 3;
+            }
+
+            if (bird.y > canvas.height - bird.height) {
+                bird.y = canvas.height - bird.height;
+                bird.isFlying = false;
+                bird.score = 0;
+                bird.lives = 3;
+            }
+
+            if (bird.y > canvas.height - bird.height) {
+                ctx.fillText('Game Over', 100, 200);
+                ctx.fillText('Press any key to restart', 100, 250);
+                bird.score = 0;
+                bird.lives = 3;
+                bird.isFlying = false;
+                bird.isJumping = false;
+                bird.y = 250;
+                bird.x = 50;
+                pipes = [];
+                bird.scoreText = '';
+                bird.livesText = '';
+                bird.isFlying = false;
+                bird.isJumping = false;
+            }
+
+            if (pipes.length < 2) {
+                pipes.push({
+                    x: canvas.width,
+                    y: Math.random() * (canvas.height - pipeHeight - pipeGap) + pipeGap
+                });
+            }
+
+            pipes.forEach(pipe => {
+                pipe.x -= pipeSpeed;
+                if (pipe.x < -pipe.width) {
+                    pipes.shift();
+                }
+            });
+
+            if (pipes.length > 0) {
+                pipes.forEach(pipe => {
+                    pipe.y += pipeSpeed;
+                });
+            }
+
+            if (pipes.length > 0) {
+                if (pipes[0].x < bird.x + bird.width && pipes[0].y < bird.y && pipes[0].y < bird.y + bird.height) {
+                    bird.isFlying = false;
+                    bird.score = 0;
+                    bird.lives = 3;
+                    ctx.fillText('Game Over', 100, 200);
+                    ctx.fillText('Press any key to restart', 100, 250);
+                    bird.scoreText = '';
+                    bird.livesText = '';
+                    bird.isFlying = false;
+                    bird.isJumping = false;
+                    bird.y = 250;
+                    bird.x = 50;
+                    pipes = [];
+                    bird.score = 0;
+                    bird.lives = 3;
+                }
+            }
+
+            if (pipes.length > 0) {
+                if (pipes[0].x < bird.x + bird.width && pipes[0].y < bird.y && pipes[0].y < bird.y + bird.height) {
+                    bird.isFlying = false;
+                    bird.score = 0;
+                    bird.lives = 3;
+                    ctx.fillText('Game Over', 100, 200);
+                    ctx.fillText('Press any key to restart', 100, 250);
+                    bird.scoreText = '';
+                    bird.livesText = '';
+                    bird.isFlying = false;
+                    bird.isJumping = false;
+                    bird.y = 250;
+                    bird.x = 50;
+                    pipes = [];
+                    bird.score = 0;
+                    bird.lives = 3;
+                }
+            }
+
+            if (pipes.length > 0) {
+                if (pipes[0].x < bird.x + bird.width && pipes[0].y < bird.y && pipes[0].y < bird.y + bird.height) {
+                    bird.isFlying = false;
+                    bird.score = 0;
+                    bird.lives = 3;
+                    ctx.fillText('Game Over', 100, 200);
+                    ctx.fillText('Press any key to restart', 100, 250);
+                    bird.scoreText = '';
+                    bird.livesText = '';
+                    bird.isFlying = false;
+                    bird.isJumping = false;
+                    bird.y = 250;
+                    bird.x = 50;
+                    pipes = [];
+                    bird.score = 0;
+                    bird.lives = 3;
+                }
+</script>
+</body></html>

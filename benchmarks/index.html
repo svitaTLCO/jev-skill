@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TypeSafe AI (Jev) & Local SLM Swarm — Community Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --card-bg: #0f1422;
+      --card-border: #1c263d;
+      --accent-cyan: #06b6d4;
+      --accent-pink: #ec4899;
+      --accent-purple: #8b5cf6;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 80px;
+    }
+
+    /* Hero */
+    header {
+      text-align: center;
+      max-width: 960px;
+      margin-bottom: 48px;
+    }
+    .badge-bar {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .pill.cyan { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .pill.pink { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .pill.purple { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+    .pill.green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    h1 {
+      font-size: clamp(2.2rem, 4vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #38bdf8 0%, #ec4899 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto 24px;
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 1180px;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    /* Grid layout */
+    .arcade-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin-bottom: 56px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #3b82f6;
+      box-shadow: 0 15px 40px rgba(59, 130, 246, 0.15);
+    }
+    .card.featured {
+      border-color: var(--accent-pink);
+      background: linear-gradient(180deg, #13172c 0%, #20102b 100%);
+      box-shadow: 0 12px 40px rgba(236, 72, 153, 0.2);
+    }
+    .card-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      width: fit-content;
+    }
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .card-summary {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .specs {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .spec-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+    .spec-val.green { color: var(--accent-green); }
+    .spec-val.pink { color: var(--accent-pink); }
+    .spec-val.amber { color: var(--accent-amber); }
+
+    .btn {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 18px;
+      border-radius: 12px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn.primary {
+      background: linear-gradient(135deg, #ec4899, #be185d);
+      color: #fff;
+    }
+    .btn.cyan {
+      background: linear-gradient(135deg, #06b6d4, #0284c7);
+      color: #fff;
+    }
+    .btn.secondary {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+    }
+    .btn:hover { opacity: 0.92; }
+
+    /* Benchmarks Section */
+    .benchmarks-wrap {
+      background: #0d121f;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 56px;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+    th {
+      background: #172033;
+      color: #94a3b8;
+      padding: 12px 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+    }
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #1a233a;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* Telemetry box */
+    .telemetry-card {
+      background: #050811;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+      overflow-x: auto;
+    }
+    .hi-cyan { color: #38bdf8; }
+    .hi-green { color: #34d399; }
+    .hi-pink { color: #f472b6; }
+    .hi-amber { color: #fbbf24; }
+
+    /* Callout */
+    .callout {
+      background: rgba(139, 92, 246, 0.1);
+      border-left: 4px solid var(--accent-purple);
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      margin: 24px 0;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.85rem;
+      margin-top: 40px;
+    }
+    footer a { color: #94a3b8; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <header>
+    <div class="badge-bar">
+      <span class="pill cyan">🔬 Empirical Research</span>
+      <span class="pill pink">⚡ Local SLM Swarm (<2B)</span>
+      <span class="pill purple">🧠 TypeSafe Jev System One</span>
+      <span class="pill green">🍎 Apple Silicon M1 (16GB)</span>
+    </div>
+    <h1>TypeSafe AI (Jev) & Local SLM Swarm</h1>
+    <p class="subtitle">
+      What happens when you coordinate swarms of ultra-fast local Small Language Models (0.8B & 2B) with 
+      <strong>TypeSafe Jev System One</strong> as an architectural judge, compiler self-healing gate, and quality inspector?
+    </p>
+  </header>
+
+  <div class="container">
+
+    <!-- Section 1: Playable Arcade -->
+    <div class="section-title">🎮 Playable Game Arcade</div>
+    <div class="section-desc">Every game below was synthesized locally by 0.8B/2B parameter SLMs under Jev System One governance. Click to play in browser.</div>
+
+    <div class="arcade-grid">
+      <!-- Space Invaders -->
+      <div class="card featured">
+        <div>
+          <span class="card-badge" style="background: #ec4899; color: #fff;">4-Worker Micro-Swarm</span>
+          <div class="card-title">Retro Space Invaders</div>
+          <div class="card-summary">
+            4 independent micro-workers (Player, Fleet, Ballistics, Renderer) assembled under Jev contract gates.
+          </div>
+          <div class="specs">
+            <div class="spec-row"><span>Workers Model</span><span class="spec-val pink">Huihui-Qwen3.5-2B</span></div>
+            <div class="spec-row"><span>Assembly Time</span><span class="spec-val">67.43s (~28 tok/s)</span></div>
+            <div class="spec-row"><span>Jev Gate Overhead</span><span class="spec-val green">2,799 ms total</span></div>
+            <div class="spec-row"><span>AST Node Syntax</span><span class="spec-val green">Exit Code 0 (PASS)</span></div>
+          </div>
+        </div>
+        <a href="space_invaders/space_invaders_playable.html" class="btn primary">Play Space Invaders 👾</a>
+      </div>
+
+      <!-- Flappy Pig Deluxe -->
+      <div class="card">
+        <div>
+          <span class="card-badge" style="background: #38bdf8; color: #0284c7;">Speculative Gating</span>
+          <div class="card-title">Flappy Pig Deluxe</div>
+          <div class="card-summary">
+            Jev Choice selected forgiving arcade physics & Web Audio synthesis before generation, passing post-flight Noul gates.
+          </div>
+          <div class="specs">
+            <div class="spec-row"><span>Physics Choice</span><span class="spec-val cyan">arcade_forgiving (97%)</span></div>
+            <div class="spec-row"><span>Maintainability</span><span class="spec-val green">2.11 / 3.0 (Score)</span></div>
+            <div class="spec-row"><span>Hitbox Fairness</span><span class="spec-val green">P(Yes)=0.890 (Noul)</span></div>
+            <div class="spec-row"><span>Jev Round-Trip</span><span class="spec-val green">1,548 ms total</span></div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <a href="run_2_typesafe_jev/index.html" class="btn cyan" style="flex: 1;">Play Deluxe 🚀</a>
+          <a href="run_1_baseline/index.html" class="btn secondary" style="flex: 1;">Play Baseline 🐷</a>
+        </div>
+      </div>
+
+      <!-- 3D Ball Simulation -->
+      <div class="card">
+        <div>
+          <span class="card-badge" style="background: #8b5cf6; color: #fff;">3D Procedural Arena</span>
+          <div class="card-title">3D Interactive Simulation</div>
+          <div class="card-summary">
+            Real-time Three.js physical arena synthesized with dynamic shadow casting, reactive bounding constraints, and interactive controls.
+          </div>
+          <div class="specs">
+            <div class="spec-row"><span>Engine</span><span class="spec-val">Three.js Procedural</span></div>
+            <div class="spec-row"><span>Camera Tracking</span><span class="spec-val green">Smooth Orbit & Pan</span></div>
+            <div class="spec-row"><span>Collision Bound</span><span class="spec-val green">Euler Restitution</span></div>
+            <div class="spec-row"><span>Execution</span><span class="spec-val green">Instant Browser Boot</span></div>
+          </div>
+        </div>
+        <a href="3d_ball_simulation/index.html" class="btn secondary">Launch 3D Arena 🌐</a>
+      </div>
+
+      <!-- Hackathon Leaderboard -->
+      <div class="card">
+        <div>
+          <span class="card-badge" style="background: #f59e0b; color: #000;">Autonomous Competition</span>
+          <div class="card-title">6-Team Swarm Hackathon</div>
+          <div class="card-summary">
+            6 autonomous local SLM teams competed in parallel. Evaluated in real-time across Architecture, Gameplay, and Polish by Jev.
+          </div>
+          <div class="specs">
+            <div class="spec-row"><span>Concurrent Teams</span><span class="spec-val amber">6 Teams in Parallel</span></div>
+            <div class="spec-row"><span>Total Tokens</span><span class="spec-val">4,200 tokens</span></div>
+            <div class="spec-row"><span>Highest Score</span><span class="spec-val green">2.68 / 3.0 (Team 4)</span></div>
+            <div class="spec-row"><span>Evaluation Gate</span><span class="spec-val green">Jev Multi-Audit</span></div>
+          </div>
+        </div>
+        <a href="hackathon_swarm/leaderboard.html" class="btn secondary">View Hackathon Leaderboard 🏆</a>
+      </div>
+    </div>
+
+    <!-- Section 2: Concurrency & Hardware Limits -->
+    <div class="benchmarks-wrap">
+      <div class="section-title">📊 Multi-Agent Concurrency & Hardware Limits</div>
+      <div class="section-desc">
+        Tested on Apple Silicon M1 (8 cores, 16GB Unified RAM) running Ollama locally. 
+        Shows throughput (tok/s), latency scaling, and RAM ceiling under concurrent workloads from 1 to 24 parallel agents.
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Model Identifier</th>
+              <th>Concurrent Agents</th>
+              <th>Wall-Clock Time</th>
+              <th>Success Rate</th>
+              <th>Avg Latency</th>
+              <th>Throughput</th>
+              <th>RAM Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>huihui-qwen3.5:0.8b</strong></td>
+              <td>1 agent</td>
+              <td>2.29s</td>
+              <td><span style="color: #34d399;">1/1 (100%)</span></td>
+              <td>2.15s</td>
+              <td>52.3 tok/s</td>
+              <td>2,851 MB</td>
+            </tr>
+            <tr>
+              <td>huihui-qwen3.5:0.8b</td>
+              <td>4 agents</td>
+              <td>8.29s</td>
+              <td><span style="color: #34d399;">4/4 (100%)</span></td>
+              <td>5.11s</td>
+              <td>57.9 tok/s</td>
+              <td>3,021 MB</td>
+            </tr>
+            <tr>
+              <td>huihui-qwen3.5:0.8b</td>
+              <td>12 agents</td>
+              <td>25.33s</td>
+              <td><span style="color: #34d399;">12/12 (100%)</span></td>
+              <td>13.75s</td>
+              <td>56.8 tok/s</td>
+              <td>3,010 MB</td>
+            </tr>
+            <tr style="background: rgba(6, 182, 212, 0.08);">
+              <td><strong>huihui-qwen3.5:0.8b (Max)</strong></td>
+              <td><strong>24 agents</strong></td>
+              <td><strong>56.06s</strong></td>
+              <td><span style="color: #34d399;"><strong>24/24 (100%)</strong></span></td>
+              <td><strong>28.89s</strong></td>
+              <td><strong>51.4 tok/s</strong></td>
+              <td><strong>2,815 MB</strong></td>
+            </tr>
+            <tr>
+              <td><strong>huihui-qwen3.5:2b</strong></td>
+              <td>1 agent</td>
+              <td>3.87s</td>
+              <td><span style="color: #34d399;">1/1 (100%)</span></td>
+              <td>3.83s</td>
+              <td>31.0 tok/s</td>
+              <td>2,790 MB</td>
+            </tr>
+            <tr>
+              <td>huihui-qwen3.5:2b</td>
+              <td>8 agents</td>
+              <td>32.90s</td>
+              <td><span style="color: #34d399;">8/8 (100%)</span></td>
+              <td>18.49s</td>
+              <td>29.2 tok/s</td>
+              <td>2,710 MB</td>
+            </tr>
+            <tr style="background: rgba(236, 72, 153, 0.08);">
+              <td><strong>huihui-qwen3.5:2b (Max)</strong></td>
+              <td><strong>24 agents</strong></td>
+              <td><strong>89.78s</strong></td>
+              <td><span style="color: #34d399;"><strong>24/24 (100%)</strong></span></td>
+              <td><strong>46.66s</strong></td>
+              <td><strong>32.1 tok/s</strong></td>
+              <td><strong>2,755 MB</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <strong>💡 Key Empirical Takeaway:</strong> 
+        Apple Silicon Unified Memory maintains exceptional memory stability (~2.8GB to 3.0GB total) even at 24 concurrent agent invocations. Throughput remains pegged at ~55 tok/s (0.8B) and ~31 tok/s (2B) without thermal throttling or out-of-memory errors.
+      </div>
+    </div>
+
+    <!-- Section 3: Telemetry & Failure Mode Analysis -->
+    <div class="section-title">⚡ Compiler-in-the-Loop Self-Healing & Gating</div>
+    <div class="section-desc">How TypeSafe Jev System One catches syntax errors and cognitive reasoning loops:</div>
+
+    <div class="telemetry-card">
+<span class="hi-cyan">[Tier 1: Syntax & AST Compilation Gate]</span>
+  → Round 0: 0.8B generated truncated particle emitter code.
+  → AST Checker: <span class="hi-pink">JavaScript SyntaxError: Unexpected end of input</span> (Unclosed class block).
+  → Self-Healing Feedback: compiler stderr fed back to model with num_predict >= 1200.
+
+<span class="hi-cyan">[Tier 2: Calibrated Jev System One Gates]</span>
+  → <span class="hi-amber">Reference Integrity (Noul):</span> P(Yes) = 0.880 [Verified all imported methods exist]
+  → <span class="hi-amber">Specification Compliance (Noul):</span> P(Yes) = 0.910 [All constraints satisfied]
+
+<span class="hi-cyan">[Tier 3: Quality Scoring & Architectural Choice]</span>
+  → <span class="hi-green">Code Maintainability (Score):</span> 2.15 / 3.0 (Confidence: 0.91)
+  → <span class="hi-green">Execution Latency Overhead:</span> ~650ms (Zero added token latency)
+    </div>
+
+  </div>
+
+  <footer>
+    <p>TypeSafe AI (Jev) Skill & Swarm Orchestration • Open Source MIT License</p>
+    <p><a href="https://github.com/sandrovita/jev-skill">GitHub Repository</a> • <a href="https://docs.typesafe.ai">TypeSafe AI Docs</a></p>
+  </footer>
+
+</body>
+</html>

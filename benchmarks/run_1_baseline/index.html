@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Flappy Pig - Run 1 (Baseline)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1a1a2e;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #fff;
+      overflow: hidden;
+    }
+    header {
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.8rem;
+      color: #ff99c8;
+      text-shadow: 2px 2px 0px #000;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      background: #e94560;
+      padding: 3px 8px;
+      border-radius: 12px;
+      margin-top: 4px;
+    }
+    #game-container {
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 3px solid #ff99c8;
+    }
+    canvas {
+      display: block;
+      background: #70c5ce;
+    }
+    .instructions {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #a0a0c0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🐷 FLAPPY PIG</h1>
+    <div class="badge">Run 1: Standard Baseline (No Skill)</div>
+  </header>
+
+  <div id="game-container">
+    <canvas id="gameCanvas" width="360" height="580"></canvas>
+  </div>
+  <div class="instructions">Tap / Click / Spacebar to Flap Wings</div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Audio synthesizer using Web Audio API
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) audioCtx = new AudioCtx();
+    }
+    function playBeep(freq, type, duration) {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    // Game state
+    let state = 'START'; // 'START', 'PLAY', 'GAMEOVER'
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('flappy_pig_high_run1') || '0');
+    let frames = 0;
+
+    // Pig object
+    const pig = {
+      x: 70,
+      y: 250,
+      radius: 18,
+      gravity: 0.35,
+      velocity: 0,
+      jump: -6.5,
+      rotation: 0,
+      wingCycle: 0,
+      reset() {
+        this.y = 250;
+        this.velocity = 0;
+        this.rotation = 0;
+      },
+      flap() {
+        initAudio();
+        this.velocity = this.jump;
+        playBeep(480, 'sine', 0.12);
+      },
+      update() {
+        this.velocity += this.gravity;
+        this.y += this.velocity;
+        this.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.velocity / 10)));
+        this.wingCycle += 0.25;
+
+        // Ground and ceiling collision
+        if (this.y + this.radius >= canvas.height - 40) {
+          this.y = canvas.height - 40 - this.radius;
+          gameOver();
+        }
+        if (this.y - this.radius <= 0) {
+          this.y = this.radius;
+          this.velocity = 0;
+        }
+      },
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        // Pig Body
+        ctx.fillStyle = '#ffb3c6';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 22, 17, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#d94b76';
+        ctx.stroke();
+
+        // Ear
+        ctx.fillStyle = '#ff8fab';
+        ctx.beginPath();
+        ctx.moveTo(-10, -12);
+        ctx.lineTo(-4, -22);
+        ctx.lineTo(2, -12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Snout
+        ctx.fillStyle = '#fb6f92';
+        ctx.beginPath();
+        ctx.ellipse(15, 2, 7, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Nostrils
+        ctx.fillStyle = '#800f2f';
+        ctx.fillRect(14, 0, 2, 3);
+        ctx.fillRect(17, 0, 2, 3);
+
+        // Eye
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(6, -6, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(7.5, -6, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Curly tail
+        ctx.strokeStyle = '#d94b76';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(-22, -2, 5, 0, Math.PI * 1.5);
+        ctx.stroke();
+
+        // Wing (animated)
+        const wingYOffset = Math.sin(this.wingCycle) * 7;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#c4c4c4';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(-4, -4 + wingYOffset, 12, 6, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    };
+
+    // Pipes
+    const pipes = [];
+    const pipeWidth = 52;
+    const pipeGap = 125;
+
+    function addPipe() {
+      const topHeight = Math.floor(Math.random() * (canvas.height - 240)) + 40;
+      pipes.push({
+        x: canvas.width,
+        top: topHeight,
+        bottom: canvas.height - topHeight - pipeGap - 40,
+        passed: false
+      });
+    }
+
+    function updatePipes() {
+      if (frames % 100 === 0) {
+        addPipe();
+      }
+      for (let i = pipes.length - 1; i >= 0; i--) {
+        const p = pipes[i];
+        p.x -= 2.2;
+
+        // Score update
+        if (!p.passed && p.x + pipeWidth < pig.x) {
+          p.passed = true;
+          score++;
+          playBeep(880, 'triangle', 0.15);
+        }
+
+        // Collision detection
+        if (
+          pig.x + pig.radius > p.x &&
+          pig.x - pig.radius < p.x + pipeWidth
+        ) {
+          if (
+            pig.y - pig.radius < p.top ||
+            pig.y + pig.radius > canvas.height - 40 - p.bottom
+          ) {
+            gameOver();
+          }
+        }
+
+        // Remove offscreen
+        if (p.x + pipeWidth < 0) {
+          pipes.splice(i, 1);
+        }
+      }
+    }
+
+    function drawPipes() {
+      pipes.forEach(p => {
+        // Top pipe
+        ctx.fillStyle = '#73bf2e';
+        ctx.fillRect(p.x, 0, pipeWidth, p.top);
+        ctx.strokeStyle = '#558822';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(p.x, 0, pipeWidth, p.top);
+        // Top pipe cap
+        ctx.fillRect(p.x - 3, p.top - 20, pipeWidth + 6, 20);
+        ctx.strokeRect(p.x - 3, p.top - 20, pipeWidth + 6, 20);
+
+        // Bottom pipe
+        const bottomY = canvas.height - 40 - p.bottom;
+        ctx.fillStyle = '#73bf2e';
+        ctx.fillRect(p.x, bottomY, pipeWidth, p.bottom);
+        ctx.strokeRect(p.x, bottomY, pipeWidth, p.bottom);
+        // Bottom pipe cap
+        ctx.fillRect(p.x - 3, bottomY, pipeWidth + 6, 20);
+        ctx.strokeRect(p.x - 3, bottomY, pipeWidth + 6, 20);
+      });
+    }
+
+    function drawGround() {
+      // Ground
+      ctx.fillStyle = '#ded895';
+      ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+      // Grass strip
+      ctx.fillStyle = '#73bf2e';
+      ctx.fillRect(0, canvas.height - 40, canvas.width, 10);
+      ctx.strokeStyle = '#558822';
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height - 40);
+      ctx.lineTo(canvas.width, canvas.height - 40);
+      ctx.stroke();
+    }
+
+    function drawClouds() {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.beginPath();
+      ctx.arc(60, 80, 25, 0, Math.PI * 2);
+      ctx.arc(85, 75, 30, 0, Math.PI * 2);
+      ctx.arc(110, 80, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(240, 140, 20, 0, Math.PI * 2);
+      ctx.arc(260, 135, 26, 0, Math.PI * 2);
+      ctx.arc(280, 140, 18, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawScore() {
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 4;
+      ctx.font = 'bold 36px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.strokeText(score, canvas.width / 2, 50);
+      ctx.fillText(score, canvas.width / 2, 50);
+    }
+
+    function gameOver() {
+      if (state === 'GAMEOVER') return;
+      state = 'GAMEOVER';
+      playBeep(180, 'sawtooth', 0.4);
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('flappy_pig_high_run1', highScore);
+      }
+    }
+
+    function drawOverlay() {
+      if (state === 'START') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('CLICK / TAP TO FLY', canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = '16px sans-serif';
+        ctx.fillText('Guide the pig through the pipes!', canvas.width / 2, canvas.height / 2 + 15);
+      } else if (state === 'GAMEOVER') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ff6b6b';
+        ctx.font = 'bold 30px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 60);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText('Score: ' + score, canvas.width / 2, canvas.height / 2 - 15);
+        ctx.fillText('Best: ' + highScore, canvas.width / 2, canvas.height / 2 + 20);
+
+        ctx.font = '16px sans-serif';
+        ctx.fillStyle = '#feca57';
+        ctx.fillText('Tap to Play Again', canvas.width / 2, canvas.height / 2 + 70);
+      }
+    }
+
+    function handleAction() {
+      if (state === 'START') {
+        state = 'PLAY';
+        pig.flap();
+      } else if (state === 'PLAY') {
+        pig.flap();
+      } else if (state === 'GAMEOVER') {
+        pipes.length = 0;
+        score = 0;
+        frames = 0;
+        pig.reset();
+        state = 'PLAY';
+        pig.flap();
+      }
+    }
+
+    // Input listeners
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleAction();
+      }
+    });
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handleAction();
+    });
+
+    // Game loop
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawClouds();
+
+      if (state === 'PLAY') {
+        frames++;
+        pig.update();
+        updatePipes();
+      }
+
+      drawPipes();
+      drawGround();
+      pig.draw();
+      drawScore();
+      drawOverlay();
+
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>

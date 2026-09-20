@@ -1,0 +1,28 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "physics_architecture": {
+      "type": "choice",
+      "choice": "centrifugal_tufo_drift",
+      "confidence": 1.0,
+      "probabilities": {
+        "rigid_spline_rail": 0.0,
+        "wasm_rigid_ragdoll": 0.0,
+        "centrifugal_tufo_drift": 1.0
+      }
+    },
+    "palio_rules_fidelity": {
+      "type": "choice",
+      "choice": "authentic_palio_mechanics",
+      "confidence": 1.0,
+      "probabilities": {
+        "arcade_laps_only": 0.0,
+        "authentic_palio_mechanics": 1.0
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 709,
+    "output_tokens": 118
+  }
+}

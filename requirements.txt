@@ -1,0 +1,7 @@
+# TypeSafe AI (Jev) & Local SLM Swarm
+# ====================================
+# The core evaluation CLI (scripts/jev_eval.py) and swarm engine (scripts/jev_swarm.py)
+# have ZERO external package dependencies and run directly on Python 3.9+ standard library.
+#
+# Optional development and testing utilities:
+# requests>=2.31.0

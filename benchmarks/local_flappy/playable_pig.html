@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html><body style="margin:0;overflow:hidden"><canvas id="c" width="360" height="500" style="background:#70c5ce"></canvas>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+let y = 200, vy = 0, g = 0.4, score = 0, over = false;
+let pipe = { x: 360, top: 150, gap: 120 };
+
+function jump() { if (over) { y = 200; vy = 0; pipe.x = 360; score = 0; over = false; } else { vy = -6.5; } }
+window.addEventListener('keydown', jump);
+window.addEventListener('pointerdown', jump);
+
+function loop() {
+  ctx.clearRect(0, 0, 360, 500);
+  if (!over) {
+    vy += g; y += vy; pipe.x -= 2;
+    if (pipe.x < -50) { pipe.x = 360; pipe.top = Math.random() * 200 + 50; score++; }
+    if (y > 480 || (pipe.x < 80 && pipe.x > 20 && (y < pipe.top || y > pipe.top + pipe.gap))) over = true;
+  }
+  // Draw pig
+  ctx.fillStyle = '#ffb3c6'; ctx.beginPath(); ctx.arc(50, y, 16, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fb6f92'; ctx.beginPath(); ctx.arc(62, y+2, 6, 0, 7); ctx.fill();
+  // Draw pipes
+  ctx.fillStyle = '#73bf2e'; ctx.fillRect(pipe.x, 0, 48, pipe.top);
+  ctx.fillRect(pipe.x, pipe.top + pipe.gap, 48, 500);
+  // Score
+  ctx.fillStyle = '#fff'; ctx.font = '24px sans-serif'; ctx.fillText(score, 170, 40);
+  if (over) { ctx.fillStyle = '#f00'; ctx.fillText('GAME OVER - TAP TO RESTART', 15, 250); }
+  requestAnimationFrame(loop);
+}
+loop();
+</script></body></html>

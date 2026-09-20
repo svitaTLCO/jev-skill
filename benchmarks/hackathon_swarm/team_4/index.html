@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyberpunk Breakout - Team 4 (Vector-Viper)</title>
+  <style>
+    body {
+      background: #050811;
+      color: #00f3ff;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    .title { font-size: 1.3rem; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }
+    .badge { font-size: 0.75rem; color: #ff007f; margin-bottom: 10px; }
+    canvas {
+      background: #070b14;
+      border: 2px solid #00f3ff;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+    }
+    .controls { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="title">⚡ CYBER-BREAKOUT // VECTOR-VIPER</div>
+  <div class="badge">Team #4 &bull; Architecture: Particle Physics & Vector Momentum</div>
+  <canvas id="c" width="480" height="500"></canvas>
+  <div class="controls">&larr; &rarr; or A / D to Move Paddle &bull; ESC to Restart</div>
+
+  <script>
+  
+The user wants me to provide a snippet of JavaScript code that initializes the global state and contracts for a specific arcade game called "Team 4 (Vector-Viper)".
+
+Here are the requirements:
+1.  **Canvas**: `const canvas = document.getElementById('c'); const ctx = canvas.getContext('2d');`
+2.  **Paddle**: `let paddle = { x: 200, y: 460, width: 80, height: 12, speed: 7 };`
+3.  **Ball**: `let ball = { x: 240, y: 300, vx: 4, vy: -4, radius: 6 };`
+4.  **Bricks**: Initialize a grid of bricks with specific dimensions and properties (rows=4, cols=8).
+5.  **Score/Lives/Game State**: `let score = 0, lives = 3, gameOver = false, gameWon = false;`
+
+I need to output *only* the clean JavaScript declarations for state initialization and brick generation. I should probably include a few lines of context or comments if needed, but the prompt asks specifically for "state initialization and brick generation".
+
+Let's construct the code block:
+-   `const canvas = document.getElementById('c'); const ctx = canvas.getContext('2d');` (Already provided)
+-   `let paddle = { x: 200, y: 460, width: 80, height: 12, speed: 7 };` (Already provided)
+-   `let ball = { x: 240, y: 300, vx: 4, vy: -4, radius: 6 };` (Already provided)
+-   `const rows = 4; const cols = 8;`
+-   `let bricks = [];`
+-   Loop to create the brick array.
+
+I will combine these into a cohesive block of code as requested. I'll make sure the variable names match exactly what was asked for (e.g., `rows`, `cols`).
+
+Wait, looking at the prompt again: "Define the global state and contracts... Output ONLY clean JavaScript declarations".
+The user provided specific lines in the prompt text (`const canvas = ...` etc). I should probably output them as a complete
+
+// Canvas setup (already provided by user)
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let paddle = { x: 200, y: 460, width: 80, height: 12, speed: 7 };
+let ball = { x: 350, y: 400, radius: 8, dx: 4, dy: -4, alive: true, score: 0 };
+
+// Paddle movement based on keys
+function updatePaddle(keys) {
+    if (keys['KeyW'] || keys['ArrowUp']) paddle.y -= paddle.speed;
+    if (keys['KeyS'] || keys['ArrowDown']) paddle.y += paddle.speed;
+    
+    // Boundary constraints for paddle
+    if (paddle.y < 0) paddle.y = 0;
+    if (paddle.y > canvas.height - paddle.height) paddle.y = canvas.height - paddle.height;
+}
+
+// Ball physics and movement
+function updateBall() {
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+    
+    // Wall collision (left/right)
+    if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+        ball.dx *= -1;
+    }
+    
+    // Top wall
+    if (ball.y - ball.radius < 0) {
+        ball.dy = -Math.abs(ball.dy);
+    }
+    
+    // Paddle collision
+    if (ball.y + ball.radius > paddle.y && 
+        ball.x > paddle.x && 
+        ball.x < paddle.x + paddle.width) {
+        
+        // Ball hit the paddle
+        let deltaY = ball.y - (paddle.y + paddle.height / 2);
+        let dySpeed = Math.abs(ball.dy);
+        let dxSpeed = Math.abs(ball.dx);
+        
+        if (dySpeed > dxSpeed) {
+            ball.dy += deltaY * 0.5;
+        } else {
+            ball.dx += dxSpeed * 0.5;
+        }
+    }
+    
+    // Bottom wall / life loss
+    if (ball.y - ball.radius > canvas.height) {
+        ball.alive = false;
+        ball.score++;
+    }
+
+function draw() {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Clear canvas with dark background
+  ctx.fillStyle = '#070b14';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw glowing neon paddle (cyan)
+  ctx.shadowBlur = 20;
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  const paddleX = canvas.width / 2 - 150;
+  ctx.moveTo(paddleX, 48);
+  ctx.lineTo(paddleX + 60, 500);
+  ctx.stroke();
+
+  // Draw glowing neon ball (magenta)
+  ctx.shadowBlur = 30;
+  ctx.fillStyle = '#ff00ff';
+  const ballRadius = 12;
+  const ballX = canvas.width / 2 - ballRadius;
+  const ballY = 48 + Math.random() * 50;
+  
+  // Draw ball glow effect
+  ctx.beginPath();
+  ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw glowing neon brick grid (neon green)
+  const gridSize = 40;
+  const brickHeight = 18;
+  
+  for (let y = 0; y < canvas.height; y += gridSize) {
+    ctx.fillStyle = '#00ff00';
+    ctx.fillRect(0, y, canvas.width / 3, gridSize);
+    
+    // Add glow to bricks
+    ctx.shadow
+
+// Key listeners & Main Loop
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key] = true; keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.key] = false; keys[e.code] = false; });
+
+function loop() {
+  if (!gameOver && !gameWon) {
+    if (typeof updatePaddle === 'function') updatePaddle(keys);
+    if (typeof updateBall === 'function') updateBall();
+    if (typeof checkBrickCollisions === 'function') checkBrickCollisions();
+  }
+  if (typeof draw === 'function') draw();
+  if (typeof drawHUD === 'function') drawHUD();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+  </script>
+</body>
+</html>

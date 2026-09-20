@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyberpunk Breakout - Team 3 (Retro-Arcade)</title>
+  <style>
+    body {
+      background: #050811;
+      color: #00f3ff;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    .title { font-size: 1.3rem; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 0 10px #00f3ff; }
+    .badge { font-size: 0.75rem; color: #ff007f; margin-bottom: 10px; }
+    canvas {
+      background: #070b14;
+      border: 2px solid #00f3ff;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+    }
+    .controls { margin-top: 10px; font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="title">⚡ CYBER-BREAKOUT // RETRO-ARCADE</div>
+  <div class="badge">Team #3 &bull; Architecture: Double-Buffered Classic Loop</div>
+  <canvas id="c" width="480" height="500"></canvas>
+  <div class="controls">&larr; &rarr; or A / D to Move Paddle &bull; ESC to Restart</div>
+
+  <script>
+  
+const canvas = document.getElementById('c'); const ctx = canvas.getContext('2d');
+
+let paddle = { x: 200, y: 460, width: 80, height: 12, speed: 7 };
+let ball = { x: 240, y: 300, vx: 4, vy: -4, radius: 6 };
+
+const rows = 4; const cols = 8;
+let bricks = [];
+
+function initBricks() {
+    for (let c = 0; c < cols; c++) {
+        for (let
+
+function updatePaddle(keys) {
+    const paddleWidth = paddle.width;
+    const paddleHeight = paddle.height;
+    let currentX = paddle.x;
+
+    if (keys['ArrowLeft']) {
+        currentX -= paddle.speed;
+    } else if (keys['ArrowRight']) {
+        currentX += paddle.speed;
+    }
+
+    // Clamp paddle to canvas boundaries (0 to 480)
+    if (currentX < 0) currentX = 0;
+    if (currentX + paddleWidth > canvas.width) currentX =
+
+function draw() {
+  const canvas = document.getElementById('gameCanvas');
+  if (!canvas) return;
+
+  // Clear canvas with dark background
+  canvas.fillStyle = '#070b14';
+  canvas.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw glowing neon paddle (cyan)
+  const paddleX = canvas.width / 2 - 35;
+  const paddleY = canvas.height - 60;
+  const paddleWidth = 70;
+  
+  canvas.fillStyle = '#00ffff';
+  canvas.shadowColor = '#00ffff';
+  canvas.shadowBlur = 10;
+  canvas.beginPath();
+  canvas.moveTo(paddleX, paddleY);
+  canvas.lineTo(paddleX + paddleWidth, paddleY);
+  canvas.lineTo(paddleX + paddleWidth, paddleY - 25);
+  canvas.closePath();
+  canvas.fill();
+
+  // Draw glowing neon ball (magenta)
+  const ballRadius = 10;
+  const ballX = canvas.width / 2;
+  const ballY = canvas.height - 30;
+  
+  canvas.fillStyle = '#ff00ff';
+  canvas.shadowColor = '#ff00ff';
+  canvas.shadowBlur = 8;
+  canvas.beginPath();
+  canvas.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+  canvas.fill();
+
+  // Draw glowing neon brick grid (neon green)
+  const gridSize = 15;
+  const brickColor = '#00ff00';
+  
+  for (let i = 0; i < canvas.height / gridSize; i++) {
+    const y = i * gridSize;
+    
+    // Draw horizontal lines with glow effect
+    canvas.strokeStyle = '#00
+
+// Key listeners & Main Loop
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key] = true; keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.key] = false; keys[e.code] = false; });
+
+function loop() {
+  if (!gameOver && !gameWon) {
+    if (typeof updatePaddle === 'function') updatePaddle(keys);
+    if (typeof updateBall === 'function') updateBall();
+    if (typeof checkBrickCollisions === 'function') checkBrickCollisions();
+  }
+  if (typeof draw === 'function') draw();
+  if (typeof drawHUD === 'function') drawHUD();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+  </script>
+</body>
+</html>

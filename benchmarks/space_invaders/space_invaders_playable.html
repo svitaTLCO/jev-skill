@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Space Invaders - Swarm + Jev</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #020617;
+      color: #f8fafc;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    h1 { color: #22c55e; margin-bottom: 8px; letter-spacing: 2px; }
+    canvas {
+      background: #090d16;
+      border: 3px solid #22c55e;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.3);
+    }
+    .footer { margin-top: 10px; font-size: 0.9rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>👾 SPACE INVADERS (JEV SWARM)</h1>
+  <canvas id="c" width="400" height="500"></canvas>
+  <div class="footer">&larr; &rarr; or A/D to Move &bull; SPACEBAR to Fire</div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let score = 0;
+    let gameState = 'START';
+    let lastFire = 0;
+
+    // --- WORKER 1: PLAYER ---
+    let player = { x: 180, y: 450, width: 36, height: 16, speed: 4, dx: 0, update: function(canvasWidth) { this.x = Math.max(0, Math.min(canvasWidth - this.width, this.x + this.dx)); } };
+
+    // --- WORKER 2: FLEET ---
+    let invaders = [];
+let invaderDir = 1;
+
+function createInvaders() {
+    invaders = [];
+    for(let r = 0; r < 3; r++) {
+        for(let c = 0; c < 6; c++) {
+            invaders.push({x: 40 + c * 50, y: 50 + r * 35, w: 28, h: 18, alive: true});
+        }
+    }
+}
+
+function updateInvaders(canvasWidth) {
+    let edge = false;
+    invaders.forEach(i => {
+        if(i.alive) {
+            i.x += invaderDir * 1.5;
+            if(i.x <= 10 || i.x >= canvasWidth - 38) edge = true;
+        }
+    });
+    if(edge) {
+        invaderDir *= -1;
+        invaders.forEach(i => {
+            i.y += 15;
+        });
+    }
+}
+
+    // --- WORKER 3: BULLETS & COLLISION ---
+    let bullets = [];
+function fireLaser() {
+  bullets.push({ x: player.x + player.width / 2 - 2, y: player.y, w: 4, h: 10, vy: -6 });
+}
+
+function updateBulletsAndCollisions() {
+  bullets.forEach(b => {
+    b.y += b.vy;
+  });
+  bullets = bullets.filter(b => b.y > 0);
+  bullets.forEach(b => {
+    invaders.forEach(inv => {
+      if (inv.alive && b.x > inv.x && b.x < inv.x + inv.w && b.y > inv.y && b.y < inv.y + inv.h) {
+        inv.alive = false;
+        b.y = -10;
+        score += 100;
+      }
+    });
+  });
+}
+
+    // --- WORKER 4: RENDERER ---
+    function drawRetroInvader(ctx, x, y, w, h) {
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(x + 4, y, w - 8, h);
+    ctx.fillRect(x, y + 4, w, h - 8);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(x + 6, y + 6, 4, 4);
+    ctx.fillRect(x + w - 10, y + 6, 4, 4);
+}
+
+function drawPlayerShip(ctx, x, y, w, h) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(x, y + 8, w, h - 8);
+    ctx.fillRect(x + w / 2 - 4, y, 8, 8);
+}
+
+    const keys = {};
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (gameState !== 'PLAYING') {
+          player.x = 180;
+          player.dx = 0;
+          bullets = [];
+          score = 0;
+          createInvaders();
+          gameState = 'PLAYING';
+        } else {
+          const now = Date.now();
+          if (now - lastFire > 220) {
+            fireLaser();
+            lastFire = now;
+          }
+        }
+      }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    createInvaders();
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (gameState === 'PLAYING') {
+        player.dx = 0;
+        if (keys['ArrowLeft'] || keys['KeyA']) player.dx = -player.speed;
+        if (keys['ArrowRight'] || keys['KeyD']) player.dx = player.speed;
+
+        player.update(canvas.width);
+        updateInvaders(canvas.width);
+        updateBulletsAndCollisions();
+
+        const aliveInv = invaders.filter(i => i.alive);
+        if (aliveInv.length === 0) gameState = 'WIN';
+        if (aliveInv.some(i => i.y + i.h >= player.y)) gameState = 'GAMEOVER';
+      }
+
+      // Draw Invaders
+      invaders.forEach(i => { if (i.alive) drawRetroInvader(ctx, i.x, i.y, i.w, i.h); });
+
+      // Draw Bullets
+      ctx.fillStyle = '#f43f5e';
+      bullets.forEach(b => { ctx.fillRect(b.x, b.y, b.w, b.h); });
+
+      // Draw Ship
+      drawPlayerShip(ctx, player.x, player.y, player.width, player.height);
+
+      // HUD
+      ctx.fillStyle = '#22c55e';
+      ctx.font = '14px monospace';
+      ctx.fillText(`SCORE: ${score}`, 16, 24);
+      ctx.fillText(`ALIENS: ${invaders.filter(i => i.alive).length}`, canvas.width - 100, 24);
+
+      if (gameState === 'START') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 22px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('SPACE INVADERS', canvas.width/2, 230);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '14px monospace';
+        ctx.fillText('PRESS SPACEBAR TO START', canvas.width/2, 270);
+        ctx.textAlign = 'left';
+      } else if (gameState === 'WIN') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 22px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('MISSION COMPLETE!', canvas.width/2, 230);
+        ctx.fillText(`SCORE: ${score}`, canvas.width/2, 265);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '14px monospace';
+        ctx.fillText('Press SPACE to Play Again', canvas.width/2, 300);
+        ctx.textAlign = 'left';
+      } else if (gameState === 'GAMEOVER') {
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 22px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('EARTH INVADED!', canvas.width/2, 230);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px monospace';
+        ctx.fillText(`FINAL SCORE: ${score}`, canvas.width/2, 265);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '14px monospace';
+        ctx.fillText('Press SPACE to Retry', canvas.width/2, 300);
+        ctx.textAlign = 'left';
+      }
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

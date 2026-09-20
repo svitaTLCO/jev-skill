@@ -1,0 +1,20 @@
+{
+  "state": "## Context\nWe have a legacy monolith service with 40 endpoints performing synchronous heavy calculations and PDF report generation. Requests frequently timeout when traffic spikes.\n\n## Constraints\n- Budget is limited.\n- Minimal infrastructure overhead (team is small, already uses Redis and PostgreSQL).\n- Must provide reliable progress or asynchronous completion to frontend clients.",
+  "model": "jev-latest",
+  "questions": {
+    "recommended_architecture": {
+      "type": "choice",
+      "instructions": "Which asynchronous architecture is best suited for the PDF and calculation pipeline given the team constraints?",
+      "criteria": {
+        "celery_redis": "Use Celery with the existing Redis instance as broker/backend; enqueue background jobs and poll task status.",
+        "temporal_orchestration": "Adopt Temporal.io workflow engine for distributed execution with event sourcing and full state persistence.",
+        "aws_sqs_lambda": "Migrate long-running jobs to AWS Lambda triggered via SQS FIFO queues with S3 storage.",
+        "in_process_threads": "Spawn in-process background threads/tasks within the existing web server process."
+      }
+    },
+    "risk_of_in_process": {
+      "type": "noul",
+      "instructions": "Does using in-process background threads pose high risk of server OOM crashes or worker thread starvation during traffic spikes?"
+    }
+  }
+}

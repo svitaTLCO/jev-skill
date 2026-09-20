@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Pig</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="360" height="540"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const pig = {
+            x: 60,
+            y: 250,
+            radius: 18,
+            gravity: 0.35,
+            velocity: 0,
+            jump: -6.5
+        };
+        const pipes = {
+            width: 50,
+            gap: 120,
+            speed: 2.2,
+            spacing: 90
+        };
+        const score = 0;
+        const scoreDisplay = document.createElement('div');
+        scoreDisplay.textContent = score;
+        scoreDisplay.style.position = 'absolute';
+        scoreDisplay.style.top = '10px';
+        scoreDisplay.style.right = '10px';
+        scoreDisplay.style.fontSize = '24px';
+        scoreDisplay.style.color = 'white';
+        scoreDisplay.style.backgroundColor = 'black';
+        scoreDisplay.style.padding = '5px';
+        scoreDisplay.style.borderRadius = '5px';
+        scoreDisplay.style.border = '1px solid black';
+        canvas.addEventListener('click', () => pig.velocity = 0);
+        canvas.addEventListener('keydown', () => pig.velocity = 0);
+        canvas.addEventListener('touchstart', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('mousedown', () => pig.velocity = 0);
+        canvas.addEventListener('mouseup', () => pig.velocity = 0);
+        canvas.addEventListener('mousemove', () => pig.velocity = 0);
+        canvas.addEventListener('mouseout', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity = 0);
+        canvas.addEventListener('touchcancel', () => pig.velocity = 0);
+        canvas.addEventListener('touchend', () => pig.velocity = 0);
+        canvas.addEventListener('touchmove', () => pig.velocity =
+</script>
+</body></html>
