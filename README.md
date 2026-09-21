@@ -121,6 +121,9 @@ next controlled evaluation program are maintained in
 [`references/jev_research_synthesis.md`](references/jev_research_synthesis.md).
 The first WSL/Galene paired study is recorded, with its limitations, in
 [`references/wsl_galene_paired_study_2026-09-21.md`](references/wsl_galene_paired_study_2026-09-21.md).
+The Windows-native Intel GPU path, including its required GPU-offload proof,
+is documented in
+[`references/windows_native_gpu_inference_2026-09-21.md`](references/windows_native_gpu_inference_2026-09-21.md).
 
 ```bash
 docker run --rm -v "$PWD:/workspace" -w /workspace python:3.11-alpine \
@@ -168,6 +171,11 @@ Python response successfully, but at approximately 0.25 tokens/second. Keep
 local theory tests short and record cold-load versus warm-model latency
 separately. The paired runner uses WSL host networking to contact this local
 endpoint; its candidate tests remain network-disabled Docker sandboxes.
+
+For this Windows host, use the native Vulkan path instead of that CPU-only
+container when GPU throughput is required. It is a distinct runtime and must
+prove GPU offload in its server log before its results are treated as a GPU
+baseline.
 
 ### Live Jev vs. direct-Qwen demo
 
