@@ -29,6 +29,12 @@ RUNNER_VERSION = 1
 SAFE_TASK_ID = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 
 
+class WorkerResponseError(RuntimeError):
+    def __init__(self, message: str, metadata: dict | None = None):
+        super().__init__(message)
+        self.metadata = metadata or {}
+
+
 def sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
@@ -98,7 +104,10 @@ def generate_ollama(worker_url: str, model: str, prompt: str, seed: int, max_tok
     elapsed = time.perf_counter() - started
     raw = data.get("response")
     if not isinstance(raw, str) or not raw.strip():
-        raise RuntimeError("Worker response did not contain a non-empty response string")
+        raise WorkerResponseError("Worker response did not contain a non-empty response string", {
+            "done_reason": data.get("done_reason"),
+            "eval_count": data.get("eval_count"),
+        })
     return extract_code(raw), data, elapsed
 
 
@@ -126,10 +135,16 @@ def generate_openai(worker_url: str, model: str, prompt: str, max_tokens: int,
         data = json.loads(response.read().decode("utf-8"))
     elapsed = time.perf_counter() - started
     choices = data.get("choices") or []
+    usage = data.get("usage") or {}
     content = choices[0].get("message", {}).get("content") if choices else None
     if not isinstance(content, str) or not content.strip():
-        raise RuntimeError("OpenAI-compatible worker response did not contain completion content")
-    usage = data.get("usage") or {}
+        details = usage.get("completion_tokens_details") if isinstance(usage, dict) else {}
+        raise WorkerResponseError("OpenAI-compatible worker response did not contain completion content", {
+            "request_id": data.get("id"),
+            "finish_reason": choices[0].get("finish_reason") if choices else None,
+            "completion_tokens": usage.get("completion_tokens") if isinstance(usage, dict) else None,
+            "reasoning_tokens": details.get("reasoning_tokens") if isinstance(details, dict) else None,
+        })
     data["eval_count"] = usage.get("completion_tokens")
     return extract_code(content), data, elapsed
 
@@ -216,6 +231,8 @@ def run_arm(arm: str, task: dict, args: argparse.Namespace, run_id: str,
     except Exception as exc:
         record["error_type"] = type(exc).__name__
         record["error"] = str(exc)[:500]
+        if isinstance(exc, WorkerResponseError):
+            record["provider_response_metadata"] = exc.metadata
     return record
 
 

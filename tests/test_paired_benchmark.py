@@ -81,6 +81,20 @@ class PairedBenchmarkTests(unittest.TestCase):
         self.assertIn(b'"enable_thinking": false', request.data)
         self.assertNotIn(b"private-key", request.data)
 
+    @patch("scripts.run_paired_benchmark.urllib.request.urlopen")
+    def test_openai_missing_content_preserves_safe_response_metadata(self, urlopen):
+        urlopen.return_value.__enter__.return_value.read.return_value = json.dumps({
+            "id": "request-123",
+            "choices": [{"finish_reason": "length", "message": {"content": ""}}],
+            "usage": {"completion_tokens": 1200, "completion_tokens_details": {"reasoning_tokens": 1180}},
+        }).encode("utf-8")
+        with self.assertRaises(run_paired_benchmark.WorkerResponseError) as caught:
+            run_paired_benchmark.generate_openai(
+                "https://worker.test/v1", "Galene/LLM", "write f", 1200, 0.2, False, 30, "private-key"
+            )
+        self.assertEqual(caught.exception.metadata["finish_reason"], "length")
+        self.assertEqual(caught.exception.metadata["reasoning_tokens"], 1180)
+
     @patch("scripts.run_paired_benchmark.GenericRuntimeValidator.validate_with_tests", return_value=(True, "sandbox pass"))
     @patch("scripts.run_paired_benchmark.generate_ollama", return_value=("def sum_positive_integers(values): return sum(v for v in values if v > 0)", {"eval_count": 12, "seed": 7}, 0.1))
     def test_paired_arms_persist_redacted_records_and_raw_candidates(self, _generate, _validate):

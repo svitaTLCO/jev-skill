@@ -119,6 +119,8 @@ Published figures are research artifacts, not product guarantees. Score generate
 The evidence classification, contradictions in historical artifacts, and the
 next controlled evaluation program are maintained in
 [`references/jev_research_synthesis.md`](references/jev_research_synthesis.md).
+The first WSL/Galene paired study is recorded, with its limitations, in
+[`references/wsl_galene_paired_study_2026-09-21.md`](references/wsl_galene_paired_study_2026-09-21.md).
 
 ```bash
 docker run --rm -v "$PWD:/workspace" -w /workspace python:3.11-alpine \
