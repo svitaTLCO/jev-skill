@@ -123,7 +123,7 @@ Evaluated across 10 diverse scenarios covering single calls, multiple arguments,
 
 ### 2. 1-Command Setup
 ```bash
-git clone https://github.com/sandrovita/jev-skill.git
+git clone https://github.com/svitaTLCO/jev-skill.git
 cd jev-skill
 
 # Export your TypeSafe API key

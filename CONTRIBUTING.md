@@ -25,7 +25,7 @@ We welcome contributions from researchers, agentic AI developers, and open-sourc
 ### 2. Setting Up Local Models
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/jev-skill.git
+git clone https://github.com/svitaTLCO/jev-skill.git
 cd jev-skill
 
 # Run setup script to verify environment
