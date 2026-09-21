@@ -112,6 +112,128 @@ BUILTIN_MODES = {
             "type": "noul",
             "instructions": "Are there critical missing constraints or ambiguous requirements in the prompt that must be clarified?"
         }
+    },
+    "choice": {
+        "architectural_choice": {
+            "type": "choice",
+            "instructions": "Select the optimal architectural pattern or implementation strategy for the given requirement and context",
+            "criteria": {
+                "lightweight_minimalist": "Minimal lines of code, standard library only, single function or class, zero external dependencies.",
+                "modular_clean_architecture": "Decoupled layers, explicit domain interfaces, high testability, and clear separation of concerns.",
+                "event_driven_reactive": "Asynchronous event queues, pub/sub, decoupled producers and consumers for high throughput."
+            }
+        },
+        "complexity_justified": {
+            "type": "noul",
+            "instructions": "Is the proposed approach proportionate to the problem, avoiding gratuitous overengineering?"
+        },
+        "robustness_score": {
+            "type": "score",
+            "instructions": "Rate the long-term maintainability and structural robustness of this choice",
+            "criteria": [
+                "Level 0 (Fragile): Hard to maintain, prone to side-effects and hidden coupling.",
+                "Level 1 (Adequate): Functional for simple cases, but incurs tech debt at scale.",
+                "Level 2 (Solid): Sound engineering tradeoffs, idiomatic, and easily testable.",
+                "Level 3 (Exemplary): Flawless architectural cohesion, future-proof, and self-documenting."
+            ]
+        }
+    },
+    "contract": {
+        "reference_integrity": {
+            "type": "noul",
+            "instructions": "Are all variables, functions, methods, and imports referenced in this code declared in scope or imported without ReferenceError risk?"
+        },
+        "spec_compliance": {
+            "type": "noul",
+            "instructions": "Does this code strictly fulfill the requested specification without empty stubs, placeholders, or missing implementations?"
+        },
+        "no_scope_creep": {
+            "type": "noul",
+            "instructions": "Does the code adhere strictly to the requested boundary without inventing unasked extra endpoints, helper functions, or unsolicited mock states?"
+        },
+        "no_identifier_collisions": {
+            "type": "noul",
+            "instructions": "Does the code avoid re-declaring variables, constants, or functions that already exist in the provided outer context?"
+        },
+        "maintainability": {
+            "type": "score",
+            "instructions": "Rate code modularity, cyclomatic simplicity, and error handling",
+            "criteria": [
+                "Level 0: Broken or uncompilable.",
+                "Level 1: Fragile with loose error handling.",
+                "Level 2: Clean, modular, and idiomatic.",
+                "Level 3: Production-grade perfection."
+            ]
+        }
+    },
+    "healing": {
+        "is_patch_sound": {
+            "type": "noul",
+            "instructions": "Does this localized patch resolve the exact compiler/runtime error reported in the context without introducing new syntax or reference errors?"
+        },
+        "is_minimal_diff": {
+            "type": "noul",
+            "instructions": "Is this fix localized to the specific defective lines/methods rather than performing an unnecessary full-file rewrite?"
+        },
+        "defect_locality": {
+            "type": "choice",
+            "instructions": "Identify the primary category of this defect",
+            "criteria": {
+                "syntax_or_formatting": "Missing delimiter, parenthesis, indentation, or quotation syntax error.",
+                "missing_reference_or_import": "Undefined variable, unimported module, or symbol typo.",
+                "signature_or_type_mismatch": "Wrong number of arguments or incompatible return type.",
+                "logic_flaw": "Algorithm error, infinite loop, or incorrect conditional branch."
+            }
+        }
+    },
+    "arena": {
+        "winning_implementation": {
+            "type": "choice",
+            "instructions": "Compare the proposed candidate implementations. Select the winning implementation that best satisfies correctness, modularity, and error resilience",
+            "criteria": {
+                "candidate_a": "Candidate A is the superior implementation.",
+                "candidate_b": "Candidate B is the superior implementation.",
+                "candidate_c": "Candidate C is the superior implementation."
+            }
+        },
+        "quality_score": {
+            "type": "score",
+            "instructions": "Rate the overall quality of the winning implementation from 0 to 3",
+            "criteria": [
+                "Level 0: Subpar, unviable candidate.",
+                "Level 1: Working but rough.",
+                "Level 2: Clean and well-engineered.",
+                "Level 3: Exemplary, production-grade code."
+            ]
+        }
+    },
+    "tool": {
+        "needs_tool": {
+            "type": "noul",
+            "instructions": "Does this request require executing external tools (e.g., filesystem, git, bash, search), or is it a conceptual/conversational question that should be answered directly in plain text?"
+        },
+        "selected_tool": {
+            "type": "choice",
+            "instructions": "Select the single primary tool required to fulfill the user request:",
+            "criteria": {
+                "none_conversational": "No tool needed; answer conversationally in plain text.",
+                "read": "Read contents of a specific file path.",
+                "edit": "Perform an exact substring replacement or patch in a file.",
+                "bash": "Execute terminal shell commands (build, run, test, install, git).",
+                "grep": "Search for code patterns, function names, or text across directories.",
+                "glob": "Find files matching a glob pattern (e.g. **/*.ts).",
+                "list": "List files and folders in a directory."
+            }
+        },
+        "tool_urgency": {
+            "type": "choice",
+            "instructions": "Determine execution posture for this tool operation",
+            "criteria": {
+                "immediate_execution": "Direct mechanical action with zero ambiguity.",
+                "read_before_mutation": "Inspect or grep existing context before making file changes.",
+                "conversational_clarification": "Ask user for missing constraints before running destructive tools."
+            }
+        }
     }
 }
 
@@ -208,13 +330,53 @@ def resolve_api_key(explicit_key: str = None) -> str:
     return None
 
 
+def extract_interface_contract(code_str: str, lang: str = "python") -> str:
+    """
+    Strips raw implementation bodies and retains only interface signatures,
+    classes, functions, and schemas to shield downstream workers from the
+    Accumulated Code Prompt Trap.
+    """
+    lines = code_str.splitlines()
+    interface_lines = []
+    in_docstring = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('"""') or stripped.startswith("'''"):
+            in_docstring = not in_docstring
+            continue
+        if in_docstring:
+            continue
+        if stripped.startswith("import ") or stripped.startswith("from "):
+            interface_lines.append(line)
+        elif stripped.startswith("class ") or stripped.startswith("def ") or stripped.startswith("async def "):
+            interface_lines.append(line)
+            if ":" in line:
+                interface_lines.append("    ...")
+        elif lang in ["javascript", "js", "ts"] and (
+            stripped.startswith("interface ") or stripped.startswith("type ") or 
+            stripped.startswith("export function ") or stripped.startswith("function ") or
+            stripped.startswith("let ") or stripped.startswith("const ")
+        ):
+            if "{" in line and "}" not in line:
+                interface_lines.append(line.split("{")[0] + "{ ... }")
+            else:
+                interface_lines.append(line)
+    return "\n".join(interface_lines) if interface_lines else code_str[:600]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Evaluate code using TypeSafe AI (Jev).")
     parser.add_argument("--prompt", "-p", help="Task requirement or specification prompt.", default="")
+    parser.add_argument("--code", help="Inline code snippet to evaluate.")
     parser.add_argument("--file", "-f", help="Path to code file to evaluate.")
     parser.add_argument("--diff", "-d", help="Path to git diff or patch file.")
     parser.add_argument("--context", "-c", help="Additional context or existing file code.")
-    parser.add_argument("--mode", "-m", choices=["review", "security", "plan", "prompt", "custom"], default="review")
+    parser.add_argument(
+        "--mode", "-m",
+        choices=["review", "security", "plan", "prompt", "choice", "contract", "healing", "arena", "tool", "interface", "custom"],
+        default="review"
+    )
+    parser.add_argument("--lang", default="python", help="Language for interface extraction (python, js, ts).")
     parser.add_argument("--questions-file", help="Path to JSON file containing custom questions.")
     parser.add_argument("--model", default=DEFAULT_MODEL, help="TypeSafe model identifier (default: jev-latest).")
     parser.add_argument("--json", action="store_true", help="Output raw JSON instead of markdown.")
@@ -225,7 +387,9 @@ def main():
 
     # Read code
     code_content = ""
-    if args.file:
+    if args.code:
+        code_content = args.code
+    elif args.file:
         if not os.path.exists(args.file):
             sys.exit(f"Error: File not found: {args.file}")
         with open(args.file, "r", encoding="utf-8") as f:
@@ -238,8 +402,19 @@ def main():
     elif not sys.stdin.isatty():
         code_content = sys.stdin.read()
 
+    # Handle interface extraction mode locally (zero latency)
+    if args.mode == "interface":
+        if not code_content:
+            sys.exit("Error: --mode interface requires code via --code, --file, or stdin.")
+        extracted = extract_interface_contract(code_content, lang=args.lang)
+        if args.json:
+            print(json.dumps({"interface": extracted}, indent=2))
+        else:
+            print(extracted)
+        return
+
     if not code_content and not args.prompt:
-        sys.exit("Error: Must provide code via --file, --diff, stdin, or a prompt via --prompt.")
+        sys.exit("Error: Must provide code via --code, --file, --diff, stdin, or a prompt via --prompt.")
 
     # Determine questions
     if args.mode == "custom" or args.questions_file:

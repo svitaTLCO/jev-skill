@@ -5,25 +5,64 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama (local)",
       "options": {
-        "baseURL": "http://127.0.0.1:11434/v1"
+        "baseURL": "http://127.0.0.1:11435/v1"
       },
       "models": {
-        "huihui-qwen3.5:2b": {
-          "name": "Huihui Qwen 3.5 2B Abliterated",
+        "qwen3.5:4b": {
+          "name": "Qwen 3.5 4B Deep Brain",
           "tool_call": true,
+          "reasoning": false,
           "limit": {
             "context": 32768,
             "output": 4096
           }
         },
-        "huihui-qwen3.5:0.8b": {
-          "name": "Huihui Qwen 3.5 0.8B Abliterated",
+        "qwen3.5:2b": {
+          "name": "Qwen 3.5 2B Agile Worker",
           "tool_call": true,
+          "reasoning": false,
           "limit": {
             "context": 32768,
             "output": 4096
           }
         }
+      }
+    }
+  },
+  "agent": {
+    "local": {
+      "description": "Local primary conversational & deep reasoning mode powered by Qwen-3.5-4B Deep Brain (32k context).",
+      "mode": "primary",
+      "model": "ollama/qwen3.5:4b",
+      "temperature": 0.1,
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "read": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "list": "allow",
+        "task": "allow"
+      }
+    },
+    "agile": {
+      "description": "High-speed micro-contract worker powered by Qwen-3.5-2B for fast schemas, physics, and endpoints.",
+      "mode": "subagent",
+      "model": "ollama/qwen3.5:2b",
+      "temperature": 0.1
+    },
+    "tool-runner": {
+      "description": "Tool-use and environment execution specialist powered by Qwen-3.5-4B (32k context, No-Think Mode).",
+      "mode": "subagent",
+      "model": "ollama/qwen3.5:4b",
+      "temperature": 0.1,
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "read": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "list": "allow"
       }
     }
   }

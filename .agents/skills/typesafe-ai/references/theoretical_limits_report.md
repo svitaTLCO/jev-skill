@@ -73,7 +73,7 @@ Partition architectural cognition:
    - `asteroids_brain`: When prompted for 3 complex math functions (`spawnAsteroid`, `splitAsteroid`, `updateAsteroids`), the 2B model spent all tokens in internal planning, resulting in an empty stub: `function spawnAsteroid(x, y, radius, level) { }`.
    - `drone_ai_brain`: Rather than emitting standalone functional primitives matching global state, it encapsulated logic into a `class VectorHunterDrone` with mismatched method signatures.
 3. **Synthesis Failure**:
-   The resulting artifact [`benchmarks/heterogeneous_swarm/neon_asteroids.html`](file:///Users/sandrovita/jev-skill/test%20speed/heterogeneous_swarm/neon_asteroids.html) failed runtime execution and could not be played without manual code reconstruction.
+   The resulting artifact [`benchmarks/heterogeneous_swarm/neon_asteroids.html`](../benchmarks/heterogeneous_swarm/neon_asteroids.html) failed runtime execution and could not be played without manual code reconstruction.
 
 ---
 

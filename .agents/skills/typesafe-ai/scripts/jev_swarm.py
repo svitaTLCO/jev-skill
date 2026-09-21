@@ -24,7 +24,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_TYPESAFE_URL = "https://api.typesafe.ai/v1/systemone"
-DEFAULT_MODEL = "huihui-qwen3.5:2b"
+DEFAULT_AGILE_MODEL = "qwen3.5:2b"
+DEFAULT_DEEP_MODEL = "qwen3.5:4b"
+DEFAULT_MODEL = DEFAULT_AGILE_MODEL
 
 def resolve_api_key(explicit_key: str = None) -> str:
     if explicit_key:
@@ -82,16 +84,27 @@ class OllamaWorker:
         self.model = model
         self.base_url = base_url
 
-    def generate(self, prompt: str, system: str = None, max_tokens: int = 1200, temperature: float = 0.2) -> tuple[str, float, int]:
+    def generate(self, prompt: str, system: str = None, max_tokens: int = 1500, temperature: float = 0.2, think: bool = False) -> tuple[str, float, int]:
         system_prompt = system or (
+            "/no_think\n"
             "You are an expert software engineer in an autonomous micro-swarm. "
-            "Output ONLY clean, production-grade code enclosed in markdown fences. Do NOT add conversational prose."
-        )
-        chatml = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n<think>\n"
+            "Output ONLY clean, production-grade code enclosed in markdown fences. Do NOT add conversational prose or explanations. "
+            "Do NOT invent unasked helper methods, extra classes, or extraneous endpoints. Keep implementation minimal, focused, and complete."
+        ) if not think else (system or (
+            "You are an expert software engineer in an autonomous micro-swarm. "
+            "Output clean, production-grade code enclosed in markdown fences. "
+            "Do NOT invent unasked helper methods, extra classes, or extraneous endpoints. Keep implementation minimal, focused, and complete."
+        ))
+
+        if think:
+            chatml = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n<think>\n"
+        else:
+            chatml = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
         
         payload = {
             "model": self.model,
             "prompt": chatml,
+            "think": think,
             "options": {
                 "num_predict": max_tokens,
                 "temperature": temperature
@@ -178,6 +191,46 @@ class GenericRuntimeValidator:
         except Exception as e:
             return False, str(e)
 
+    @staticmethod
+    def validate_with_tests(code_str: str, tests_str: str, lang: str = "python") -> tuple[bool, str]:
+        """Runs the code along with unit test assertions to verify runtime correctness."""
+        if not tests_str:
+            return GenericRuntimeValidator.validate_code(code_str, lang=lang)
+        
+        valid_syntax, syn_err = GenericRuntimeValidator.validate_code(code_str, lang=lang)
+        if not valid_syntax:
+            return False, syn_err
+            
+        if lang.lower() in ["python", "py"]:
+            full_script = f"{code_str}\n\n# --- AUTOMATED TEST SUITE ---\n{tests_str}\n"
+            with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
+                f.write(full_script)
+                tmp_path = f.name
+            try:
+                res = subprocess.run([sys.executable, tmp_path], capture_output=True, text=True, timeout=5)
+                if res.returncode != 0:
+                    err = res.stderr.strip() or res.stdout.strip()
+                    return False, f"Unit Test Assertion Failure: {err}"
+                return True, "All unit test assertions passed cleanly"
+            finally:
+                try: os.unlink(tmp_path)
+                except Exception: pass
+        elif lang.lower() in ["javascript", "js"]:
+            full_script = f"{code_str}\n\n// --- AUTOMATED TEST SUITE ---\n{tests_str}\n"
+            with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as f:
+                f.write(full_script)
+                tmp_path = f.name
+            try:
+                res = subprocess.run(["node", tmp_path], capture_output=True, text=True, timeout=5)
+                if res.returncode != 0:
+                    err = res.stderr.strip() or res.stdout.strip()
+                    return False, f"JavaScript Test Assertion Failure: {err}"
+                return True, "All JavaScript test assertions passed cleanly"
+            finally:
+                try: os.unlink(tmp_path)
+                except Exception: pass
+        return True, "Skipped test execution for language"
+
 
 class JevSwarm:
     """
@@ -188,6 +241,68 @@ class JevSwarm:
         self.jev = JevClient(api_key)
         self.default_model = default_worker_model
 
+    def evaluate_architecture_choice(self, task_spec: str, options: dict[str, str]) -> tuple[str, float]:
+        """
+        Empirical Discovery: Use Jev Choice to decide between competing architectural patterns or technical designs.
+        """
+        questions = {
+            "architectural_decision": {
+                "type": "choice",
+                "instructions": "Select the optimal architectural pattern or implementation design for this requirement:",
+                "criteria": options
+            },
+            "soundness_score": {
+                "type": "score",
+                "instructions": "Rate the long-term maintainability and structural clarity of the best approach",
+                "criteria": [
+                    "Level 0: Fragile / High Tech Debt",
+                    "Level 1: Acceptable Prototype",
+                    "Level 2: Solid Engineering",
+                    "Level 3: Production Grade Perfection"
+                ]
+            }
+        }
+        state = f"## Architecture & Design Decision Specification\n{task_spec}"
+        ans, elapsed = self.jev.evaluate(state, questions)
+        choice_obj = ans.get("architectural_decision", {})
+        selected_option = choice_obj.get("choice", list(options.keys())[0])
+        score = ans.get("soundness_score", {}).get("score", 0.0)
+        return selected_option, score
+
+    @staticmethod
+    def extract_interface_contract(code_str: str, lang: str = "python") -> str:
+        """
+        Crucial Discovery (Experiment 7): Strips raw implementation code and leaves ONLY
+        interface declarations (classes, function signatures, schemas, type declarations)
+        to prevent the 'Accumulated Code Prompt Trap' (>600 tokens reasoning expansion in small SLMs).
+        """
+        lines = code_str.splitlines()
+        interface_lines = []
+        in_docstring = False
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith('"""') or stripped.startswith("'''"):
+                in_docstring = not in_docstring
+                continue
+            if in_docstring:
+                continue
+            if stripped.startswith("import ") or stripped.startswith("from "):
+                interface_lines.append(line)
+            elif stripped.startswith("class ") or stripped.startswith("def ") or stripped.startswith("async def "):
+                interface_lines.append(line)
+                if ":" in line:
+                    interface_lines.append("    ...")
+            elif lang in ["javascript", "js", "ts"] and (
+                stripped.startswith("interface ") or stripped.startswith("type ") or 
+                stripped.startswith("export function ") or stripped.startswith("function ") or
+                stripped.startswith("let ") or stripped.startswith("const ")
+            ):
+                if "{" in line and "}" not in line:
+                    interface_lines.append(line.split("{")[0] + "{ ... }")
+                else:
+                    interface_lines.append(line)
+        return "\n".join(interface_lines) if interface_lines else code_str[:600]
+
     def execute_micro_contract(
         self,
         task_id: str,
@@ -195,34 +310,100 @@ class JevSwarm:
         lang: str = "javascript",
         spec_requirement: str = "",
         model: str = None,
+        tier: str = "agile",
+        unit_tests: str = None,
         max_tokens: int = 1200,
-        min_noul: float = 0.70
+        min_noul: float = 0.70,
+        sample_candidates: int = 1,
+        think: bool = False
     ) -> dict:
-        worker_model = model or self.default_model
+        if model:
+            worker_model = model
+        elif tier.lower() == "deep":
+            worker_model = DEFAULT_DEEP_MODEL
+        else:
+            worker_model = DEFAULT_AGILE_MODEL
+
         worker = OllamaWorker(worker_model)
         
-        # Generation Pass
-        code, t_gen, tokens = worker.generate(prompt, max_tokens=max_tokens)
+        # Generation Pass (Supports Multi-Candidate Arena from Exp 6 & 7)
+        candidates = []
+        total_tokens = 0
+        total_gen_time = 0.0
+
+        if sample_candidates > 1:
+            print(f"   🏟️ [{task_id}] Running Multi-Candidate Arena ({sample_candidates} competing candidates on {worker_model})...")
+            with ThreadPoolExecutor(max_workers=sample_candidates) as ex:
+                futures = [ex.submit(worker.generate, prompt, max_tokens=max_tokens, think=think) for _ in range(sample_candidates)]
+                for fut in as_completed(futures):
+                    c_code, c_t, c_tok = fut.result()
+                    total_tokens += c_tok
+                    total_gen_time = max(total_gen_time, c_t)
+                    # Tier 1 check
+                    valid, _ = GenericRuntimeValidator.validate_code(c_code, lang=lang)
+                    if valid:
+                        candidates.append(c_code)
+            if not candidates:
+                # Fallback to standard generation if all failed syntax
+                code, t_gen, tokens = worker.generate(prompt, max_tokens=max_tokens, think=think)
+                total_tokens += tokens
+                total_gen_time += t_gen
+            elif len(candidates) == 1:
+                code = candidates[0]
+            else:
+                # Jev Arena Selection
+                arena_payload = {
+                    "state": f"## Task Specification\n{prompt}\n\n" + "\n\n".join(
+                        [f"### Candidate {i+1}\n```{lang}\n{c}\n```" for i, c in enumerate(candidates[:3])]
+                    ),
+                    "model": "jev-latest",
+                    "questions": {
+                        "winning_candidate": {
+                            "type": "choice",
+                            "instructions": "Select the winning candidate implementation with best correctness and modularity:",
+                            "criteria": {f"candidate_{i+1}": f"Candidate {i+1} is superior" for i in range(len(candidates[:3]))}
+                        }
+                    }
+                }
+                ans, _ = self.jev.evaluate(arena_payload["state"], arena_payload["questions"])
+                win_key = ans.get("winning_candidate", {}).get("choice", "candidate_1")
+                try:
+                    win_idx = int(win_key.split("_")[-1]) - 1
+                except Exception:
+                    win_idx = 0
+                code = candidates[min(win_idx, len(candidates)-1)]
+                print(f"   👑 [{task_id}] Jev Arena Promoted Winner: Candidate {win_idx + 1}")
+        else:
+            code, t_gen, tokens = worker.generate(prompt, max_tokens=max_tokens, think=think)
+            total_tokens = tokens
+            total_gen_time = t_gen
         
-        # --- TIER 1: Generic Runtime Sanity ---
-        is_valid, err_msg = GenericRuntimeValidator.validate_code(code, lang=lang)
+        # --- TIER 1: Generic Runtime Sanity & Optional Unit Test Verification ---
+        if unit_tests:
+            is_valid, err_msg = GenericRuntimeValidator.validate_with_tests(code, unit_tests, lang=lang)
+        else:
+            is_valid, err_msg = GenericRuntimeValidator.validate_code(code, lang=lang)
         
-        # Self-Healing Loop if Tier 1 Fails
+        # Self-Healing Loop if Tier 1 Fails (Localized AST Healing from Exp 4)
         if not is_valid:
             print(f"   ⚠️ [{task_id}] Tier 1 Runtime Failure ({err_msg[:80]}). Triggering Compiler-in-the-Loop Self-Healing...")
             healing_prompt = (
-                f"Your previous code failed compilation with this exact error:\n"
+                f"Your previous code failed execution/tests with this exact diagnostic:\n"
                 f"ERROR: {err_msg}\n\n"
-                f"CODE:\n{code}\n\n"
-                f"TASK: Fix the error and return ONLY the complete, corrected {lang} code."
+                f"DEFECTIVE CODE:\n```{lang}\n{code}\n```\n\n"
+                f"INSTRUCTION: Apply a localized patch to fix the error. Return ONLY the complete, compilable {lang} code inside markdown fences. Keep it minimal and focused without extra unasked methods."
             )
-            healed_code, th, tokh = worker.generate(healing_prompt, max_tokens=max_tokens + 200)
-            t_gen += th
-            tokens += tokh
-            is_valid, err_msg = GenericRuntimeValidator.validate_code(healed_code, lang=lang)
+            heal_tokens = max(max_tokens + 300, 1600)
+            healed_code, th, tokh = worker.generate(healing_prompt, max_tokens=heal_tokens, think=think)
+            total_gen_time += th
+            total_tokens += tokh
+            if unit_tests:
+                is_valid, err_msg = GenericRuntimeValidator.validate_with_tests(healed_code, unit_tests, lang=lang)
+            else:
+                is_valid, err_msg = GenericRuntimeValidator.validate_code(healed_code, lang=lang)
             if is_valid:
                 code = healed_code
-                print(f"   ✅ [{task_id}] Self-Healing Succeeded!")
+                print(f"   ✅ [{task_id}] Localized Self-Healing Succeeded!")
             else:
                 print(f"   ❌ [{task_id}] Self-Healing Failed. Rejecting candidate.")
                 return {
@@ -230,8 +411,8 @@ class JevSwarm:
                     "code": code,
                     "passed": False,
                     "reason": f"Tier 1 Fatal Error: {err_msg}",
-                    "tokens": tokens,
-                    "time": t_gen
+                    "tokens": total_tokens,
+                    "time": total_gen_time
                 }
 
         # --- TIER 2: Calibrated TypeSafe Jev Gates (System One) ---
@@ -248,6 +429,10 @@ class JevSwarm:
                     "type": "noul",
                     "instructions": spec_instr
                 },
+                "no_scope_creep": {
+                    "type": "noul",
+                    "instructions": "Does this code strictly stay within bounds without inventing unprompted extra endpoints, functions, or state?"
+                },
                 "code_quality": {
                     "type": "score",
                     "instructions": "Rate code elegance, modularity, and error-handling from 0 to 3",
@@ -259,20 +444,22 @@ class JevSwarm:
         ans, t_jev = self.jev.evaluate(audit_payload["state"], audit_payload["questions"])
         ref_noul = ans.get("reference_integrity", {}).get("noul", 0.0)
         spec_noul = ans.get("spec_compliance", {}).get("noul", 0.0)
+        scope_noul = ans.get("no_scope_creep", {}).get("noul", 0.0)
         quality_score = ans.get("code_quality", {}).get("score", 0.0)
 
         passed = (ref_noul >= min_noul) and (spec_noul >= min_noul)
         status_icon = "✅" if passed else "⚠️"
-        print(f"   {status_icon} [{task_id}] Tier 2 Gated in {t_jev*1000:.0f}ms | Ref Noul: {ref_noul:.2f} | Spec Noul: {spec_noul:.2f} | Score: {quality_score:.2f}/3.0")
+        print(f"   {status_icon} [{task_id}] Tier 2 Gated in {t_jev*1000:.0f}ms | Ref: {ref_noul:.2f} | Spec: {spec_noul:.2f} | Scope: {scope_noul:.2f} | Score: {quality_score:.2f}/3.0")
 
         return {
             "task_id": task_id,
             "code": code,
             "passed": passed,
-            "time_seconds": round(t_gen, 2),
-            "tokens": tokens,
+            "time_seconds": round(total_gen_time, 2),
+            "tokens": total_tokens,
             "reference_integrity_noul": ref_noul,
             "spec_compliance_noul": spec_noul,
+            "no_scope_creep_noul": scope_noul,
             "quality_score": quality_score
         }
 
@@ -280,9 +467,13 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="TypeSafe Jev Generic Swarm CLI")
     parser.add_argument("prompt", nargs="?", help="Task specification or contract prompt")
-    parser.add_argument("--model", "-m", default="huihui-qwen3.5:2b", help="Worker model (default: huihui-qwen3.5:2b)")
+    parser.add_argument("--model", "-m", default=None, help="Worker model override (default: tier selection)")
+    parser.add_argument("--tier", choices=["agile", "deep"], default="agile", help="Cognitive tier: agile (qwen3.5:2b) or deep (qwen3.5:4b)")
     parser.add_argument("--lang", "-l", default="python", help="Language (python, javascript, shell)")
     parser.add_argument("--spec", "-s", default="", help="Specific acceptance criteria for Jev Tier 2 gate")
+    parser.add_argument("--tests", "-t", default=None, help="Inline unit test string or path to unit test file")
+    parser.add_argument("--think", action="store_true", help="Enable thinking mode (default: False)")
+    parser.add_argument("--candidates", "-c", type=int, default=1, help="Number of Arena candidates to sample")
     parser.add_argument("--max-tokens", type=int, default=1200, help="Max tokens per worker pass")
     parser.add_argument("--out", "-o", help="File to write output code to")
 
@@ -291,15 +482,26 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    swarm = JevSwarm(default_worker_model=args.model)
-    print(f"🐝 [Jev Swarm] Dispatching task to {args.model} under Jev 3-Tier Governance...")
+    # Load unit tests from file if specified
+    unit_tests = args.tests
+    if unit_tests and os.path.isfile(unit_tests):
+        with open(unit_tests) as f:
+            unit_tests = f.read()
+
+    selected_model = args.model or (DEFAULT_DEEP_MODEL if args.tier == "deep" else DEFAULT_AGILE_MODEL)
+    swarm = JevSwarm(default_worker_model=selected_model)
+    print(f"🐝 [Jev Swarm] Dispatching task to {selected_model} (Tier: {args.tier.upper()}, Think: {args.think}) under Jev 3-Tier Governance...")
     res = swarm.execute_micro_contract(
         task_id="cli_task",
         prompt=args.prompt,
         lang=args.lang,
         spec_requirement=args.spec,
-        model=args.model,
-        max_tokens=args.max_tokens
+        model=selected_model,
+        tier=args.tier,
+        unit_tests=unit_tests,
+        max_tokens=args.max_tokens,
+        sample_candidates=args.candidates,
+        think=args.think
     )
 
     if res["passed"]:

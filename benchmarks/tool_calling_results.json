@@ -1,0 +1,833 @@
+{
+  "qwen3.5:2b": {
+    "display_name": "Qwen 3.5 2B (Agile Baseline)",
+    "passed_count": 7,
+    "total_count": 10,
+    "accuracy_percent": 70.0,
+    "total_latency_s": 117.58,
+    "avg_latency_s": 11.76,
+    "total_tokens": 361,
+    "tests": {
+      "T01_read_file_single_arg": {
+        "passed": true,
+        "reason": "Valid single-arg extraction",
+        "latency_s": 5.779764625011012,
+        "eval_count": 28,
+        "tokens_per_sec": 24.151526678380158,
+        "tool_calls": [
+          {
+            "id": "call_d58ba6xv",
+            "function": {
+              "index": 0,
+              "name": "read_file",
+              "arguments": {
+                "path": "/workspace/src/index.ts"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T02_bash_multi_typed": {
+        "passed": false,
+        "reason": "Expected integer timeout 45, got 45000 (type: <class 'int'>)",
+        "latency_s": 6.498543375171721,
+        "eval_count": 60,
+        "tokens_per_sec": 23.434204564983048,
+        "tool_calls": [
+          {
+            "id": "call_rtwlayc7",
+            "function": {
+              "index": 0,
+              "name": "run_bash",
+              "arguments": {
+                "command": "npm test -- --coverage",
+                "timeout": 45000,
+                "background": false
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T03_distractor_selection": {
+        "passed": true,
+        "reason": "Correctly selected grep_search among 5 distractors",
+        "latency_s": 6.15744400001131,
+        "eval_count": 39,
+        "tokens_per_sec": 24.453434390808518,
+        "tool_calls": [
+          {
+            "id": "call_33pi7qut",
+            "function": {
+              "index": 0,
+              "name": "grep_search",
+              "arguments": {
+                "query": "calculate_hash",
+                "path": "src/"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T04_complex_schema_enums_and_nested": {
+        "passed": true,
+        "reason": "Valid enum, nested object, and typed ints",
+        "latency_s": 7.074634750140831,
+        "eval_count": 69,
+        "tokens_per_sec": 23.58417208105709,
+        "tool_calls": [
+          {
+            "id": "call_dd9zgp33",
+            "function": {
+              "index": 0,
+              "name": "deploy_service",
+              "arguments": {
+                "environment": "production",
+                "replicas": 5,
+                "config": {
+                  "memory_mb": 1024,
+                  "region": "eu-central-1"
+                }
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T05_edit_file_exact_code": {
+        "passed": false,
+        "reason": "Expected 'edit_file', got 'read_file'",
+        "latency_s": 6.571445791050792,
+        "eval_count": 27,
+        "tokens_per_sec": 22.543433682227757,
+        "tool_calls": [
+          {
+            "id": "call_r87cj079",
+            "function": {
+              "index": 0,
+              "name": "read_file",
+              "arguments": {
+                "path": "src/app.py"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T06_abstention_conversational": {
+        "passed": true,
+        "reason": "Zero false positives: refrained from tool call and answered directly",
+        "latency_s": 6.695401082979515,
+        "eval_count": 32,
+        "tokens_per_sec": 23.288817728612496,
+        "tool_calls": [],
+        "content_preview": "An architectural invariant is a fundamental property or rule"
+      },
+      "T07_abstention_mental_math": {
+        "passed": true,
+        "reason": "Zero false positives: answered calculation directly without tools",
+        "latency_s": 4.8000472080893815,
+        "eval_count": 4,
+        "tokens_per_sec": 30.31359413128818,
+        "tool_calls": [],
+        "content_preview": "600"
+      },
+      "T08_parallel_tool_calling": {
+        "passed": true,
+        "reason": "Successfully emitted 2 parallel tool calls: ['package.json', 'tsconfig.json']",
+        "latency_s": 7.198349791113287,
+        "eval_count": 55,
+        "tokens_per_sec": 23.21841904518262,
+        "tool_calls": [
+          {
+            "id": "call_58u07ggy",
+            "function": {
+              "index": 0,
+              "name": "get_file_size",
+              "arguments": {
+                "path": "package.json"
+              }
+            }
+          },
+          {
+            "id": "call_7sw78zk7",
+            "function": {
+              "index": 1,
+              "name": "get_file_size",
+              "arguments": {
+                "path": "tsconfig.json"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T09_multi_turn_stateful": {
+        "passed": true,
+        "reason": "Successfully used prior turn tool output context",
+        "latency_s": 6.802490666043013,
+        "eval_count": 47,
+        "tokens_per_sec": 23.391079438594186,
+        "tool_calls": [
+          {
+            "id": "call_1p78rkdx",
+            "function": {
+              "index": 0,
+              "name": "docker_restart",
+              "arguments": {
+                "container_id": "c1a2b3",
+                "memory_limit": "2g"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T10_array_and_boolean_filters": {
+        "passed": false,
+        "reason": "Ollama API Error: timed out",
+        "latency_s": 60.004921708023176,
+        "eval_count": 0,
+        "tokens_per_sec": 0,
+        "tool_calls": [],
+        "content_preview": ""
+      }
+    }
+  },
+  "qwen3.5:4b": {
+    "display_name": "Qwen 3.5 4B (No-Think)",
+    "passed_count": 9,
+    "total_count": 10,
+    "accuracy_percent": 90.0,
+    "total_latency_s": 141.29,
+    "avg_latency_s": 14.13,
+    "total_tokens": 427,
+    "tests": {
+      "T01_read_file_single_arg": {
+        "passed": true,
+        "reason": "Valid single-arg extraction",
+        "latency_s": 11.50137387495488,
+        "eval_count": 28,
+        "tokens_per_sec": 15.856844408678452,
+        "tool_calls": [
+          {
+            "id": "call_c4u779p6",
+            "function": {
+              "index": 0,
+              "name": "read_file",
+              "arguments": {
+                "path": "/workspace/src/index.ts"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T02_bash_multi_typed": {
+        "passed": true,
+        "reason": "Valid multi-type argument extraction (str, int, bool)",
+        "latency_s": 13.153602874837816,
+        "eval_count": 57,
+        "tokens_per_sec": 15.517259684607614,
+        "tool_calls": [
+          {
+            "id": "call_5ijagc98",
+            "function": {
+              "index": 0,
+              "name": "run_bash",
+              "arguments": {
+                "command": "npm test -- --coverage",
+                "timeout": 45,
+                "background": false
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T03_distractor_selection": {
+        "passed": true,
+        "reason": "Correctly selected grep_search among 5 distractors",
+        "latency_s": 11.789577624993399,
+        "eval_count": 39,
+        "tokens_per_sec": 15.449025938914552,
+        "tool_calls": [
+          {
+            "id": "call_wel3bfnc",
+            "function": {
+              "index": 0,
+              "name": "grep_search",
+              "arguments": {
+                "query": "calculate_hash",
+                "path": "src/"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T04_complex_schema_enums_and_nested": {
+        "passed": true,
+        "reason": "Valid enum, nested object, and typed ints",
+        "latency_s": 12.863952874904498,
+        "eval_count": 69,
+        "tokens_per_sec": 15.53503679889985,
+        "tool_calls": [
+          {
+            "id": "call_g8gby16f",
+            "function": {
+              "index": 0,
+              "name": "deploy_service",
+              "arguments": {
+                "environment": "production",
+                "replicas": 5,
+                "config": {
+                  "memory_mb": 1024,
+                  "region": "eu-central-1"
+                }
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T05_edit_file_exact_code": {
+        "passed": false,
+        "reason": "Expected 'edit_file', got 'read_file'",
+        "latency_s": 10.952817665878683,
+        "eval_count": 27,
+        "tokens_per_sec": 14.246337108436785,
+        "tool_calls": [
+          {
+            "id": "call_du8nj8sh",
+            "function": {
+              "index": 0,
+              "name": "read_file",
+              "arguments": {
+                "path": "src/app.py"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T06_abstention_conversational": {
+        "passed": true,
+        "reason": "Zero false positives: refrained from tool call and answered directly",
+        "latency_s": 11.032873291056603,
+        "eval_count": 32,
+        "tokens_per_sec": 15.791793103822652,
+        "tool_calls": [],
+        "content_preview": "An architectural invariant is a fundamental property or cons"
+      },
+      "T07_abstention_mental_math": {
+        "passed": true,
+        "reason": "Zero false positives: answered calculation directly without tools",
+        "latency_s": 8.548688165843487,
+        "eval_count": 4,
+        "tokens_per_sec": 19.476851761681242,
+        "tool_calls": [],
+        "content_preview": "600"
+      },
+      "T08_parallel_tool_calling": {
+        "passed": true,
+        "reason": "Successfully emitted 2 parallel tool calls: ['package.json', 'tsconfig.json']",
+        "latency_s": 13.873273208038881,
+        "eval_count": 55,
+        "tokens_per_sec": 12.86863371443253,
+        "tool_calls": [
+          {
+            "id": "call_c44br9k3",
+            "function": {
+              "index": 0,
+              "name": "get_file_size",
+              "arguments": {
+                "path": "package.json"
+              }
+            }
+          },
+          {
+            "id": "call_e4cczl9b",
+            "function": {
+              "index": 1,
+              "name": "get_file_size",
+              "arguments": {
+                "path": "tsconfig.json"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T09_multi_turn_stateful": {
+        "passed": true,
+        "reason": "Successfully used prior turn tool output context",
+        "latency_s": 11.679341916926205,
+        "eval_count": 47,
+        "tokens_per_sec": 15.753531640130344,
+        "tool_calls": [
+          {
+            "id": "call_ssvr88v9",
+            "function": {
+              "index": 0,
+              "name": "docker_restart",
+              "arguments": {
+                "container_id": "c1a2b3",
+                "memory_limit": "2g"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T10_array_and_boolean_filters": {
+        "passed": true,
+        "reason": "Valid array of strings and boolean flags",
+        "latency_s": 35.8991738751065,
+        "eval_count": 69,
+        "tokens_per_sec": 12.937136951594296,
+        "tool_calls": [
+          {
+            "id": "call_zuanyief",
+            "function": {
+              "index": 0,
+              "name": "batch_delete_files",
+              "arguments": {
+                "paths": [
+                  "temp/cache1.tmp",
+                  "temp/cache2.tmp",
+                  "temp/cache3.tmp"
+                ],
+                "force": true,
+                "dry_run": true
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      }
+    }
+  },
+  "llama3-groq-tool-use:8b": {
+    "display_name": "Llama 3 Groq Tool Use 8B",
+    "passed_count": 9,
+    "total_count": 10,
+    "accuracy_percent": 90.0,
+    "total_latency_s": 112.76,
+    "avg_latency_s": 11.28,
+    "total_tokens": 447,
+    "tests": {
+      "T01_read_file_single_arg": {
+        "passed": true,
+        "reason": "Valid single-arg extraction",
+        "latency_s": 8.796640916960314,
+        "eval_count": 29,
+        "tokens_per_sec": 12.216529132420016,
+        "tool_calls": [
+          {
+            "id": "call_7metdyoc",
+            "function": {
+              "index": 0,
+              "name": "read_file",
+              "arguments": {
+                "path": "/workspace/src/index.ts"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T02_bash_multi_typed": {
+        "passed": true,
+        "reason": "Valid multi-type argument extraction (str, int, bool)",
+        "latency_s": 9.890545709058642,
+        "eval_count": 42,
+        "tokens_per_sec": 12.184168935242882,
+        "tool_calls": [
+          {
+            "id": "call_zldmzre9",
+            "function": {
+              "index": 0,
+              "name": "run_bash",
+              "arguments": {
+                "command": "npm test -- --coverage",
+                "timeout": 45,
+                "background": false
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T03_distractor_selection": {
+        "passed": false,
+        "reason": "No tool calls emitted",
+        "latency_s": 11.130588083062321,
+        "eval_count": 42,
+        "tokens_per_sec": 12.139363359759571,
+        "tool_calls": [],
+        "content_preview": "I'm sorry but I don't have the capability to perform file sy"
+      },
+      "T04_complex_schema_enums_and_nested": {
+        "passed": true,
+        "reason": "Valid enum, nested object, and typed ints",
+        "latency_s": 11.467895000008866,
+        "eval_count": 53,
+        "tokens_per_sec": 11.553234251633802,
+        "tool_calls": [
+          {
+            "id": "call_ubg92mx7",
+            "function": {
+              "index": 0,
+              "name": "deploy_service",
+              "arguments": {
+                "environment": "production",
+                "replicas": 5,
+                "config": {
+                  "memory_mb": 1024,
+                  "region": "eu-central-1"
+                }
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T05_edit_file_exact_code": {
+        "passed": true,
+        "reason": "Exact substring replacement parameters preserved",
+        "latency_s": 12.155259333085269,
+        "eval_count": 50,
+        "tokens_per_sec": 12.088013311341534,
+        "tool_calls": [
+          {
+            "id": "call_t4fxf1fb",
+            "function": {
+              "index": 0,
+              "name": "edit_file",
+              "arguments": {
+                "path": "src/app.py",
+                "old_str": "PORT = 3000",
+                "new_str": "PORT = 8080"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T06_abstention_conversational": {
+        "passed": true,
+        "reason": "Zero false positives: refrained from tool call and answered directly",
+        "latency_s": 10.641870332881808,
+        "eval_count": 32,
+        "tokens_per_sec": 12.118118328881186,
+        "tool_calls": [],
+        "content_preview": "An architectural invariant is a constraint that must always "
+      },
+      "T07_abstention_mental_math": {
+        "passed": true,
+        "reason": "Zero false positives: answered calculation directly without tools",
+        "latency_s": 13.621105125173926,
+        "eval_count": 54,
+        "tokens_per_sec": 10.137726648591476,
+        "tool_calls": [],
+        "content_preview": "The microservice handles 200 requests per second. To find ou"
+      },
+      "T08_parallel_tool_calling": {
+        "passed": true,
+        "reason": "Successfully emitted 2 parallel tool calls: ['package.json', 'tsconfig.json']",
+        "latency_s": 12.42972662486136,
+        "eval_count": 57,
+        "tokens_per_sec": 11.176665632008088,
+        "tool_calls": [
+          {
+            "id": "call_ie5od6fo",
+            "function": {
+              "index": 0,
+              "name": "get_file_size",
+              "arguments": {
+                "path": "package.json"
+              }
+            }
+          },
+          {
+            "id": "call_55lf5d7h",
+            "function": {
+              "index": 1,
+              "name": "get_file_size",
+              "arguments": {
+                "path": "tsconfig.json"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T09_multi_turn_stateful": {
+        "passed": true,
+        "reason": "Successfully used prior turn tool output context",
+        "latency_s": 10.300380208995193,
+        "eval_count": 34,
+        "tokens_per_sec": 11.971691878228176,
+        "tool_calls": [
+          {
+            "id": "call_fb561j47",
+            "function": {
+              "index": 0,
+              "name": "docker_restart",
+              "arguments": {
+                "container_id": "c1a2b3",
+                "memory_limit": "2g"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T10_array_and_boolean_filters": {
+        "passed": true,
+        "reason": "Valid array of strings and boolean flags",
+        "latency_s": 12.326035874895751,
+        "eval_count": 54,
+        "tokens_per_sec": 10.784401441754646,
+        "tool_calls": [
+          {
+            "id": "call_9537wlzw",
+            "function": {
+              "index": 0,
+              "name": "batch_delete_files",
+              "arguments": {
+                "dry_run": true,
+                "force": true,
+                "paths": [
+                  "temp/cache1.tmp",
+                  "temp/cache2.tmp",
+                  "temp/cache3.tmp"
+                ]
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      }
+    }
+  },
+  "qwen3.5:4b (think=True)": {
+    "display_name": "Qwen 3.5 4B (With Think)",
+    "passed_count": 10,
+    "total_count": 10,
+    "accuracy_percent": 100.0,
+    "total_latency_s": 180.29,
+    "avg_latency_s": 18.03,
+    "total_tokens": 1246,
+    "tests": {
+      "T01_read_file_single_arg": {
+        "passed": true,
+        "reason": "Valid single-arg extraction",
+        "latency_s": 15.486119708046317,
+        "eval_count": 59,
+        "tokens_per_sec": 15.517932022515204,
+        "tool_calls": [
+          {
+            "id": "call_1c51evzn",
+            "function": {
+              "index": 0,
+              "name": "read_file",
+              "arguments": {
+                "path": "/workspace/src/index.ts"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T02_bash_multi_typed": {
+        "passed": true,
+        "reason": "Valid multi-type argument extraction (str, int, bool)",
+        "latency_s": 17.35103474999778,
+        "eval_count": 118,
+        "tokens_per_sec": 15.713119975796468,
+        "tool_calls": [
+          {
+            "id": "call_71hi3j8s",
+            "function": {
+              "index": 0,
+              "name": "run_bash",
+              "arguments": {
+                "command": "npm test -- --coverage",
+                "timeout": 45,
+                "background": false
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T03_distractor_selection": {
+        "passed": true,
+        "reason": "Correctly selected grep_search among 5 distractors",
+        "latency_s": 17.32119149994105,
+        "eval_count": 121,
+        "tokens_per_sec": 14.993486507287145,
+        "tool_calls": [
+          {
+            "id": "call_834k5gle",
+            "function": {
+              "index": 0,
+              "name": "grep_search",
+              "arguments": {
+                "query": "calculate_hash",
+                "path": "src/"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T04_complex_schema_enums_and_nested": {
+        "passed": true,
+        "reason": "Valid enum, nested object, and typed ints",
+        "latency_s": 21.656332458835095,
+        "eval_count": 192,
+        "tokens_per_sec": 15.105640351697073,
+        "tool_calls": [
+          {
+            "id": "call_8zoqjaf2",
+            "function": {
+              "index": 0,
+              "name": "deploy_service",
+              "arguments": {
+                "environment": "production",
+                "replicas": 5,
+                "config": {
+                  "memory_mb": 1024,
+                  "region": "eu-central-1"
+                }
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T05_edit_file_exact_code": {
+        "passed": true,
+        "reason": "Exact substring replacement parameters preserved",
+        "latency_s": 21.131568541983142,
+        "eval_count": 176,
+        "tokens_per_sec": 15.292755917101791,
+        "tool_calls": [
+          {
+            "id": "call_098qp1r7",
+            "function": {
+              "index": 0,
+              "name": "edit_file",
+              "arguments": {
+                "path": "src/app.py",
+                "old_str": "PORT = 3000",
+                "new_str": "PORT = 8080"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T06_abstention_conversational": {
+        "passed": true,
+        "reason": "Zero false positives: refrained from tool call and answered directly",
+        "latency_s": 16.055863125016913,
+        "eval_count": 111,
+        "tokens_per_sec": 15.545373724789187,
+        "tool_calls": [],
+        "content_preview": "An architectural invariant is a fundamental property or cons"
+      },
+      "T07_abstention_mental_math": {
+        "passed": true,
+        "reason": "Zero false positives: answered calculation directly without tools",
+        "latency_s": 14.948112667072564,
+        "eval_count": 90,
+        "tokens_per_sec": 15.418673521237853,
+        "tool_calls": [],
+        "content_preview": "600"
+      },
+      "T08_parallel_tool_calling": {
+        "passed": true,
+        "reason": "Successfully emitted 2 parallel tool calls: ['package.json', 'tsconfig.json']",
+        "latency_s": 15.79450066597201,
+        "eval_count": 117,
+        "tokens_per_sec": 15.438284993907816,
+        "tool_calls": [
+          {
+            "id": "call_mweo9dsx",
+            "function": {
+              "index": 0,
+              "name": "get_file_size",
+              "arguments": {
+                "path": "package.json"
+              }
+            }
+          },
+          {
+            "id": "call_ejq8l0d4",
+            "function": {
+              "index": 1,
+              "name": "get_file_size",
+              "arguments": {
+                "path": "tsconfig.json"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T09_multi_turn_stateful": {
+        "passed": true,
+        "reason": "Successfully used prior turn tool output context",
+        "latency_s": 17.026256792014465,
+        "eval_count": 104,
+        "tokens_per_sec": 13.654580087525858,
+        "tool_calls": [
+          {
+            "id": "call_b2csrgs3",
+            "function": {
+              "index": 0,
+              "name": "docker_restart",
+              "arguments": {
+                "container_id": "c1a2b3",
+                "memory_limit": "2g"
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      },
+      "T10_array_and_boolean_filters": {
+        "passed": true,
+        "reason": "Valid array of strings and boolean flags",
+        "latency_s": 23.521833499893546,
+        "eval_count": 158,
+        "tokens_per_sec": 12.361296280634598,
+        "tool_calls": [
+          {
+            "id": "call_uosq3dh6",
+            "function": {
+              "index": 0,
+              "name": "batch_delete_files",
+              "arguments": {
+                "paths": [
+                  "temp/cache1.tmp",
+                  "temp/cache2.tmp",
+                  "temp/cache3.tmp"
+                ],
+                "force": true,
+                "dry_run": true
+              }
+            }
+          }
+        ],
+        "content_preview": ""
+      }
+    }
+  }
+}

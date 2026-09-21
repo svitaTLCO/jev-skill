@@ -112,7 +112,7 @@ To make this skill available across your Antigravity workspaces:
 2. **Global Level**: Copy or symlink this folder to `~/.gemini/config/skills/typesafe-ai/`:
    ```bash
    mkdir -p ~/.gemini/config/skills
-   cp -r /Users/sandrovita/jev-skill ~/.gemini/config/skills/typesafe-ai
+   cp -r /path/to/jev-skill ~/.gemini/config/skills/typesafe-ai
    ```
 
 ### Claude Code
