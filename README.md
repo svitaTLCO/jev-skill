@@ -179,7 +179,7 @@ baseline.
 
 ### Live Jev vs. direct-Qwen demo
 
-The demo starts two measured sessions and renders their generated artifacts side-by-side. It duplicates the configured Galene OpenAI-compatible provider (`https://api-tlco.elettra.ai/v1`, `Galene/LLM`, Qwen3.8-27B). The compose service mounts the existing authorized TypeSafe and Galene dotenv sources read-only, extracts only the required variables, and never stores them in this repository. It never substitutes a prebuilt game when a generation or Jev gate fails.
+The demo starts two measured sessions and renders their generated artifacts side-by-side. Both lanes use the same Windows-native Ollama worker (`qwen3.5:4b`) through `host.docker.internal:11434`: the direct lane keeps worker thinking enabled, while the Jev lane selects a compact blueprint, disables worker thinking, and applies Noul/Score gates. The compose service mounts only the TypeSafe dotenv source read-only; it never stores credentials in this repository or substitutes a prebuilt game when generation or a Jev gate fails.
 
 ```bash
 docker compose -f demo/docker-compose.yml up --build

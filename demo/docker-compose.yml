@@ -6,8 +6,9 @@ services:
     ports:
       - "8088:8088"
     environment:
-      JEV_DEMO_GALENE_BASE_URL: ${JEV_DEMO_GALENE_BASE_URL:-https://api-tlco.elettra.ai/v1}
-      JEV_DEMO_MODEL: ${JEV_DEMO_MODEL:-Galene/LLM}
+      JEV_DEMO_WORKER_PROVIDER: ${JEV_DEMO_WORKER_PROVIDER:-ollama}
+      JEV_DEMO_WORKER_BASE_URL: ${JEV_DEMO_WORKER_BASE_URL:-http://host.docker.internal:11434}
+      JEV_DEMO_MODEL: ${JEV_DEMO_MODEL:-qwen3.5:4b}
       JEV_DEMO_TYPESAFE_ENV_FILE: /run/secrets/typesafe.env
       JEV_DEMO_GALENE_ENV_FILE: /run/secrets/galene.env
     volumes:

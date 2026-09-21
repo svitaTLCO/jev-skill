@@ -35,15 +35,15 @@ class DemoServerTests(unittest.TestCase):
         self.assertEqual(thread.call_count, 2)
 
     @patch("scripts.demo_server.urllib.request.urlopen")
-    def test_galene_adapter_uses_openai_chat_completions(self, urlopen):
-        urlopen.return_value.__enter__.return_value.read.return_value = b'{"choices":[{"message":{"content":"<!doctype html><html></html>"}}],"usage":{"completion_tokens":12}}'
-        content, tokens = demo_server.galene_generate("make a game")
+    def test_ollama_adapter_uses_native_generate_endpoint(self, urlopen):
+        urlopen.return_value.__enter__.return_value.read.return_value = b'{"response":"<!doctype html><html></html>","eval_count":12}'
+        content, tokens = demo_server.ollama_generate("make a game", thinking=False)
         self.assertEqual(tokens, 12)
         self.assertIn("<!doctype html>", content)
         request = urlopen.call_args.args[0]
-        self.assertTrue(request.full_url.endswith("/v1/chat/completions"))
-        self.assertIn(b'"reasoning_effort": "none"', request.data)
-        self.assertIn(b'"enable_thinking": false', request.data)
+        self.assertTrue(request.full_url.endswith("/api/generate"))
+        self.assertIn(b'"think": false', request.data)
+        self.assertIn(b'"num_predict": 1800', request.data)
 
 
 if __name__ == "__main__":

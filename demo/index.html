@@ -19,12 +19,12 @@
 </head>
 <body>
   <h1>One task. Two inference paths.</h1>
-  <p>Each lane generates a Flappy Pig clone from scratch through the configured Galene Qwen provider. Direct Qwen receives one broad prompt. The Jev lane first selects a constrained blueprint, then evaluates the candidate against its contract. Timings are measured from the server; no outcome is preloaded.</p>
+  <p>Each lane generates a Flappy Pig clone from scratch through the configured local Ollama Qwen worker. Direct Qwen receives one broad prompt with thinking enabled. The Jev lane selects a constrained blueprint, invokes the same Qwen worker with thinking disabled, then evaluates the candidate against its contract. Timings are measured from the server; no outcome is preloaded.</p>
   <button id="start">Start two live sessions</button>
   <p class="note" id="configuration"></p>
   <section class="grid">
-    <article id="direct"><header><h2>Direct local Qwen</h2><div class="meta">single broad prompt · thinking enabled</div></header><span class="status">Waiting to start.</span><iframe title="Direct Qwen result" sandbox="allow-scripts"></iframe></article>
-    <article id="guided"><header><h2>Jev-guided Qwen</h2><div class="meta">Choice → constrained generation → Noul/Score gate</div></header><span class="status">Waiting to start.</span><iframe title="Jev-guided result" sandbox="allow-scripts"></iframe></article>
+    <article id="direct"><header><h2>Direct local Qwen</h2><div class="meta">one broad prompt · thinking enabled</div></header><span class="status">Waiting to start.</span><iframe title="Direct Qwen result" sandbox="allow-scripts"></iframe></article>
+    <article id="guided"><header><h2>Jev-guided local Qwen</h2><div class="meta">Choice → constrained no-think generation → Noul/Score gate</div></header><span class="status">Waiting to start.</span><iframe title="Jev-guided result" sandbox="allow-scripts"></iframe></article>
   </section>
   <script>
     const button = document.querySelector('#start');
