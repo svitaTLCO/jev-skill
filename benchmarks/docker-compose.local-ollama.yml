@@ -1,0 +1,13 @@
+services:
+  local-ollama:
+    image: ollama/ollama:latest
+    container_name: jev-local-ollama
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - jev-local-ollama:/root/.ollama
+
+volumes:
+  jev-local-ollama:
+    name: jev-local-ollama

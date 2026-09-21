@@ -11,8 +11,9 @@ services:
       JEV_GIT_REVISION: ${JEV_GIT_REVISION:-unknown}
       JEV_SANDBOX_TMPDIR: /workspace/benchmark-runs/.sandbox
       JEV_SANDBOX_HOST_DIR: ${JEV_SANDBOX_HOST_DIR:?Set this to the absolute host path of benchmark-runs/.sandbox}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    # WSL/Linux host networking lets the runner reach the local Ollama port
+    # directly while preserving the separate, network-disabled test sandbox.
+    network_mode: host
     volumes:
       - ../benchmark-runs:/workspace/benchmark-runs
       - /var/run/docker.sock:/var/run/docker.sock

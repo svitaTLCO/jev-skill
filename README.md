@@ -151,7 +151,23 @@ or latency difference. A provider that does not echo the seed is recorded as
 
 The default worker is the configured Galene OpenAI-compatible provider. To use
 a host-local Ollama proxy instead, set `JEV_BENCHMARK_PROVIDER=ollama` and
-`JEV_BENCHMARK_WORKER_URL=http://host.docker.internal:11435/api/generate`.
+`JEV_BENCHMARK_WORKER_URL=http://127.0.0.1:11434/api/generate`.
+
+### WSL local SLM baseline
+
+For the same small model family used by the Mac research, run Ollama in the
+isolated Docker volume and pull the exact worker model once:
+
+```bash
+docker compose -f benchmarks/docker-compose.local-ollama.yml up -d
+docker exec jev-local-ollama ollama pull qwen3.5:2b
+```
+
+On the verified WSL CPU-only host, `qwen3.5:2b` generated a 13-token no-think
+Python response successfully, but at approximately 0.25 tokens/second. Keep
+local theory tests short and record cold-load versus warm-model latency
+separately. The paired runner uses WSL host networking to contact this local
+endpoint; its candidate tests remain network-disabled Docker sandboxes.
 
 ### Live Jev vs. direct-Qwen demo
 
