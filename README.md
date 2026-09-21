@@ -8,7 +8,7 @@
 [![Hardware: Apple Silicon](https://img.shields.io/badge/hardware-Apple%20Silicon%20(16GB%20RAM)-lightgrey.svg)]()
 [![Orchestrator: TypeSafe Jev](https://img.shields.io/badge/orchestrator-TypeSafe%20Jev%20System%20One-purple.svg)](https://docs.typesafe.ai)
 [![SLM Models: Qwen 3.5](https://img.shields.io/badge/slm%20workers-Qwen%203.5%20(2B%20%7C%204B)-orange.svg)](https://ollama.com)
-[![Tool Calling: 100%](https://img.shields.io/badge/tool%20calling-100%25%20BFCL%20benchmark-emerald.svg)](benchmarks/tool_calling_results.json)
+[![Tool Calling: 90%](https://img.shields.io/badge/tool%20calling-90%25%20checked--in%20benchmark-yellow.svg)](benchmarks/tool_calling_results.json)
 
 **Empirical research, agent skills, and a production-grade swarm orchestration engine coordinating local Small Language Models (SLMs) under the strict supervision of TypeSafe AI's System One model (Jev).**
 
@@ -20,7 +20,7 @@
 
 ## 💡 The Core Thesis
 
-Small Language Models (1.5B–4B parameters) run blazing fast (30–60 tokens/sec) and **100% privately on consumer hardware** like Apple Silicon. However, when assigned complex, monolithic coding tasks, they frequently encounter critical failure modes:
+Small Language Models (1.5B–4B parameters) can run locally on consumer hardware such as Apple Silicon. Local inference stays on-device; TypeSafe Jev review is an external API call. However, when assigned complex, monolithic coding tasks, they frequently encounter critical failure modes:
 
 1. **The "Accumulated Code" Prompt Trap**: When raw accumulated implementation code is fed into downstream prompts, small models suffer reasoning explosion (`>600 tokens` in `<think>`), truncating before code completion.
 2. **Abliteration Scope Creep & Structural Hallucination**: Small models invent unprompted helper functions, unasked endpoints, or re-declare global state mid-line.
@@ -32,7 +32,7 @@ Small Language Models (1.5B–4B parameters) run blazing fast (30–60 tokens/se
 Rather than paying massive latency and cloud API costs for frontier models on every single token, we deploy **TypeSafe Jev System One** as an ultra-fast (~650ms) architectural co-pilot and calibrated decision gate over an orchestrated swarm of specialized local SLMs:
 
 - **Agile Micro-Worker (`qwen3.5:2b`)**: Lightning-fast (<15s) micro-contracts, data schemas, physics loops, and atomic functions.
-- **Deep Brain & Tool Specialist (`qwen3.5:4b`)**: Complex state machines, pointer data structures, and **100% accurate tool calling** with 32k context.
+- **Deep Brain & Tool Specialist (`qwen3.5:4b`)**: Complex state machines and pointer data structures; the checked-in 10-task tool benchmark reports **9/10 (90%)** accuracy.
 - **Supreme Hivemind & Inspector (`TypeSafe Jev System One`)**: Calibrated architectural decisions (`Choice`), interface extraction, pre-flight tool routing, maintainability scoring (`Score`), and specification gating (`Noul`).
 
 ---
@@ -85,12 +85,12 @@ All benchmarks were conducted on **Apple Silicon (M-Series, 16GB Unified RAM, ma
 
 | Local Model | Concurrent Agents | Wall-Clock Time | Success Rate | Generation Throughput | Unified RAM Usage |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `qwen3.5:2b` | 1 agent | 2.29s | 1/1 (100%) | 52.3 tok/s | 2,851 MB |
-| `qwen3.5:2b` | 8 agents | 16.56s | 8/8 (100%) | 57.9 tok/s | 2,950 MB |
-| **`qwen3.5:2b`** | **24 agents** | **56.06s** | **24/24 (100%)** | **51.4 tok/s** | **2,815 MB** |
-| `qwen3.5:4b` | 1 agent | 3.87s | 1/1 (100%) | 31.0 tok/s | 3,790 MB |
-| `qwen3.5:4b` | 8 agents | 32.90s | 8/8 (100%) | 29.2 tok/s | 3,810 MB |
-| **`qwen3.5:4b`** | **24 agents** | **89.78s** | **24/24 (100%)** | **32.1 tok/s** | **3,855 MB** |
+| `huihui-qwen3.5:0.8b` | 1 agent | 2.29s | 1/1 (HTTP success) | 52.3 tok/s | 2,851 MB |
+| `huihui-qwen3.5:0.8b` | 8 agents | 16.56s | 8/8 (HTTP success) | 57.9 tok/s | 2,950 MB |
+| **`huihui-qwen3.5:0.8b`** | **24 agents** | **56.06s** | **24/24 (HTTP success)** | **51.4 tok/s** | **2,815 MB** |
+| `huihui-qwen3.5:2b` | 1 agent | 3.87s | 1/1 (HTTP success) | 31.0 tok/s | 2,790 MB |
+| `huihui-qwen3.5:2b` | 8 agents | 32.90s | 8/8 (HTTP success) | 29.2 tok/s | 2,710 MB |
+| **`huihui-qwen3.5:2b`** | **24 agents** | **89.78s** | **24/24 (HTTP success)** | **32.1 tok/s** | **2,755 MB** |
 
 > **Key Takeaway:** Unified Memory on Apple Silicon maintains rock-solid stability (~2.8GB–3.8GB) even under bursts of 24 parallel inference threads. Throughput remains pegged at full hardware speed without thermal throttling.
 
@@ -100,7 +100,7 @@ Evaluated across 10 diverse scenarios covering single calls, multiple arguments,
 
 | Benchmark Metric | `ollama/qwen3.5:4b` (Our Deep Brain) | `llama3-groq-tool-use:8b` (Baseline) |
 | :--- | :--- | :--- |
-| **Overall Accuracy** | **10 / 10 (100%)** | 9 / 10 (90%) |
+| **Overall Accuracy** | **9 / 10 (90%)** | 9 / 10 (90%) |
 | **Distractor Avoidance** | **100% Pass** (Selected exact tool) | ❌ **Frozen** (0 tool calls generated) |
 | **Context Window** | **32,768 tokens (32k)** | 8,192 tokens (8k) |
 | **Disk & VRAM Footprint** | **3.4 GB** (Lean & fast) | 4.7 GB |
@@ -111,6 +111,32 @@ Evaluated across 10 diverse scenarios covering single calls, multiple arguments,
 - Small models (0.8B–4B) spend 600–1,200 tokens deliberating inside `<think>`, adding 20–70s latency per worker and risking output truncation.
 - Enforcing **No-Think mode** (`think: False` or `reasoning_effort: "none"`) yields **68% token reduction**, **65% latency reduction**, and eliminates empty-thought halts.
 - Our **Ollama Fast Proxy** (`scripts/ollama_fast_proxy.py`) transparently enforces `reasoning_effort: "none"` and optimal 32k context on port `11435`, dropping turn latency from **56s down to 0.3s**.
+
+### Reproducible evaluation
+
+Published figures are research artifacts, not product guarantees. Score generated candidates against the fixed corpus with a model digest and seed; runtime tests run only in a network-disabled Docker sandbox:
+
+The evidence classification, contradictions in historical artifacts, and the
+next controlled evaluation program are maintained in
+[`references/jev_research_synthesis.md`](references/jev_research_synthesis.md).
+
+```bash
+docker run --rm -v "$PWD:/workspace" -w /workspace python:3.11-alpine \
+  python scripts/evaluate_corpus.py --candidates /workspace/candidates \
+  --model "qwen3.5:4b@sha256:..." --seed 42
+```
+
+Syntax validation is not a runtime pass. Unsupported runtime languages fail closed until a corresponding sandbox adapter is implemented.
+
+### Live Jev vs. direct-Qwen demo
+
+The demo starts two measured sessions and renders their generated artifacts side-by-side. It duplicates the configured Galene OpenAI-compatible provider (`https://api-tlco.elettra.ai/v1`, `Galene/LLM`, Qwen3.8-27B). The compose service mounts the existing authorized TypeSafe and Galene dotenv sources read-only, extracts only the required variables, and never stores them in this repository. It never substitutes a prebuilt game when a generation or Jev gate fails.
+
+```bash
+docker compose -f demo/docker-compose.yml up --build
+```
+
+Open `http://localhost:8088`, then select **Start two live sessions**.
 
 ---
 

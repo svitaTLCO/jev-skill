@@ -1,0 +1,16 @@
+services:
+  jev-demo:
+    build:
+      context: ..
+      dockerfile: demo/Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      JEV_DEMO_GALENE_BASE_URL: ${JEV_DEMO_GALENE_BASE_URL:-https://api-tlco.elettra.ai/v1}
+      JEV_DEMO_MODEL: ${JEV_DEMO_MODEL:-Galene/LLM}
+      JEV_DEMO_TYPESAFE_ENV_FILE: /run/secrets/typesafe.env
+      JEV_DEMO_GALENE_ENV_FILE: /run/secrets/galene.env
+    volumes:
+      - ./runs:/app/demo/runs
+      - /home/adminmatto/progetti/rd/radix-db-exporter/.env:/run/secrets/typesafe.env:ro
+      - /home/adminmatto/progetti/rd/repo-security-scan/repo_guardian/.env:/run/secrets/galene.env:ro

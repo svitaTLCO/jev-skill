@@ -16,13 +16,14 @@ import os
 import sys
 import json
 import subprocess
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import urllib.request
 import urllib.error
 
 OLLAMA_UPSTREAM = os.environ.get("OLLAMA_UPSTREAM", "http://127.0.0.1:11434")
 DEFAULT_PORT = 11435
 PLIST_LABEL = "ai.typesafe.ollama-fast-proxy"
+MAX_REQUEST_BYTES = 10 * 1024 * 1024
 
 class FastProxyHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
@@ -34,7 +35,7 @@ class FastProxyHandler(BaseHTTPRequestHandler):
         headers = {k: v for k, v in self.headers.items() if k.lower() != 'host'}
         req = urllib.request.Request(url, headers=headers)
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:
                 self.send_response(resp.status)
                 for k, v in resp.getheaders():
                     self.send_header(k, v)
@@ -50,10 +51,17 @@ class FastProxyHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
 
     def do_POST(self):
-        content_length = int(self.headers.get("Content-Length", 0))
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            self.send_error(400, "Invalid Content-Length")
+            return
+        if content_length < 0 or content_length > MAX_REQUEST_BYTES:
+            self.send_error(413, "Request body too large")
+            return
         body = self.rfile.read(content_length)
 
-        if "/v1/chat/completions" in self.path:
+        if self.path in ("/v1/chat/completions", "/api/generate"):
             try:
                 data = json.loads(body.decode("utf-8"))
                 # Enforce no reasoning effort so small models don't stall in <think>
@@ -62,9 +70,12 @@ class FastProxyHandler(BaseHTTPRequestHandler):
                 opts = data.setdefault("options", {})
                 if not opts.get("num_ctx") or opts["num_ctx"] > 32768:
                     opts["num_ctx"] = 32768
+                if self.path == "/api/generate":
+                    data["think"] = False
                 body = json.dumps(data).encode("utf-8")
-            except Exception:
-                pass
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                self.send_error(400, "Request body must be valid JSON")
+                return
 
         url = f"{OLLAMA_UPSTREAM}{self.path}"
         headers = {k: v for k, v in self.headers.items() if k.lower() not in ("host", "content-length")}
@@ -72,7 +83,7 @@ class FastProxyHandler(BaseHTTPRequestHandler):
 
         req = urllib.request.Request(url, data=body, headers=headers, method="POST")
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=130) as resp:
                 self.send_response(resp.status)
                 for k, v in resp.getheaders():
                     if k.lower() != "transfer-encoding":
@@ -194,7 +205,7 @@ def main():
         return
 
     port = int(args[0]) if args and args[0].isdigit() else DEFAULT_PORT
-    server = HTTPServer(("127.0.0.1", port), FastProxyHandler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), FastProxyHandler)
     print(f"🚀 [Ollama Fast Proxy] Listening on http://127.0.0.1:{port} -> {OLLAMA_UPSTREAM}")
     print("   Enforcing: reasoning_effort='none' | max num_ctx=32768")
     try:

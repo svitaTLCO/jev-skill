@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "purpose": "Fixed public micro-contract corpus. Results must record model digest, seed, runner version, and candidate SHA-256.",
+  "tasks": [
+    {
+      "id": "sum_positive_integers",
+      "split": "development",
+      "language": "python",
+      "candidate_file": "sum_positive_integers.py",
+      "tests": "assert sum_positive_integers([1, -2, 3, 0]) == 4\nassert sum_positive_integers([]) == 0"
+    },
+    {
+      "id": "clamp_value",
+      "split": "holdout",
+      "language": "python",
+      "candidate_file": "clamp_value.py",
+      "tests": "assert clamp_value(5, 0, 3) == 3\nassert clamp_value(-1, 0, 3) == 0\nassert clamp_value(2, 0, 3) == 2"
+    }
+  ]
+}
