@@ -41,4 +41,5 @@ node_modules/
 /tmp/
 scratch/
 evaluation-results.json
+benchmark-runs/
 demo/runs/

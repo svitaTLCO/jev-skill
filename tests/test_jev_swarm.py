@@ -38,6 +38,21 @@ class RuntimeValidationTests(unittest.TestCase):
             self.assertIn(item, command)
         self.assertIn("ALL", command)
 
+    @patch("scripts.jev_swarm.subprocess.run")
+    @patch("scripts.jev_swarm.shutil.which", return_value="/usr/bin/docker")
+    def test_runtime_tests_use_host_mount_mapping_when_configured(self, _which, run):
+        run.return_value = subprocess.CompletedProcess([], 0, "", "")
+        with patch.dict(os.environ, {
+            "JEV_SANDBOX_TMPDIR": "/container/shared",
+            "JEV_SANDBOX_HOST_DIR": "/host/shared",
+        }, clear=False):
+            valid, _ = GenericRuntimeValidator.validate_with_tests("def f(): return 1", "assert f() == 1", "python")
+        self.assertTrue(valid)
+        command = run.call_args.args[0]
+        mount = command[command.index("-v") + 1]
+        self.assertTrue(mount.startswith("/host/shared/jev-sandbox-"))
+        self.assertTrue(mount.endswith(":/work:ro"))
+
     def test_non_python_runtime_fails_closed(self):
         valid, message = GenericRuntimeValidator.validate_with_tests("const x = 1", "console.assert(x === 1)", "javascript")
         self.assertFalse(valid)

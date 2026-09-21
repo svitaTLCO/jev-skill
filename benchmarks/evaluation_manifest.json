@@ -7,6 +7,7 @@
       "split": "development",
       "language": "python",
       "candidate_file": "sum_positive_integers.py",
+      "prompt": "Implement only a Python function sum_positive_integers(values) that returns the sum of strictly positive integers in values. Return only complete Python source code. Do not add imports, tests, prose, or any other functions.",
       "tests": "assert sum_positive_integers([1, -2, 3, 0]) == 4\nassert sum_positive_integers([]) == 0"
     },
     {
@@ -14,6 +15,7 @@
       "split": "holdout",
       "language": "python",
       "candidate_file": "clamp_value.py",
+      "prompt": "Implement only a Python function clamp_value(value, minimum, maximum) that returns value limited to the inclusive range minimum through maximum. Return only complete Python source code. Do not add imports, tests, prose, or any other functions.",
       "tests": "assert clamp_value(5, 0, 3) == 3\nassert clamp_value(-1, 0, 3) == 0\nassert clamp_value(2, 0, 3) == 2"
     }
   ]

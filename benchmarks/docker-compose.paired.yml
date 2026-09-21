@@ -1,0 +1,24 @@
+services:
+  paired-benchmark:
+    build:
+      context: ..
+      dockerfile: benchmarks/Dockerfile
+    environment:
+      JEV_BENCHMARK_PROVIDER: ${JEV_BENCHMARK_PROVIDER:-openai}
+      JEV_BENCHMARK_WORKER_URL: ${JEV_BENCHMARK_WORKER_URL:-https://api-tlco.elettra.ai/v1}
+      JEV_PAIRED_TYPESAFE_ENV_FILE: /run/secrets/typesafe.env
+      JEV_PAIRED_GALENE_ENV_FILE: /run/secrets/galene.env
+      JEV_GIT_REVISION: ${JEV_GIT_REVISION:-unknown}
+      JEV_SANDBOX_TMPDIR: /workspace/benchmark-runs/.sandbox
+      JEV_SANDBOX_HOST_DIR: ${JEV_SANDBOX_HOST_DIR:?Set this to the absolute host path of benchmark-runs/.sandbox}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../benchmark-runs:/workspace/benchmark-runs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/adminmatto/progetti/rd/radix-db-exporter/.env:/run/secrets/typesafe.env:ro
+      - /home/adminmatto/progetti/rd/repo-security-scan/repo_guardian/.env:/run/secrets/galene.env:ro
+    command: >-
+      python scripts/run_paired_benchmark.py
+      --model ${JEV_BENCHMARK_MODEL:?Set JEV_BENCHMARK_MODEL to an exact model identifier or digest}
+      --seed ${JEV_BENCHMARK_SEED:-1}

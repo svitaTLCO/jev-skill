@@ -128,6 +128,29 @@ docker run --rm -v "$PWD:/workspace" -w /workspace python:3.11-alpine \
 
 Syntax validation is not a runtime pass. Unsupported runtime languages fail closed until a corresponding sandbox adapter is implemented.
 
+### Paired direct vs Jev experiment
+
+`benchmarks/docker-compose.paired.yml` runs one seed of the first controlled
+experiment: the direct and Jev-Choice-guided arms invoke the same worker with
+the same decoding settings and use the same Docker sandbox oracle. It stores
+redacted records and raw candidates in the ignored `benchmark-runs/` directory.
+The container mounts the Docker socket only to execute the existing
+network-disabled candidate sandbox; run it only on a trusted development host.
+
+```bash
+JEV_BENCHMARK_MODEL="Galene/LLM" JEV_BENCHMARK_SEED=1 JEV_GIT_REVISION="$(git rev-parse HEAD)" \
+JEV_SANDBOX_HOST_DIR="$PWD/benchmark-runs/.sandbox" \
+  docker compose -f benchmarks/docker-compose.paired.yml run --rm paired-benchmark
+```
+
+Repeat with paired seeds (for example 1 through 20) before claiming a quality
+or latency difference. A provider that does not echo the seed is recorded as
+`provider_seed_confirmed: false`; do not call that run reproducible.
+
+The default worker is the configured Galene OpenAI-compatible provider. To use
+a host-local Ollama proxy instead, set `JEV_BENCHMARK_PROVIDER=ollama` and
+`JEV_BENCHMARK_WORKER_URL=http://host.docker.internal:11435/api/generate`.
+
 ### Live Jev vs. direct-Qwen demo
 
 The demo starts two measured sessions and renders their generated artifacts side-by-side. It duplicates the configured Galene OpenAI-compatible provider (`https://api-tlco.elettra.ai/v1`, `Galene/LLM`, Qwen3.8-27B). The compose service mounts the existing authorized TypeSafe and Galene dotenv sources read-only, extracts only the required variables, and never stores them in this repository. It never substitutes a prebuilt game when a generation or Jev gate fails.

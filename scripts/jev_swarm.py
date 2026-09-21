@@ -221,15 +221,30 @@ class GenericRuntimeValidator:
             return False, "Docker is required for runtime validation"
 
         full_script = f"{code_str}\n\n# --- AUTOMATED TEST SUITE ---\n{tests_str}\n"
-        with tempfile.TemporaryDirectory(prefix="jev-sandbox-") as tmp_dir:
+        # A runner container that talks to the host Docker socket must write the
+        # candidate into a bind-mounted directory and tell the daemon its host
+        # path. Local execution leaves both variables unset.
+        tmp_parent = os.environ.get("JEV_SANDBOX_TMPDIR")
+        host_parent = os.environ.get("JEV_SANDBOX_HOST_DIR")
+        if bool(tmp_parent) != bool(host_parent):
+            return False, "JEV_SANDBOX_TMPDIR and JEV_SANDBOX_HOST_DIR must be configured together"
+        if tmp_parent:
+            try:
+                os.makedirs(tmp_parent, exist_ok=True)
+            except OSError as exc:
+                return False, f"Cannot create configured sandbox directory: {exc}"
+        with tempfile.TemporaryDirectory(prefix="jev-sandbox-", dir=tmp_parent) as tmp_dir:
             candidate_path = os.path.join(tmp_dir, "candidate.py")
             with open(candidate_path, "w", encoding="utf-8") as handle:
                 handle.write(full_script)
+            mount_dir = tmp_dir
+            if host_parent:
+                mount_dir = os.path.join(host_parent, os.path.basename(tmp_dir))
             command = [
                 "docker", "run", "--rm", "--network", "none", "--read-only",
                 "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m", "--pids-limit", "64",
                 "--memory", "256m", "--cpus", "1", "--cap-drop", "ALL",
-                "--security-opt", "no-new-privileges", "-v", f"{tmp_dir}:/work:ro",
+                "--security-opt", "no-new-privileges", "-v", f"{mount_dir}:/work:ro",
                 "-w", "/work", os.environ.get("JEV_SANDBOX_IMAGE", DEFAULT_SANDBOX_IMAGE),
                 "python", "candidate.py",
             ]
