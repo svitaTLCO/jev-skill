@@ -68,9 +68,10 @@ First stop the CPU-only container, so only the Windows service owns the port:
 docker compose -f benchmarks/docker-compose.local-ollama.yml stop
 ```
 
-Then, from WSL, find a reachable Windows-host address. Prefer
-`host.docker.internal`; if it does not resolve from host-networked containers,
-use the Windows nameserver address reported by `/etc/resolv.conf`.
+The paired runner uses normal Docker bridge networking. It reaches the Windows
+loopback service through `host.docker.internal`; do not enable
+`network_mode: host`, because that WSL network namespace cannot reach Windows
+`127.0.0.1`.
 
 ```bash
 JEV_BENCHMARK_PROVIDER=ollama \
