@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 import os
 import tempfile
@@ -43,7 +44,15 @@ class DemoServerTests(unittest.TestCase):
         request = urlopen.call_args.args[0]
         self.assertTrue(request.full_url.endswith("/api/generate"))
         self.assertIn(b'"think": false', request.data)
-        self.assertIn(b'"num_predict": 1800', request.data)
+        self.assertIn(b'"num_predict": 8192', request.data)
+        self.assertEqual(urlopen.call_args.kwargs["timeout"], 2400)
+
+    def test_persist_raw_writes_gitignored_run_ledger(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(demo_server, "RUN_ROOT", Path(tmp)):
+                demo_server.persist_raw("abc123", "direct", "<truncated output>")
+                ledger = Path(tmp) / "abc123" / "direct.raw.txt"
+                self.assertEqual(ledger.read_text(encoding="utf-8"), "<truncated output>")
 
 
 if __name__ == "__main__":

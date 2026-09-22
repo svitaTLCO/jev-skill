@@ -65,13 +65,19 @@ def ollama_generate(prompt: str, thinking: bool, max_tokens: int | None = None) 
         "prompt": prompt,
         "stream": False,
         "think": thinking,
-        "options": {"temperature": 0.2, "num_predict": max_tokens or 1800},
+        # Probe 2026-09-22: the direct lane with think ON consumed 4202 tokens
+        # end-to-end (reasoning channel included) and stopped with a complete
+        # document, so 8192 leaves 2x headroom over the measured requirement.
+        "options": {"temperature": 0.2, "num_predict": max_tokens or 8192},
     }
+    # The iGPU-backed worker sustains ~5 tok/s and the lanes share one
+    # inference slot serially, so a slow lane can hold the other in Ollama's
+    # queue; the client deadline must cover queue wait plus full generation.
     request = urllib.request.Request(
         f"{WORKER_BASE_URL}/api/generate", data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"}, method="POST"
     )
-    with urllib.request.urlopen(request, timeout=420) as response:
+    with urllib.request.urlopen(request, timeout=2400) as response:
         payload = json.loads(response.read().decode("utf-8"))
     content = payload.get("response")
     if not isinstance(content, str) or not content.strip():
@@ -136,11 +142,22 @@ def persist_artifact(run_id: str, lane_id: str, html: str) -> str:
     return f"/runs/{run_id}/{lane_id}.html"
 
 
+def persist_raw(run_id: str, lane_id: str, raw: str) -> None:
+    """Keep truncated or gate-rejected raw output in the run ledger (gitignored)."""
+    run_dir = RUN_ROOT / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / f"{lane_id}.raw.txt").write_text(raw, encoding="utf-8")
+
+
 def run_direct(run_id: str) -> None:
     try:
         update_lane(run_id, "direct", status="generating", detail="Sending one broad prompt to local Qwen with thinking enabled…")
         raw, tokens = worker_generate(GAME_REQUIREMENT, thinking=True)
-        artifact_url = persist_artifact(run_id, "direct", extract_html(raw))
+        try:
+            artifact_url = persist_artifact(run_id, "direct", extract_html(raw))
+        except ValueError:
+            persist_raw(run_id, "direct", raw)
+            raise ValueError(f"model response did not contain a complete HTML document ({len(raw)} chars, {tokens} eval tokens)")
         update_lane(run_id, "direct", status="ready", tokens=tokens, artifact_url=artifact_url, detail=f"Generated {tokens} tokens.")
     except Exception as exc:
         update_lane(run_id, "direct", status="failed", detail=str(exc))
@@ -162,7 +179,11 @@ def run_guided(run_id: str) -> None:
         update_lane(run_id, "guided", status="generating", detail=f"Jev selected {blueprint}; local Qwen is generating constrained code…", jev_seconds=round(plan_seconds, 2))
         prompt = f"{GUIDED_REQUIREMENT}\n\nChosen blueprint: {blueprint}."
         raw, tokens = worker_generate(prompt, thinking=False)
-        html = extract_html(raw)
+        try:
+            html = extract_html(raw)
+        except ValueError:
+            persist_raw(run_id, "guided", raw)
+            raise ValueError(f"model response did not contain a complete HTML document ({len(raw)} chars, {tokens} eval tokens)")
         update_lane(run_id, "guided", status="reviewing", detail="Jev is checking contract compliance and scope…")
         answers, review_seconds = jev.evaluate(
             f"## Trusted requirement\n{GUIDED_REQUIREMENT}\n\n## Untrusted candidate\n```html\n{html}\n```",
@@ -176,6 +197,7 @@ def run_guided(run_id: str) -> None:
         scope = float(answers["scope"]["noul"])
         quality = float(answers["quality"]["score"])
         if contract < 0.70 or scope < 0.70 or quality < 1.0:
+            persist_raw(run_id, "guided", html)
             raise ValueError(f"Jev gate rejected candidate: contract={contract:.2f}, scope={scope:.2f}, quality={quality:.2f}")
         artifact_url = persist_artifact(run_id, "guided", html)
         update_lane(run_id, "guided", status="ready", tokens=tokens, artifact_url=artifact_url, detail=(
