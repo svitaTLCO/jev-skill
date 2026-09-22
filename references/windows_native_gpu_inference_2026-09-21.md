@@ -96,3 +96,14 @@ study.
   2.7 GB model on an integrated GPU.
 - The benchmark Docker sandbox remains network-disabled; no change is made to
   its security boundary.
+
+## Measured outcome (2026-09-22)
+
+The acceptance check **passed**: Ollama v0.34.2 reported `Vulkan0` (Intel
+Iris Xe) and loaded `qwen3.5:4b` with all 34 layers offloaded
+(`OLLAMA_VULKAN=true`, no CPU fallback). Sustained generation on the broad
+think-on demo task measured ~3.4 tok/s (probe: 4202 tokens in 20.6 minutes);
+prompt evaluation ran at ~12 tok/s. See
+[windows_gpu_ollama_race_2026-09-22.md](windows_gpu_ollama_race_2026-09-22.md)
+for the full race evidence, including the direct/guided outcomes and the
+instrumentation history that preceded them.
