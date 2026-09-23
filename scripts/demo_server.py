@@ -12,7 +12,7 @@ from http import HTTPStatus
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 
-from scripts.jev_swarm import JevClient
+from scripts.jev_swarm import GenericRuntimeValidator, JevClient
 
 ROOT = Path(__file__).resolve().parent.parent
 DEMO_ROOT = ROOT / "demo"
@@ -54,6 +54,43 @@ pipes manager: spawn() appends obstacles with x and gapY on a fixed interval, up
 score counter: integer incremented per passed obstacle; collision triggers GAME_OVER; restart resets score and state to START.
 shared input dispatch: one handler binding Space keydown, mousedown, and touchstart routes to the current state's action.
 game loop: one requestAnimationFrame callback updating the state machine then rendering background, entities, and HUD each tick.""",
+}
+
+# Arm A′ (semantic-critic repair), added 2026-09-22 after the repair PoC refuted
+# parser-diagnostic-only self-repair on this worker. The critic therefore feeds each
+# repair round an enumerable list of violated sub-contracts instead of a global score;
+# every repair prompt always carries the canonical gate feedback line, so no round ever
+# re-submits unchanged content plus an unresolved diagnostic (the proven fixed point).
+MAX_REPAIR_ROUNDS = 3  # declared cost governance (serial inference-slot budget), not a content limit
+BATTERY_FAIL_THRESHOLD = 0.70
+SUBCONTRACT_BATTERY = {
+    "start_flow": "Does the specified input (Space/click/tap) actually transition the game from its initial state into play?",
+    "play_update": "During play, do gravity update the pig's motion and the pipes move toward the player every frame?",
+    "collision": "Do collisions with pipes or screen boundaries end the run in a game-over state?",
+    "scoring": "Is the score incremented when a pipe is passed and visible on screen during play?",
+    "restart": "After game over, does the specified input reset the game so it can be played again from zero?",
+    "asset_freedom": "Does the game run entirely without external libraries, asset files, or network requests?",
+}
+REPAIR_PROMPT_TEMPLATE = """You are repairing a JavaScript game inside a single-file HTML document. Make MINIMAL localized edits that fix the listed issues while preserving everything that already works.
+
+Automated review report (repair round {round} of at most {max_rounds}):
+
+{issues}
+
+Current full document:
+----- DOCUMENT BEGIN -----
+{doc}
+----- DOCUMENT END -----
+
+Rules:
+- Apply the smallest possible changes; do not rewrite working sections or rename existing identifiers.
+- Keep the requirements intact: a canvas Flappy Pig game with an emoji pig, Space/click flap, gravity, moving pipes, collision, a visible score, and restart after game over. No libraries, assets, CSS framework, or explanations.
+- Return ONLY the complete corrected <!doctype html> document. No markdown fences, no wrapper tags, no change commentary."""
+
+CANONICAL_GATE_QUESTIONS = {
+    "contract": {"type": "noul", "instructions": "Does the candidate satisfy every stated game requirement?"},
+    "scope": {"type": "noul", "instructions": "Does the candidate avoid external dependencies and unrequested scope?"},
+    "quality": {"type": "score", "instructions": "Rate functional clarity and maintainability from 0 to 3.", "criteria": ["broken", "rough", "solid", "excellent"]},
 }
 
 
@@ -156,6 +193,78 @@ def worker_generate(prompt: str, thinking: bool, max_tokens: int | None = None) 
     raise ValueError(f"Unsupported JEV_DEMO_WORKER_PROVIDER: {WORKER_PROVIDER!r}")
 
 
+def syntax_check(html: str) -> tuple[bool, str]:
+    """Tier-0 mechanical check (node vm.Script) on every executable script block.
+
+    GenericRuntimeValidator fails closed on any input containing a <script tag, so it
+    only receives extracted bodies; every non-empty block must parse. Tooling exceptions
+    mean "check unavailable" and are never reported as parse-ok — a failed tool must not
+    be mistaken for passing code.
+    """
+    blocks = [match.group(1) for match in re.finditer(r"<script[^>]*>(.*?)</script>", html, re.IGNORECASE | re.DOTALL)]
+    blocks = [block for block in blocks if block.strip()]
+    if not blocks:
+        return False, "no executable <script> block found"
+    for js in blocks:
+        try:
+            ok, message = GenericRuntimeValidator.validate_code(js.strip(), lang="javascript")
+        except Exception as exc:  # node missing / timeout / unexpected validator error
+            return False, f"mechanical check unavailable ({exc})"
+        if not ok:
+            return False, message
+    return True, "all script blocks parse"
+
+
+def canonical_gate(jev: JevClient, html: str) -> tuple[float, float, float, float]:
+    """The frozen three-question acceptance gate shared by every guided arm."""
+    answers, seconds = jev.evaluate(
+        f"## Trusted requirement\n{GUIDED_REQUIREMENT_V2}\n\n## Untrusted candidate\n```html\n{html}\n```",
+        CANONICAL_GATE_QUESTIONS,
+    )
+    return float(answers["contract"]["noul"]), float(answers["scope"]["noul"]), float(answers["quality"]["score"]), seconds
+
+
+def gate_passed(contract: float, scope: float, quality: float) -> bool:
+    return contract >= 0.70 and scope >= 0.70 and quality >= 1.0
+
+
+def gate_feedback(contract: float, scope: float, quality: float) -> str:
+    """Per-dimension failure summary used as the fresh repair signal; '' when passed."""
+    dims = []
+    if contract < 0.70:
+        dims.append(f"contract={contract:.2f} below 0.70 — one or more stated requirements are missing or wrong")
+    if scope < 0.70:
+        dims.append(f"scope={scope:.2f} below 0.70 — remove external dependencies or unrequested additions")
+    if quality < 1.0:
+        dims.append(f"quality={quality:.2f} below 1.0 — functionality is broken or unclear")
+    return "; ".join(dims)
+
+
+def battery_violations(jev: JevClient, html: str) -> tuple[list[str], int, float]:
+    """One Jev evaluate decomposing the requirement into per-sub-contract Noul probes.
+
+    Diagnostic only: the battery never accepts a candidate — the canonical gate does.
+    Returns (violated sub-contract statements, satisfied count, seconds).
+    """
+    answers, seconds = jev.evaluate(
+        f"## Trusted requirement\n{GUIDED_REQUIREMENT_V2}\n\n## Untrusted candidate\n```html\n{html}\n```",
+        {name: {"type": "noul", "instructions": statement} for name, statement in SUBCONTRACT_BATTERY.items()},
+    )
+    violations = [statement for name, statement in SUBCONTRACT_BATTERY.items()
+                  if float(answers[name]["noul"]) < BATTERY_FAIL_THRESHOLD]
+    return violations, len(SUBCONTRACT_BATTERY) - len(violations), seconds
+
+
+def assemble_repair_issues(gate_summary: str, violations: list[str], parse_ok: bool, parse_err: str) -> str:
+    """Layered issue block for a repair prompt: gate feedback always first (a fresh,
+    guaranteed signal even when the battery and parser have nothing new to report)."""
+    lines = [f"GATE FEEDBACK: {gate_summary}"] if gate_summary else ["GATE FEEDBACK: acceptance gate failing; see violation reports below"]
+    if not parse_ok:
+        lines.append(f"PARSER ERROR: {parse_err}")
+    lines.extend(f"VIOLATES REQUIREMENT: {violation}" for violation in violations)
+    return "\n".join(lines)
+
+
 def update_lane(run_id: str, lane_id: str, **changes: object) -> None:
     with LOCK:
         lane = RUNS[run_id]["lanes"][lane_id]
@@ -242,30 +351,41 @@ def run_guided(run_id: str) -> None:
     finish_run_if_complete(run_id)
 
 
+def guided_plan(jev: JevClient) -> tuple[str, float]:
+    """Planning step shared by guided_v2/guided_a: Jev picks the blueprint choice."""
+    answers, plan_seconds = jev.evaluate(GAME_REQUIREMENT, {
+        "blueprint": {"type": "choice", "instructions": "Choose the most reliable compact implementation plan.", "criteria": {
+            "canvas_state_machine": "One Canvas file with explicit start, playing and game-over states.",
+            "framework": "A framework-based multi-file game.",
+        }},
+        "scope": {"type": "noul", "instructions": "Can this be safely completed as one asset-free HTML file?"},
+    })
+    return answers["blueprint"]["choice"], plan_seconds
+
+
+def guided_generation_prompt(blueprint: str) -> tuple[str, str]:
+    """Generation prompt shared by guided_v2/guided_a: deterministic interface-contract
+    handoff (AGENTS.md invariant #1 — declarations downstream, never accumulated prose)."""
+    # The output format is always one self-contained HTML document, so any
+    # blueprint outside the single-file contracts maps to the state-machine
+    # one; the mapping is recorded in the lane detail for the study record.
+    contract_key = blueprint if blueprint in INTERFACE_CONTRACTS else "canvas_state_machine"
+    fallback_note = "" if contract_key == blueprint else f" (blueprint {blueprint!r} mapped to single-file contract {contract_key!r})"
+    prompt = (f"{GUIDED_REQUIREMENT_V2}\n\nImplement exactly this interface contract:\n{INTERFACE_CONTRACTS[contract_key]}\n\n"
+              "Return only the complete HTML document.")
+    return prompt, fallback_note
+
+
 def run_guided_v2(run_id: str) -> None:
     """Arm B (Guided-v2): same Jev planning, de-compressed cap-free generation."""
     try:
         update_lane(run_id, "guided_v2", status="planning", detail="Jev is selecting a game architecture…")
         jev = JevClient(api_key=TYPESAFE_KEY, url=TYPESAFE_URL)
-        answers, plan_seconds = jev.evaluate(GAME_REQUIREMENT, {
-            "blueprint": {"type": "choice", "instructions": "Choose the most reliable compact implementation plan.", "criteria": {
-                "canvas_state_machine": "One Canvas file with explicit start, playing and game-over states.",
-                "framework": "A framework-based multi-file game.",
-            }},
-            "scope": {"type": "noul", "instructions": "Can this be safely completed as one asset-free HTML file?"},
-        })
-        blueprint = answers["blueprint"]["choice"]
-        # The output format is always one self-contained HTML document, so any
-        # blueprint outside the single-file contracts maps to the state-machine
-        # one; the mapping is recorded in the lane detail for the study record.
-        contract_key = blueprint if blueprint in INTERFACE_CONTRACTS else "canvas_state_machine"
-        fallback_note = "" if contract_key == blueprint else f" (blueprint {blueprint!r} mapped to single-file contract {contract_key!r})"
-        contract = INTERFACE_CONTRACTS[contract_key]
+        blueprint, plan_seconds = guided_plan(jev)
+        prompt, fallback_note = guided_generation_prompt(blueprint)
         update_lane(run_id, "guided_v2", status="generating",
                     detail=f"Jev selected {blueprint}{fallback_note}; local Qwen implements the interface contract, no size limits…",
                     jev_seconds=round(plan_seconds, 2))
-        prompt = (f"{GUIDED_REQUIREMENT_V2}\n\nImplement exactly this interface contract:\n{contract}\n\n"
-                  "Return only the complete HTML document.")
         raw, tokens = worker_generate(prompt, thinking=False)
         update_lane(run_id, "guided_v2", tokens=tokens)
         try:
@@ -274,18 +394,8 @@ def run_guided_v2(run_id: str) -> None:
             persist_raw(run_id, "guided_v2", raw)
             raise ValueError(f"model response did not contain a complete HTML document ({len(raw)} chars, {tokens} eval tokens)")
         update_lane(run_id, "guided_v2", status="reviewing", detail="Jev is checking contract compliance and scope against the cap-free requirement…")
-        answers, review_seconds = jev.evaluate(
-            f"## Trusted requirement\n{GUIDED_REQUIREMENT_V2}\n\n## Untrusted candidate\n```html\n{html}\n```",
-            {
-                "contract": {"type": "noul", "instructions": "Does the candidate satisfy every stated game requirement?"},
-                "scope": {"type": "noul", "instructions": "Does the candidate avoid external dependencies and unrequested scope?"},
-                "quality": {"type": "score", "instructions": "Rate functional clarity and maintainability from 0 to 3.", "criteria": ["broken", "rough", "solid", "excellent"]},
-            },
-        )
-        contract_score = float(answers["contract"]["noul"])
-        scope_score = float(answers["scope"]["noul"])
-        quality_score = float(answers["quality"]["score"])
-        if contract_score < 0.70 or scope_score < 0.70 or quality_score < 1.0:
+        contract_score, scope_score, quality_score, review_seconds = canonical_gate(jev, html)
+        if not gate_passed(contract_score, scope_score, quality_score):
             persist_raw(run_id, "guided_v2", html)
             raise ValueError(
                 f"Jev gate rejected candidate ({tokens} eval tokens): "
@@ -299,6 +409,96 @@ def run_guided_v2(run_id: str) -> None:
     finish_run_if_complete(run_id)
 
 
+def run_guided_a(run_id: str) -> None:
+    """Arm A′ (semantic-critic repair) on top of B-style generation.
+
+    Seed: fresh B generation (Choice + interface contract, uncapped no-think). Critic:
+    the canonical three-question gate plus a sub-contract Noul battery that decomposes
+    the failure into enumerable violations (diagnostic only — the gate alone accepts).
+    Repairs ask for MINIMAL localized edits, receive the layered issue block (gate
+    feedback line always first = fresh guaranteed signal per round), and return the full
+    HTML document so no splicing confound can arise. Fixed-point candidates short-
+    circuit early because retrying without new information is proven worthless (PoC v2).
+    MAX_REPAIR_ROUNDS is declared cost governance, not a content limit.
+    """
+    history: list[dict] = []
+    total_tokens = 0
+    try:
+        update_lane(run_id, "guided_a", status="planning", detail="Jev is selecting a game architecture…")
+        jev = JevClient(api_key=TYPESAFE_KEY, url=TYPESAFE_URL)
+        blueprint, plan_seconds = guided_plan(jev)
+        prompt, fallback_note = guided_generation_prompt(blueprint)
+        update_lane(run_id, "guided_a", status="generating",
+                    detail=f"Jev selected {blueprint}{fallback_note}; local Qwen implements the interface contract, no size limits…",
+                    jev_seconds=round(plan_seconds, 2))
+        raw, tokens = worker_generate(prompt, thinking=False)
+        total_tokens = tokens
+        update_lane(run_id, "guided_a", tokens=total_tokens)
+        try:
+            candidate = extract_html(raw)
+        except ValueError:
+            persist_raw(run_id, "guided_a", raw)
+            raise ValueError(f"model response did not contain a complete HTML document ({len(raw)} chars, {tokens} eval tokens)")
+        update_lane(run_id, "guided_a", status="reviewing", detail="Jev gate is reviewing the seed candidate…")
+        contract, scope, quality, _seed_gate_seconds = canonical_gate(jev, candidate)
+        summary = gate_feedback(contract, scope, quality)
+        history.append({"round": 0, "seed": True, "contract": round(contract, 2), "scope": round(scope, 2), "quality": round(quality, 2)})
+        if not gate_passed(contract, scope, quality):
+            outcome = None
+            for rnd in range(1, MAX_REPAIR_ROUNDS + 1):
+                update_lane(run_id, "guided_a", status="repairing",
+                            detail=f"Repair round {rnd}/{MAX_REPAIR_ROUNDS}: Jev critic decomposes violated sub-contracts…")
+                violations, satisfied_count, _battery_seconds = battery_violations(jev, candidate)
+                parse_ok, parse_err = syntax_check(candidate)
+                issues = assemble_repair_issues(summary, violations, parse_ok, parse_err)
+                previous = candidate
+                repair_prompt = REPAIR_PROMPT_TEMPLATE.format(round=rnd, max_rounds=MAX_REPAIR_ROUNDS, issues=issues, doc=candidate)
+                raw_r, tokens_r = worker_generate(repair_prompt, thinking=False)
+                total_tokens += tokens_r
+                update_lane(run_id, "guided_a", tokens=total_tokens)
+                persist_raw(run_id, f"guided_a.r{rnd}", raw_r)
+                try:
+                    candidate = extract_html(raw_r)
+                except ValueError:
+                    persist_raw(run_id, "guided_a", raw_r)
+                    raise ValueError(f"repair round {rnd} returned no complete HTML document ({len(raw_r)} chars, {tokens_r} eval tokens)")
+                if candidate.strip() == previous.strip():
+                    history.append({"round": rnd, "fixed_point": True,
+                                    "battery_satisfied": f"{satisfied_count}/{len(SUBCONTRACT_BATTERY)}", "parse_ok": parse_ok})
+                    outcome = ("fixed_point", rnd)
+                    break
+                contract, scope, quality, _gate_seconds = canonical_gate(jev, candidate)
+                summary = gate_feedback(contract, scope, quality)
+                history.append({"round": rnd, "fixed_point": False,
+                                "battery_satisfied": f"{satisfied_count}/{len(SUBCONTRACT_BATTERY)}", "parse_ok": parse_ok,
+                                "contract": round(contract, 2), "scope": round(scope, 2), "quality": round(quality, 2)})
+                if gate_passed(contract, scope, quality):
+                    outcome = ("passed", rnd)
+                    break
+            if outcome is None:
+                persist_raw(run_id, "guided_a", candidate)
+                raise ValueError(
+                    f"repair bound exhausted ({MAX_REPAIR_ROUNDS} declared rounds); last gate: {summary}; "
+                    f"history={json.dumps(history)}")
+            if outcome[0] == "fixed_point":
+                persist_raw(run_id, "guided_a", candidate)
+                raise ValueError(
+                    f"worker hit a fixed point at repair round {outcome[1]} (returned an unchanged document); "
+                    f"last gate: {summary}; history={json.dumps(history)}")
+            artifact_url = persist_artifact(run_id, "guided_a", candidate)
+            update_lane(run_id, "guided_a", status="ready", tokens=total_tokens, artifact_url=artifact_url, detail=(
+                f"Critic-repaired after {outcome[1]} round(s); {total_tokens} tokens; "
+                f"contract={contract:.2f}, scope={scope:.2f}, quality={quality:.2f}; history={json.dumps(history)}"))
+        else:
+            artifact_url = persist_artifact(run_id, "guided_a", candidate)
+            update_lane(run_id, "guided_a", status="ready", tokens=total_tokens, artifact_url=artifact_url, detail=(
+                f"Gate passed on the seed candidate (0 repair rounds); {total_tokens} tokens; "
+                f"contract={contract:.2f}, scope={scope:.2f}, quality={quality:.2f}; history={json.dumps(history)}"))
+    except Exception as exc:
+        update_lane(run_id, "guided_a", status="failed", detail=str(exc))
+    finish_run_if_complete(run_id)
+
+
 def finish_run_if_complete(run_id: str) -> None:
     with LOCK:
         run = RUNS[run_id]
@@ -306,13 +506,13 @@ def finish_run_if_complete(run_id: str) -> None:
             run["status"] = "complete"
 
 
-LANE_ORDER = ("direct", "guided", "guided_v2")
-LANE_RUNNERS = {"direct": run_direct, "guided": run_guided, "guided_v2": run_guided_v2}
+LANE_ORDER = ("direct", "guided", "guided_v2", "guided_a")
+LANE_RUNNERS = {"direct": run_direct, "guided": run_guided, "guided_v2": run_guided_v2, "guided_a": run_guided_a}
 
 
 def create_run(lanes: list[str] | None = None) -> dict:
     """Start a race. Defaults to the historical direct/guided pair; research
-    probes may request subsets (e.g. ["guided", "guided_v2"]) to control the
+    probes may request subsets (e.g. ["guided_v2", "guided_a"]) to control the
     serial-slot wall clock."""
     selected = list(dict.fromkeys(lanes)) if lanes else list(LANE_ORDER[:2])
     unknown = [lane for lane in selected if lane not in LANE_RUNNERS]

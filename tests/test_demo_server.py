@@ -1,3 +1,4 @@
+import shutil
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -72,6 +73,48 @@ class DemoServerTests(unittest.TestCase):
                 demo_server.persist_raw("abc123", "direct", "<truncated output>")
                 ledger = Path(tmp) / "abc123" / "direct.raw.txt"
                 self.assertEqual(ledger.read_text(encoding="utf-8"), "<truncated output>")
+
+    def test_gate_feedback_names_only_failing_dimensions(self):
+        text = demo_server.gate_feedback(0.30, 0.63, 1.69)
+        self.assertIn("contract=0.30", text)
+        self.assertIn("scope=0.63", text)
+        self.assertNotIn("quality=", text)
+        # The gate passed in race #4's v2 arm only on quality; feedback must stay empty there.
+        self.assertEqual(demo_server.gate_feedback(0.80, 0.90, 1.50), "")
+
+    def test_assemble_repair_issues_puts_gate_feedback_first(self):
+        issues = demo_server.assemble_repair_issues(
+            "contract=0.30 below 0.70 — missing requirement",
+            ["Does the specified input actually start the game?"],
+            parse_ok=False, parse_err="SyntaxError: Unexpected identifier 'e'",
+        )
+        lines = issues.splitlines()
+        self.assertTrue(lines[0].startswith("GATE FEEDBACK:"))
+        self.assertEqual(lines[1], "PARSER ERROR: SyntaxError: Unexpected identifier 'e'")
+        self.assertEqual(lines[2], "VIOLATES REQUIREMENT: Does the specified input actually start the game?")
+        parsed = demo_server.assemble_repair_issues("gate still failing", [], parse_ok=True, parse_err="")
+        self.assertNotIn("PARSER ERROR", parsed)
+
+    @patch("scripts.demo_server.threading.Thread")
+    def test_create_run_accepts_guided_a_lane_subset(self, thread):
+        run = demo_server.create_run(["guided_v2", "guided_a"])
+        self.assertEqual(set(run["lanes"]), {"guided_v2", "guided_a"})
+        self.assertEqual(thread.call_count, 2)
+
+    @unittest.skipUnless(shutil.which("node"), "node not available on PATH")
+    def test_syntax_check_flags_unparseable_and_missing_script_blocks(self):
+        ok, message = demo_server.syntax_check("<!doctype html><html><script>var x = 1;</script></html>")
+        self.assertTrue(ok)
+        # A broken second block must fail the check even though the first parses.
+        multi, _ = demo_server.syntax_check(
+            "<html><script>var a = 1;</script><script src=\"ext.js\"></script><script>let = ;</script></html>")
+        self.assertFalse(multi)
+        bad, msg = demo_server.syntax_check("<!doctype html><html><script>let = ;</script></html>")
+        self.assertFalse(bad)
+        self.assertIn("SyntaxError", msg)
+        none_js, msg = demo_server.syntax_check("<!doctype html><html><body>plain</body></html>")
+        self.assertFalse(none_js)
+        self.assertIn("no executable", msg)
 
 
 if __name__ == "__main__":

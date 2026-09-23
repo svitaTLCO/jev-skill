@@ -27,6 +27,7 @@
     <article id="direct"><header><h2>Direct local Qwen</h2><div class="meta">one broad prompt · thinking enabled</div></header><span class="status">Waiting to start.</span><iframe title="Direct Qwen result" sandbox="allow-scripts"></iframe></article>
     <article id="guided"><header><h2>Jev-guided local Qwen</h2><div class="meta">Choice → constrained no-think generation → Noul/Score gate</div></header><span class="status">Waiting to start.</span><iframe title="Jev-guided result" sandbox="allow-scripts"></iframe></article>
     <article id="guided_v2" class="skipped"><header><h2>Jev-guided v2 · no limits</h2><div class="meta">Choice → interface contract → uncapped no-think generation → Noul/Score gate</div></header><span class="status">Not part of the default two-lane race. Request it via POST /api/runs {"lanes":["guided","guided_v2"]}.</span><iframe title="Jev-guided v2 result" sandbox="allow-scripts"></iframe></article>
+    <article id="guided_a" class="skipped"><header><h2>Jev-guided A′ · semantic-critic repair</h2><div class="meta">v2 generation → sub-contract Noul battery + node check → minimal-edit repair (≤3 declared rounds) → Noul/Score gate</div></header><span class="status">Not part of the default two-lane race. Request it via POST /api/runs {"lanes":["guided_v2","guided_a"]}.</span><iframe title="Jev-guided A-prime result" sandbox="allow-scripts"></iframe></article>
   </section>
   <script>
     const button = document.querySelector('#start');
@@ -42,7 +43,7 @@
     }
     async function poll(runId) {
       const response = await fetch(`/api/runs/${runId}`); const run = await response.json();
-      for (const id of ['direct', 'guided', 'guided_v2']) renderLane(id, run.lanes[id]);
+      for (const id of ['direct', 'guided', 'guided_v2', 'guided_a']) renderLane(id, run.lanes[id]);
       if (run.status === 'running') { timer = setTimeout(() => poll(runId), 800); return; }
       button.disabled = false; button.textContent = 'Run again';
     }
