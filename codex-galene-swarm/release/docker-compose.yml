@@ -1,0 +1,15 @@
+name: codex-galene-swarm-team
+
+services:
+  server:
+    image: ${SWARM_IMAGE:?Set SWARM_IMAGE to the approved image digest}
+    env_file: .env
+    environment:
+      SWARM_DB_PATH: /data/swarm.sqlite3
+      SWARM_REQUIRE_JEV: "1"
+    volumes:
+      - team-ledger:/data
+    stdin_open: true
+
+volumes:
+  team-ledger:

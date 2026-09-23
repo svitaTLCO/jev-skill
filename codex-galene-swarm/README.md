@@ -23,6 +23,13 @@ any returned patch and for running repository-level tests.
   workflow, including Docker-only validation and live-smoke guidance.
 - [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md) is the living
   handoff record: implemented capabilities, test health, gaps, and session log.
+- [`docs/TEAM_PILOT_PLAN.md`](docs/TEAM_PILOT_PLAN.md) proposes the gates for a
+  first internal distribution and real-work pilot.
+- [`release/README.md`](release/README.md) describes the image-only Linux/WSL
+  team bundle and Codex MCP connection.
+- [`pilot/circuit-sprint-3d/README.md`](pilot/circuit-sprint-3d/README.md) is
+  the playable 3D racing pilot; its evidence file records the Jev rejections
+  and executable checks.
 
 Read `docs/SCOPE.md` before changing behavior and update
 `docs/IMPLEMENTATION_STATUS.md` in the same change when capability or validation
@@ -60,6 +67,16 @@ A preceding 120-token attempt failed with `finish_reason=length` after all 120
 tokens were reported as reasoning. This is why the smoke contract uses the
 established 1,200-token ceiling and why no-content metadata is persisted.
 
+On 2026-09-23 the `0.2.0rc1` image completed a second live Galene + mandatory
+Jev smoke through the MCP boundary using a temporary in-memory ledger. Run
+`f57316afdabb402faa554721ee2f3eb8` completed with one passed task. Galene
+returned a request ID, `finish_reason=stop`, 278 completion tokens, 249
+reasoning tokens, and 4.49 seconds latency. Jev passed policy v1 in 0.53
+seconds. The temporary ledger was removed with the container, so this run ID is
+a point-in-time report identifier rather than a retrievable persistent record.
+The smoke did not verify the backend model behind the `Galene/LLM` alias or
+candidate quality on a real repository task.
+
 ## Run tests
 
 All project execution happens in Docker:
@@ -67,6 +84,13 @@ All project execution happens in Docker:
 ```bash
 docker compose run --rm test
 ```
+
+The candidate team build is version `0.2.0rc1`. Its Dockerfile pins the base
+image digest and uses `requirements.lock` for Python runtime dependencies.
+The team bundle forces Jev gating with `SWARM_REQUIRE_JEV=1`; an unset Jev key
+fails at startup. The `Galene/LLM` alias appears as `Qwen3.8-27B-NVFP4` in the
+local OpenCode configuration, but the GaleneAI endpoint owner still needs to
+confirm the live deployment behind that alias.
 
 ## Run the MCP server
 

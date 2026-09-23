@@ -70,12 +70,11 @@ queued -> running -> completed
 queued/running -> cancelled
 ```
 
-Cancellation immediately marks the run and still-queued tasks cancelled and
+Cancellation immediately marks the run and all still-active tasks cancelled and
 attempts to cancel futures that have not started. An in-flight external request
-is not interrupted. A cancellation check after provider generation prevents
-that candidate from being promoted, but there is currently no additional check
-after Jev or verifier execution. Callers must treat a cancelled run as cancelled
-even if an in-flight task later writes a terminal task state.
+is not interrupted. Checks after provider generation and Jev evaluation avoid
+starting further gates after cancellation; a ledger guard prevents a late
+provider, Jev, or verifier result from replacing a cancelled task.
 
 ## Persistence and restart behavior
 
@@ -85,19 +84,21 @@ mode `0600`. Candidate text and verifier output are stored; provider secrets are
 not.
 
 Background work lives only in the server process. After an unexpected restart,
-previously `queued` or `running` tasks remain in those states and are not resumed
-or reconciled. Operating more than one server process against the same database
-is outside the current design.
+previously `queued` or `running` tasks in active runs are marked failed with an
+interruption error, and their runs become failed. Work is not resumed. Operating
+more than one server process against the same database is outside the current
+design.
 
-The in-memory future registry is also process-local and is not pruned after a
-run completes. This is acceptable for the proof-of-architecture lifetime, but
-must be addressed before treating the server as long-running infrastructure.
+The in-memory future registry is process-local and completed futures are pruned.
 
 ## Provider boundary
 
 The Galene adapter sends a system message plus one generated user prompt. It
-uses low temperature, disables model thinking through the provider's supported
-parameters, does not stream, and supplies the per-contract token ceiling.
+uses low temperature, requests Qwen's supported `low` reasoning effort, sends
+both top-level and chat-template `enable_thinking=false`, does not stream, and
+supplies the per-contract token ceiling. A live 2026-09-23 Galene probe showed
+zero reasoning tokens only after the top-level setting was added; the actual
+response metadata remains the evidence for each request.
 
 Repository content reaches a worker only through fields Codex places in the
 contract. The prompt labels `context` as untrusted data, but prompt wording is a
@@ -154,10 +155,12 @@ engineering gap.
 | `GALENE_API_KEY` | yes | none | Provider |
 | `GALENE_BASE_URL` | yes | empty | Provider |
 | `GALENE_MODEL` | no | `Galene/LLM` | Provider |
+| `GALENE_TIMEOUT_SECONDS` | no | `180` | Local request timeout; `0` disables it for a research run |
 | `TYPESAFE_API_KEY` | only for required Jev | none | Jev |
 | `TYPESAFE_URL` | no | TypeSafe System One endpoint | Jev |
 | `SWARM_DB_PATH` | no | `/data/swarm.sqlite3` | Store |
-| `SWARM_MAX_CONCURRENCY` | no | `4` | Orchestrator; valid 1-8 |
+| `SWARM_MAX_CONCURRENCY` | no | `4` | Operator-selected positive worker count; no fixed product maximum |
+| `SWARM_REQUIRE_JEV` | no | `0` | MCP adapter; `1` requires Jev for every run |
 | `SWARM_REPOSITORY_PATH` | only for verification | none | Verifier |
 | `SWARM_VERIFIER_IMAGE` | only for verification | profile image | Verifier |
 | `SWARM_VERIFIER_TIMEOUT` | no | `300` seconds | Verifier; valid 1-1800 |
@@ -172,4 +175,3 @@ engineering gap.
 - Treat durable recovery, multi-process coordination, remote transports, and
   automatic application as separate design changes requiring explicit scope and
   security decisions.
-

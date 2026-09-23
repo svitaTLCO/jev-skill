@@ -4,6 +4,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from threading import Event
 
 from codex_galene_swarm.models import GateResult, ProviderResult, TaskContract, VerificationResult
 from codex_galene_swarm.orchestrator import SwarmOrchestrator
@@ -63,6 +64,18 @@ class BrokenVerifier:
         raise VerificationError("daemon unavailable")
 
 
+class BlockingProvider(FakeProvider):
+    def __init__(self) -> None:
+        self.entered = Event()
+        self.release = Event()
+
+    def generate(self, goal: str, contract: TaskContract) -> ProviderResult:
+        self.entered.set()
+        if not self.release.wait(5):
+            raise TimeoutError("test provider was not released")
+        return super().generate(goal, contract)
+
+
 class OrchestratorTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
@@ -97,6 +110,75 @@ class OrchestratorTests(unittest.TestCase):
         task = {"task_id": "same", "role": "implementer", "objective": "Return code"}
         with self.assertRaisesRegex(ValueError, "unique"):
             self.orchestrator.start("goal", [task, task])
+
+    def test_research_batch_has_no_fixed_task_or_worker_ceiling(self) -> None:
+        other = SwarmOrchestrator(self.orchestrator.store, FakeProvider(), max_concurrency=9)
+        self.addCleanup(other.close)
+        tasks = [
+            {"task_id": f"task-{index}", "role": "analyst", "objective": "Answer"}
+            for index in range(13)
+        ]
+        started = other.start("Research batch", tasks)
+        result = self.wait_for_terminal(started["run_id"])
+        self.assertEqual(13, started["task_count"])
+        self.assertEqual(13, len(result["tasks"]))
+        self.assertTrue(all(task["status"] == "passed" for task in result["tasks"]))
+
+    def test_rejects_oversized_and_malformed_prompt_fields(self) -> None:
+        valid = {"task_id": "one", "role": "implementer", "objective": "Return code"}
+        invalid = [
+            ("x" * 4001, [valid]),
+            ("goal", [{**valid, "context": "x" * 16001}]),
+            ("goal", [{**valid, "interfaces": "not a list"}]),
+            ("goal", [{**valid, "acceptance_checks": [1]}]),
+            ("goal", [{**valid, "max_tokens": True}]),
+            ("goal", [{**valid, "max_tokens": 0}]),
+            ("goal", [{**valid, "output_kind": []}]),
+        ]
+        for goal, tasks in invalid:
+            with self.subTest(goal_length=len(goal), tasks=tasks):
+                with self.assertRaises(ValueError):
+                    self.orchestrator.start(goal, tasks)
+
+    def test_reconciles_interrupted_run_after_store_restart(self) -> None:
+        path = str(Path(self.temp.name) / "restart.sqlite3")
+        first = RunStore(path)
+        contract = TaskContract(task_id="pending", role="analyst", objective="Answer")
+        first.create_run("interrupted", "goal", [contract], False)
+        first.set_run_status("interrupted", "running")
+        first.update_task("interrupted", "pending", "running")
+
+        recovered = RunStore(path).get_run("interrupted")
+        self.assertEqual("failed", recovered["status"])
+        self.assertEqual("failed", recovered["tasks"][0]["status"])
+        self.assertEqual("Interrupted by server restart", recovered["tasks"][0]["error"])
+
+    def test_cancelled_inflight_result_cannot_reappear(self) -> None:
+        provider = BlockingProvider()
+        other = SwarmOrchestrator(self.orchestrator.store, provider, None, max_concurrency=1)
+        self.addCleanup(other.close)
+        started = other.start("goal", [{"task_id": "slow", "role": "analyst", "objective": "Answer"}])
+        self.assertTrue(provider.entered.wait(2))
+        self.assertEqual("cancelled", other.cancel(started["run_id"])["status"])
+        provider.release.set()
+        for _ in range(100):
+            if started["run_id"] not in other._futures:
+                break
+            time.sleep(0.01)
+        result = other.result(started["run_id"])
+        self.assertEqual("cancelled", result["status"])
+        self.assertEqual("cancelled", result["tasks"][0]["status"])
+        self.assertIsNone(result["tasks"][0]["result"])
+        self.assertNotIn(started["run_id"], other._futures)
+
+    def test_cancelling_completed_run_does_not_change_evidence(self) -> None:
+        started = self.orchestrator.start(
+            "goal", [{"task_id": "done", "role": "analyst", "objective": "Answer"}]
+        )
+        completed = self.wait_for_terminal(started["run_id"])
+        self.assertEqual("completed", completed["status"])
+        self.assertEqual("completed", self.orchestrator.cancel(started["run_id"])["status"])
+        self.assertEqual(completed, self.orchestrator.result(started["run_id"]))
 
     def test_requires_configured_jev_when_requested(self) -> None:
         other = SwarmOrchestrator(self.orchestrator.store, FakeProvider(), None, max_concurrency=1)

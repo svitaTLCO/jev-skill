@@ -28,8 +28,9 @@ multi-agent development environment.
 
 The current service supports:
 
-1. Codex submits between 1 and 12 independent task contracts under one goal.
-2. The service runs them asynchronously with configured concurrency from 1 to 8.
+1. Codex submits one or more independent task contracts under one goal.
+2. The service runs them asynchronously with a positive, operator-configured
+   concurrency setting (default 4). It does not rate-limit requests.
 3. Each worker returns `unified_diff`, `code`, or `analysis` text.
 4. The service optionally requires a fail-closed Jev policy evaluation.
 5. A `unified_diff` task may request executable verification when the privileged
@@ -55,8 +56,8 @@ routine implementation detail.
 - Worker output is an untrusted candidate, never an automatically accepted edit.
 - The default server cannot execute generated code and cannot access the caller's
   repository or Docker daemon.
-- Jev is optional unless the caller sets `require_jev=true`; when required,
-  missing configuration or evaluation failure fails closed.
+- Jev is required when the caller sets `require_jev=true` or the server sets
+  `SWARM_REQUIRE_JEV=1`; missing configuration or evaluation failure fails closed.
 - Executable verification is opt-in, is limited to unified diffs and declared
   files, and runs only through the separately enabled verified profile.
 - Model scores and syntax checks do not substitute for the repository's own
@@ -67,11 +68,9 @@ routine implementation detail.
 
 ## Task contract
 
-The table below defines the intended JSON shape. The current implementation
-enforces required scalar fields, task ID safety, output kind, token bounds,
-verification-command bounds, and unknown-field rejection. Complete type and
-size validation for every prompt-bearing list/string remains an identified gap
-in `IMPLEMENTATION_STATUS.md`.
+The table below defines the intended JSON shape. The implementation enforces
+required fields, prompt string/list size limits, task ID safety, output kind,
+token and verification-command bounds, and unknown-field rejection.
 
 | Field | Required | Meaning and bounds |
 |---|---:|---|
@@ -83,7 +82,7 @@ in `IMPLEMENTATION_STATUS.md`.
 | `acceptance_checks` | no | Contract-level conditions used by the worker and Jev |
 | `context` | no | Minimum repository information needed; treated as untrusted data |
 | `output_kind` | no | `unified_diff` (default), `code`, or `analysis` |
-| `max_tokens` | no | Completion ceiling from 1 to 4,000; default 1,400 |
+| `max_tokens` | no | Optional positive completion ceiling; omitted by default so Galene controls the limit |
 | `verification_command` | no | Argument vector, maximum 32 parts and 4,096 characters total |
 
 A verification command requires `output_kind="unified_diff"` and at least one

@@ -1,0 +1,63 @@
+{
+  "goal": "Build original modules for Circuit Sprint 3D, a playable 3D overhead arcade racer. Each worker writes one focused ES module. Return only source code, with no explanation or Markdown fence.",
+  "require_jev": true,
+  "tasks": [
+    {
+      "task_id": "track-math",
+      "role": "implementer",
+      "objective": "Write all of src/track-math.js. Generate a smooth original closed circuit centerline and a nearest-point query. Keep the module concise.",
+      "interfaces": [
+        "Export makeTrackSamples(count = 240), returning count ordered plain {x,z} points around a closed loop. XZ is the horizontal plane; direction is increasing index.",
+        "Export nearestTrackPoint(samples, x, z), returning {x,z,tangentX,tangentZ,distance,progress,index}. Tangent is unit forward, distance nonnegative, progress in [0,1), index integer.",
+        "No imports or Three.js. Inputs are finite numbers, samples has at least 3 points."
+      ],
+      "allowed_files": ["src/track-math.js"],
+      "acceptance_checks": [
+        "Original smooth loop with no self intersection and enough bends to race; count points exactly.",
+        "Nearest-point results remain finite at every sample and at the center of the map.",
+        "No external assets, DOM, network or extra exports. Raw valid ES module code only."
+      ],
+      "context": "The renderer will turn these points into a road ribbon. Cars use tangent and progress for steering and lap scoring. A simple deformed oval is sufficient; correctness and legibility matter more than decorative code.",
+      "output_kind": "code",
+      "max_tokens": 2800
+    },
+    {
+      "task_id": "car-mesh",
+      "role": "implementer",
+      "objective": "Write all of src/car-mesh.js. Build a compact original low-poly 3D racing-car mesh with a clear front direction.",
+      "interfaces": [
+        "Import * as THREE from 'three'. Export createCarMesh(color) returning a THREE.Group.",
+        "The group origin is car center on the ground. Car forward is local +Z; Y is up. Width around 1.5, length around 2.5, height below 1.2 world units.",
+        "The caller moves and rotates the returned group; do not implement physics or input."
+      ],
+      "allowed_files": ["src/car-mesh.js"],
+      "acceptance_checks": [
+        "Procedural body, cockpit, four wheels, and contrasting front accent use only Three.js built-in geometry/materials.",
+        "Distinct passed colors are visible; group can be reused for player and AI cars.",
+        "No DOM, network, textures or external assets. Raw valid ES module code only."
+      ],
+      "context": "Game is viewed by a tilted overhead camera, so the silhouette and front direction must read at a small size. Keep geometry construction concise and avoid per-frame work.",
+      "output_kind": "code",
+      "max_tokens": 2800
+    },
+    {
+      "task_id": "keyboard-input",
+      "role": "implementer",
+      "objective": "Write all of src/controls.js. Implement reliable keyboard controls for one or two local players.",
+      "interfaces": [
+        "Export createControls(target = window). It installs keydown/keyup listeners and returns { read, dispose }.",
+        "read(playerNumber) returns { throttle, brake, steer } with throttle/brake 0 or 1 and steer -1, 0, or 1. Player 1: W or ArrowUp throttle, S or ArrowDown brake, A or ArrowLeft steer left, D or ArrowRight steer right. Player 2: I throttle, K brake, J left, L right.",
+        "dispose() removes listeners. Browser window is available; no Three.js dependency."
+      ],
+      "allowed_files": ["src/controls.js"],
+      "acceptance_checks": [
+        "Key state clears on keyup and window blur; repeated keydown does not accumulate state.",
+        "Prevent browser scrolling for arrow keys and space only while controls are active.",
+        "Both player mappings work at the same time, and dispose is safe to call twice. Raw valid ES module code only."
+      ],
+      "context": "The game loop polls read(1) and optionally read(2) once per frame. Use event.code so keyboard layout changes do not alter controls. Do not create visible UI or a game loop.",
+      "output_kind": "code",
+      "max_tokens": 2800
+    }
+  ]
+}

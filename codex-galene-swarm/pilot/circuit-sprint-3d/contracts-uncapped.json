@@ -1,0 +1,24 @@
+{
+  "goal": "Build Circuit Sprint 3D, an original browser-based 3D overhead racer. Return a complete track module that can be reviewed and integrated by Codex.",
+  "require_jev": true,
+  "tasks": [
+    {
+      "task_id": "track-uncapped",
+      "role": "implementer",
+      "objective": "Write complete src/track.js as a JavaScript ES module. Create a continuous original road with curbs, grass, and a start line, then expose nearest-road-point lookup.",
+      "interfaces": [
+        "Import * as THREE from 'three'; export function createTrack(scene).",
+        "Return { samples, halfWidth, start, nearest, onRoad }. samples is an ordered closed loop of at least 180 {x,z} points; halfWidth is road half-width. start is {x,z,yaw}; car forward is (sin(yaw),cos(y)).",
+        "nearest(x,z) returns {x,z,tangentX,tangentZ,distance,progress,index}; progress is 0..1. onRoad(x,z) tests distance <= halfWidth."
+      ],
+      "allowed_files": ["src/track.js"],
+      "acceptance_checks": [
+        "Road, curbs, ground, and start line use original procedural Three.js geometry; no external assets.",
+        "nearest returns usable tangent and progress everywhere on the loop.",
+        "Valid JavaScript for Three.js 0.186.0; return only raw module source."
+      ],
+      "context": "World axes: XZ ground and Y up. The tilted overhead camera shows the full track. The caller owns cars and race rules.",
+      "output_kind": "code"
+    }
+  ]
+}

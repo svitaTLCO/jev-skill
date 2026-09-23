@@ -56,6 +56,17 @@ class RunStore:
                 );
                 """
             )
+            now = utc_now()
+            db.execute(
+                """UPDATE tasks SET status = 'failed', error = 'Interrupted by server restart', updated_at = ?
+                   WHERE status IN ('queued', 'running') AND run_id IN
+                   (SELECT run_id FROM runs WHERE status IN ('queued', 'running'))""",
+                (now,),
+            )
+            db.execute(
+                "UPDATE runs SET status = 'failed', updated_at = ? WHERE status IN ('queued', 'running')",
+                (now,),
+            )
 
     def create_run(self, run_id: str, goal: str, contracts: list[TaskContract], require_jev: bool) -> None:
         now = utc_now()
@@ -73,24 +84,34 @@ class RunStore:
         with self._connect() as db:
             db.execute("UPDATE runs SET status = ?, updated_at = ? WHERE run_id = ?", (status, utc_now(), run_id))
 
-    def update_task(self, run_id: str, task_id: str, status: str, result: dict[str, Any] | None = None, error: str | None = None) -> None:
-        with self._connect() as db:
-            db.execute(
-                "UPDATE tasks SET status = ?, result_json = ?, error = ?, updated_at = ? WHERE run_id = ? AND task_id = ?",
-                (status, json.dumps(result) if result is not None else None, error, utc_now(), run_id, task_id),
-            )
-
-    def request_cancel(self, run_id: str) -> bool:
+    def update_task(self, run_id: str, task_id: str, status: str, result: dict[str, Any] | None = None, error: str | None = None) -> bool:
         with self._connect() as db:
             cursor = db.execute(
-                "UPDATE runs SET cancel_requested = 1, status = 'cancelled', updated_at = ? WHERE run_id = ?",
-                (utc_now(), run_id),
-            )
-            db.execute(
-                "UPDATE tasks SET status = 'cancelled', updated_at = ? WHERE run_id = ? AND status = 'queued'",
-                (utc_now(), run_id),
+                """UPDATE tasks SET status = ?, result_json = ?, error = ?, updated_at = ?
+                   WHERE run_id = ? AND task_id = ? AND status IN ('queued', 'running')
+                   AND EXISTS (SELECT 1 FROM runs WHERE run_id = ? AND cancel_requested = 0 AND status = 'running')""",
+                (status, json.dumps(result) if result is not None else None, error, utc_now(), run_id, task_id, run_id),
             )
         return cursor.rowcount == 1
+
+    def request_cancel(self, run_id: str) -> str | None:
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            run = db.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+            if run is None:
+                return None
+            if run["status"] not in ("queued", "running"):
+                return run["status"]
+            now = utc_now()
+            db.execute(
+                "UPDATE runs SET cancel_requested = 1, status = 'cancelled', updated_at = ? WHERE run_id = ?",
+                (now, run_id),
+            )
+            db.execute(
+                "UPDATE tasks SET status = 'cancelled', updated_at = ? WHERE run_id = ? AND status IN ('queued', 'running')",
+                (now, run_id),
+            )
+        return "cancelled"
 
     def is_cancel_requested(self, run_id: str) -> bool:
         with self._connect() as db:
@@ -116,11 +137,16 @@ class RunStore:
         return result
 
     def finish_if_terminal(self, run_id: str) -> None:
-        run = self.get_run(run_id, include_results=False)
-        if not run or run["cancel_requested"]:
-            return
-        statuses = {task["status"] for task in run["tasks"]}
-        terminal = {"passed", "rejected", "failed", "cancelled"}
-        if statuses and statuses <= terminal:
-            final = "failed" if statuses <= {"failed", "cancelled"} else "completed"
-            self.set_run_status(run_id, final)
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            statuses = {row["status"] for row in db.execute(
+                "SELECT status FROM tasks WHERE run_id = ?", (run_id,)
+            )}
+            terminal = {"passed", "rejected", "failed", "cancelled"}
+            if statuses and statuses <= terminal:
+                final = "failed" if statuses <= {"failed", "cancelled"} else "completed"
+                db.execute(
+                    """UPDATE runs SET status = ?, updated_at = ? WHERE run_id = ?
+                       AND status = 'running' AND cancel_requested = 0""",
+                    (final, utc_now(), run_id),
+                )

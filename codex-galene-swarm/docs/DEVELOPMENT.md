@@ -33,6 +33,17 @@ The default tests use fake provider/evaluator/verifier boundaries and require no
 credentials or Docker socket mount. A green suite proves the tested application
 logic; it does not prove live Galene/Jev availability or real verifier isolation.
 
+For research runs, omit task `max_tokens` unless the experiment explicitly
+compares budgets. Set `SWARM_MAX_CONCURRENCY` in the container environment to
+the number of simultaneous requests you want; it defaults to 4 and has no
+fixed product maximum. `GALENE_TIMEOUT_SECONDS` defaults to 180; set it to
+`0` to remove the local request timeout for a supervised experiment. The
+service does not add rate-limit sleeps or automatic retries. Galene may still
+return HTTP 429 or enforce its own capacity, context, completion, and time
+limits; provider failures retain safe metadata for analysis. Prompt-field and
+response-size checks remain in place to protect the MCP service and SQLite
+ledger.
+
 ## Change workflow
 
 1. Inspect Git status and preserve existing unrelated changes.
@@ -104,7 +115,9 @@ vector. The service does not pull a worker-selected image.
 ## Contract authoring checklist
 
 - Split only independent work; there is no task dependency scheduler.
-- Make one objective observable and small enough for the token ceiling.
+- Make each objective observable. Omit `max_tokens` during research unless a
+  particular experiment needs a defined completion budget; the Galene endpoint
+  may still enforce its own limit.
 - Supply exact interfaces and only the context the worker needs.
 - Keep `allowed_files` narrow; an empty list means no file writes are permitted
   in the prompt and makes executable verification unavailable.
@@ -136,9 +149,9 @@ vector. The service does not pull a worker-selected image.
 |---|---|
 | Server fails during startup | `GALENE_API_KEY`, `GALENE_BASE_URL`, database path ownership |
 | Required Jev run is rejected before dispatch | `TYPESAFE_API_KEY` is present in the server container |
-| Provider returns no content | Inspect stored finish reason and reasoning-token metadata; increase a deliberately undersized task ceiling only when justified |
+| Provider returns no content | Inspect stored finish reason and reasoning-token metadata; distinguish an explicit task ceiling from an endpoint-imposed limit |
 | Verification request is refused | Use the verified profile and provide both `allowed_files` and a `unified_diff` output kind |
 | Docker verifier cannot start | Socket mount/group, pre-existing image, daemon availability, and required utilities |
-| Run remains queued/running after restart | Current service has no job recovery; preserve the ledger for diagnosis and start a new run deliberately |
+| Run is failed after restart | Queued/running work was interrupted and reconciled; inspect task errors and start a new run deliberately |
+| Team server refuses startup | Check `SWARM_REQUIRE_JEV=1` and `TYPESAFE_API_KEY`, then Galene credentials and ledger permissions |
 | Run says completed but work is missing | Inspect each task; rejected/failed tasks can coexist with a completed run |
-

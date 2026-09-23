@@ -1,0 +1,70 @@
+{
+  "goal": "Build an original, playable 3D overhead circuit racer inspired by the race loop of the NES Super Sprint. This is a real-work test of the Codex Galene Swarm: workers create bounded modules, Codex integrates and tests the game. Use procedural visuals only; no copied assets, names, audio, or track layouts.",
+  "require_jev": true,
+  "tasks": [
+    {
+      "task_id": "track-world",
+      "role": "implementer",
+      "objective": "Return the complete JavaScript source for src/track.js: render one attractive original 3D circuit and provide reliable road geometry queries for racing.",
+      "interfaces": [
+        "Use import * as THREE from 'three'. Export function createTrack(scene).",
+        "World is XZ horizontal, Y up. Return { samples, halfWidth, start, nearest, onRoad }. samples is a closed-loop ordered array of at least 180 plain {x,z} points; halfWidth is road half-width in world units; start is {x,z,yaw} with yaw radians where forward is (sin(yaw), cos(yaw)).",
+        "nearest(x,z) returns {x,z,tangentX,tangentZ,distance,progress,index}. distance is nonnegative world units from road center; progress is normalized [0,1); tangent is unit forward along samples; index is nearest sample index. onRoad(x,z) returns true inside halfWidth.",
+        "The other modules call nearest several times per animation frame and may position cars at samples[(i + offset) % samples.length]."
+      ],
+      "allowed_files": ["src/track.js"],
+      "acceptance_checks": [
+        "One continuous, non-self-intersecting drivable loop with visible 3D road surface, edge barriers/curbs, infield, and a visible start line.",
+        "No external textures, assets, network calls, or DOM dependency; all visuals are Three.js geometry/materials.",
+        "Code is valid ES module JavaScript for Three.js 0.186.0 and Vite 8.3.0; return raw code only, no markdown fence.",
+        "Nearest-point query and progress stay stable around the whole loop; road width is wide enough for four small cars."
+      ],
+      "context": "A tilted orthographic camera will show the entire track. The game creates a Three.Scene, calls createTrack(scene), then creates cars and race logic. Make the circuit visually legible at a glance: dark asphalt, contrasting curb, grass/infield, small track-side geometry and lighting-compatible materials. Keep geometry creation reasonably efficient.",
+      "output_kind": "code",
+      "max_tokens": 4000
+    },
+    {
+      "task_id": "vehicle-physics",
+      "role": "implementer",
+      "objective": "Return the complete JavaScript source for src/vehicle.js: an original low-poly 3D racing car and responsive arcade driving physics.",
+      "interfaces": [
+        "Use import * as THREE from 'three'. Export function createCar(scene, { id, color, x, z, yaw }) and function stepCar(car, input, dt, track).",
+        "createCar returns mutable { id, group, x, z, yaw, speed, spinTimer, upgrade } at minimum. Car forward direction is (sin(yaw), cos(yaw)); group.position and group.rotation.y track the physics pose. The car is roughly 1.5 units wide and 2.5 long, resting above y=0.",
+        "input is { throttle, brake, steer } with values 0..1, 0..1, -1..1. dt is seconds. track has halfWidth and nearest(x,z) returning {x,z,tangentX,tangentZ,distance,progress,index}.",
+        "Race logic may set car.spinTimer to positive seconds after an oil slick and increment car.upgrade (0..3) after collecting a wrench. AI and human cars use the same stepCar."
+      ],
+      "allowed_files": ["src/vehicle.js"],
+      "acceptance_checks": [
+        "Acceleration, braking/reverse, steering, drag, off-road slowdown, and soft barrier collision feel playable at 60 Hz and remain stable at dt up to 0.05 s.",
+        "Oil spin visibly disrupts handling then recovers; upgrade slightly improves performance without breaking balance.",
+        "Low-poly car has visible heading/front, wheels, shadow or trim; each car color is distinct. No external assets or DOM dependency.",
+        "Code is valid ES module JavaScript for Three.js 0.186.0; return raw code only, no markdown fence."
+      ],
+      "context": "Circuit Sprint 3D is an overhead three-lap racer. World axes XZ with Y up. The track module supplies nearest road point and halfWidth. Human controls and AI each send input each animation frame. The camera shows most of the circuit, so use strong silhouettes and contrast. Keep the update deterministic and do not create new geometry every frame.",
+      "output_kind": "code",
+      "max_tokens": 4000
+    },
+    {
+      "task_id": "race-loop",
+      "role": "implementer",
+      "objective": "Return the complete JavaScript source for src/race.js: a playable three-lap race loop with AI opponents, lap scoring, oil slicks, wrench pickups, and standings.",
+      "interfaces": [
+        "Import * as THREE from 'three' and { stepCar } from './vehicle.js'. Export function createRace(scene, track, entrants, lapsToWin = 3).",
+        "entrants is array of { id, kind, car } where kind is 'human' or 'ai'. track is { samples, halfWidth, start, nearest, onRoad } and nearest returns {x,z,tangentX,tangentZ,distance,progress,index}.",
+        "Return { state, update, reset }. state is a mutable object with { mode, elapsed, winner, lapsToWin, standings }. mode starts 'ready', then 'running' when update is first called, then 'finished'. standings is an array of { id, lap, progress, place, wrenches } updated each frame, sorted by place. winner is entrant id or null.",
+        "update(dt, inputById) advances each entrant. inputById is object mapping human id to {throttle,brake,steer}. AI entries choose controls by looking ahead along track samples and use stepCar. reset() restores lap and pickup state but main may recreate cars separately; do not change exported interface."
+      ],
+      "allowed_files": ["src/race.js"],
+      "acceptance_checks": [
+        "AI cars complete the loop, brake on bends or steer robustly, and do not drive straight off track.",
+        "Lap counting requires ordered checkpoints or equivalent anti-cheat progression and works across progress wrap; finish occurs only after three valid laps.",
+        "At least two visible oil slicks spin cars briefly, and two visible wrench pickups increment car.upgrade up to 3 and standings.wrenches; pickups respawn on reset.",
+        "Standings and winner remain consistent when a human or AI finishes. Reset returns state to ready. No external assets, network calls, or DOM dependency.",
+        "Code is valid ES module JavaScript for Three.js 0.186.0; return raw code only, no markdown fence."
+      ],
+      "context": "The main application will render the scene, collect keyboard input, create 1 or 2 human cars and AI cars using createCar, then call race.update(dt, inputs) and read race.state for HUD. Vehicle stepCar accepts input and handles road collision. Track samples are ordered around a closed loop. Use procedural geometry for hazards and wrenches. Keep race logic independent of HTML UI.",
+      "output_kind": "code",
+      "max_tokens": 4000
+    }
+  ]
+}

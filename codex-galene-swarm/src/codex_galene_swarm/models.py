@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import re
 from typing import Any, Literal
 
 
@@ -18,11 +19,13 @@ class TaskContract:
     acceptance_checks: list[str] = field(default_factory=list)
     context: str = ""
     output_kind: Literal["unified_diff", "code", "analysis"] = "unified_diff"
-    max_tokens: int = 1400
+    max_tokens: int | None = None
     verification_command: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> "TaskContract":
+        if not isinstance(value, dict):
+            raise ValueError("task must be an object")
         allowed = {
             "task_id", "role", "objective", "interfaces", "allowed_files",
             "acceptance_checks", "context", "output_kind", "max_tokens",
@@ -31,15 +34,31 @@ class TaskContract:
         unknown = set(value) - allowed
         if unknown:
             raise ValueError(f"Unknown task fields: {sorted(unknown)}")
+        for name, limit in (("task_id", 64), ("role", 64), ("objective", 4000)):
+            item = value.get(name)
+            if not isinstance(item, str) or not item.strip() or len(item) > limit:
+                raise ValueError(f"{name} must be a non-empty string of at most {limit} characters")
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", value["task_id"]):
+            raise ValueError(f"Unsafe task_id: {value['task_id']!r}")
+        context = value.get("context", "")
+        if not isinstance(context, str) or len(context) > 16000:
+            raise ValueError("context must be a string of at most 16000 characters")
+        for name, max_items, max_item_length in (
+            ("interfaces", 32, 1000),
+            ("allowed_files", 64, 512),
+            ("acceptance_checks", 32, 1000),
+        ):
+            items = value.get(name, [])
+            if (not isinstance(items, list) or len(items) > max_items or any(
+                not isinstance(item, str) or not item.strip() or len(item) > max_item_length
+                for item in items
+            )):
+                raise ValueError(f"{name} must be a bounded list of non-empty strings")
         contract = cls(**value)
-        if not contract.task_id or not contract.objective or not contract.role:
-            raise ValueError("task_id, role, and objective are required")
-        if not contract.task_id.replace("-", "").replace("_", "").isalnum():
-            raise ValueError(f"Unsafe task_id: {contract.task_id!r}")
-        if contract.output_kind not in {"unified_diff", "code", "analysis"}:
+        if not isinstance(contract.output_kind, str) or contract.output_kind not in {"unified_diff", "code", "analysis"}:
             raise ValueError(f"Unsupported output_kind: {contract.output_kind}")
-        if not 1 <= contract.max_tokens <= 4000:
-            raise ValueError("max_tokens must be between 1 and 4000")
+        if contract.max_tokens is not None and (type(contract.max_tokens) is not int or contract.max_tokens < 1):
+            raise ValueError("max_tokens must be a positive integer or null")
         if not isinstance(contract.verification_command, list) or any(
             not isinstance(part, str) or not part for part in contract.verification_command
         ):

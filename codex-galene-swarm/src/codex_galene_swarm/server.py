@@ -24,7 +24,8 @@ mcp = MCPServer(
 
 @lru_cache(maxsize=1)
 def get_orchestrator() -> SwarmOrchestrator:
-    store = RunStore(os.environ.get("SWARM_DB_PATH", "/data/swarm.sqlite3"))
+    if os.environ.get("SWARM_REQUIRE_JEV", "0") == "1" and not os.environ.get("TYPESAFE_API_KEY"):
+        raise ValueError("SWARM_REQUIRE_JEV=1 requires TYPESAFE_API_KEY")
     provider = GaleneProvider()
     jev = JevEvaluator() if os.environ.get("TYPESAFE_API_KEY") else None
     repository_path = os.environ.get("SWARM_REPOSITORY_PATH")
@@ -36,6 +37,7 @@ def get_orchestrator() -> SwarmOrchestrator:
             image=verifier_image,
             timeout_seconds=int(os.environ.get("SWARM_VERIFIER_TIMEOUT", "300")),
         )
+    store = RunStore(os.environ.get("SWARM_DB_PATH", "/data/swarm.sqlite3"))
     return SwarmOrchestrator(
         store=store,
         provider=provider,
@@ -48,7 +50,8 @@ def get_orchestrator() -> SwarmOrchestrator:
 @mcp.tool()
 def swarm_start(goal: str, tasks: list[dict[str, Any]], require_jev: bool = False) -> dict[str, Any]:
     """Start bounded Galene worker contracts and return a durable run identifier."""
-    return get_orchestrator().start(goal=goal, tasks=tasks, require_jev=require_jev)
+    mandatory_jev = os.environ.get("SWARM_REQUIRE_JEV", "0") == "1"
+    return get_orchestrator().start(goal=goal, tasks=tasks, require_jev=require_jev or mandatory_jev)
 
 
 @mcp.tool()
@@ -70,6 +73,7 @@ def swarm_cancel(run_id: str) -> dict[str, Any]:
 
 
 def main() -> None:
+    get_orchestrator()
     mcp.run()
 
 
