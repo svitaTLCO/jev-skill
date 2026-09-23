@@ -280,9 +280,102 @@ The demo now atomically checkpoints each run to `demo/runs/<id>/run.json` and re
 completed runs on startup. Any nonterminal lane found after a container restart is
 marked `failed` with an explicit interruption detail; raw candidates and progress fields
 remain available. A″ was restarted as a single-lane run
-(`be0f8eb8f96c4aecb3a15ab6d6d34d4b`) to avoid repeat queue contention; its terminal
-result will be recorded here when available.
+(`be0f8eb8f96c4aecb3a15ab6d6d34d4b`) to avoid repeat queue contention; that run was
+also killed by a container recreation and is recorded as `interrupted` (see §10).
 
 P0 remains outstanding: run the fixed nine-task corpus for at least 20 paired seeds
 per task (180 task-seed pairs, 360 live generations) and inspect the resulting
 ledger/report before making comparative claims.
+
+## 10. Race #6 — first full A″ live measurement (run `d16f898c`, 2026-09-23)
+
+All three lanes ran in one shot — `guided_v2` (drift control), `guided_a` (A′,
+reproduce/refute the fixed-point law), `guided_aa` (A″ naming critic with arena
+fallback K=3) — on the serialized worker slot (NUM_PARALLEL=1), qwen3.5:4b,
+completed 13:34 CET. Artifacts came from the atomic run checkpoints; syntax ground
+truth = node `vm.Script` on each extracted `<script>` block of the seven distinct
+documents (duplicates share SHA-256).
+
+| Lane / stage | Wall s | Eval tokens | Gate (contract/scope/quality) | Syntax GT | Outcome label |
+| :--- | ---: | ---: | :--- | :--- | :--- |
+| `guided_v2` (drift control) | 972.5 | 1708 | 0.54 / 0.74 / 2.01 → rejected | valid (1/1 blocks) | Generated · Syntax-valid · Gate-rejected |
+| `guided_a` seed | (shared slot) | (lane total 3488) | 0.60 / 0.68 / 2.20 → rejected | valid | Generated · Syntax-valid · Gate-rejected |
+| `guided_a` repair r1 | 2517.5 total | — (short-circuited) | battery 6/6, parse ok; last gate 0.60/0.68 | valid — **byte-identical to seed** (SHA 53c753…) | Repair-stalled-Fixed-point-R1-Gate-rejected |
+| `guided_aa` seed (r0) | (shared slot) | (lane total 10823) | 0.13 / 0.64 / 0.61 → rejected; critic named `collision_geometry` | valid | Generated · Syntax-valid · Gate-rejected |
+| `guided_aa` repair r1 | 4118.1 total | — | 0.56 / 0.73 / 2.03 → rejected; critic named `collision_geometry` again | valid | Generated · Syntax-valid · Gate-rejected (best single-round gain ever observed: +0.43 contract) |
+| `guided_aa` repair r2 | — | — | byte-identical to r1 (SHA 8fc237…) → **named-layer fixed point**, short-circuited | valid | short-circuit evidence only |
+| `guided_aa` arena 1–3 | — | — | 0.55/0.66/2.01 · 0.54/0.61/2.07 · 0.58/0.61/2.18, all rejected | all valid (1/1 each) | no eligible candidate |
+
+### 10.1 Forensics
+
+- Fixed points, byte-proven: `guided_a.raw ≡ guided_a.r1` — the generic-feedback
+  repair returned the unchanged document although the battery reported 6/6 and
+  parsing succeeded (race-#5 localisation-gap signature reproduced).
+  `guided_aa.seed ≠ guided_aa.r1` but `guided_aa.r1 ≡ guided_aa.r2 ≡ final artifact`
+  — the second *named* dispatch (same defect class) also settled into a fixed point.
+- Static reading of `guided_aa.r1`: the named defect was genuinely repaired — the
+  drawn geometry (top `[0, p.y]`, bottom `[p.y+gapHeight, H]`) now matches the
+  collision test `(pigTop < p.y) || (pigBottom > p.y + gapHeight)`; floor/ceiling
+  handled, gravity active only while PLAYING, zero external references. Plausible
+  residual contract drags (candidates, not established defects): two-input restart
+  (GAME_OVER→START→PLAYING), pipes keep animating during GAME_OVER, and spawn
+  cadence keyed on a never-reset frame counter. Per-item contract attribution is
+  unavailable — the gate reports dimension scores, not per-requirement verdicts.
+
+### 10.2 Findings
+
+1. **A″ machinery verified end-to-end on its first full live run.** The critic stayed
+   in-taxonomy (both rounds named `collision_geometry`; the fail-loud path never
+   fired), repairs dispatched only together with a named violation, fixed-point
+   short-circuits fired correctly in both layers, the arena fallback executed K=3,
+   the full history was checkpointed atomically, and there was zero syntax
+   corruption anywhere (parser ground truth confirms every `syntax_ok`).
+2. **The named information delta produced the largest single-round gain observed in
+   any race**: contract 0.13→0.56 (+0.43), scope 0.64→0.73, quality 0.61→2.03, on
+   the worst seed seen so far. This mirrors the refined fixed-point law (§8.2.3) in
+   reverse: a demonstrable named defect moves the worker, while an unnamed global
+   complaint does not. The naming mechanism earns its cost exactly when seeds
+   collapse.
+3. **A fixed point exists in the named layer too.** Re-dispatching the *same* defect
+   name after the worker has applied what it could from it gains nothing (r2 ≡ r1
+   byte-identical). Named violations are single-use; a productive second round would
+   need a *fresh* residual sub-defect name, which the current taxonomy cannot force.
+   Design options for later: bail when the same name persists (saves one
+   zero-gain regeneration) or require critic refinement before re-dispatch. Not
+   implemented.
+4. **The bottleneck moved from orchestration to model capacity.** Across every lane
+   and every fresh arena draw, non-collapsed artifacts cluster at contract
+   ∈ [0.54, 0.60] and scope ∈ [0.61, 0.74]: v2 control 0.54/0.74, fresh arena draws
+   0.54–0.58, best repair 0.56. Orchestration lifts bad seeds *into* the band but no
+   arm pushes *past* the 0.70 contract bar. Quality saturates ≥ 2.0 everywhere
+   except the collapsed seed (0.61): quality is calibrated lenient relative to
+   contract/scope and is not the binding dimension. This cross-arm stability is what
+   P0 exists to quantify.
+5. **Cost (contended, serialized slot).** Lane totals: v2 972.5 s / 1708 tokens;
+   A′ 2517.5 s / 3488 (two regenerations); A″ 4118.1 s / 10823 (six regenerations:
+   seed + two repairs + three arena draws, the second repair a bought-for-zero
+   information byte-identical copy). Wall times interleave queue waiting across
+   lanes, so per-generation attribution stays approximate against the ~387 s
+   clean-slot anchor.
+6. **Nothing was promoted.** Every lane failed the canonical gate; no candidate in
+   any race to date has passed it. Honest labels: best artifact overall =
+   Generated · Syntax-valid · Gate-rejected (`arena3` 0.58/0.61/2.18; highest scope
+   of the repaired/arena set = `aa.r1` 0.56/0.73/2.03). Nothing reached the
+   Runtime-valid tier (no oracle/browser execution on these candidates; the only
+   browser-exercised artifact remains §9's arena-1 smoke test, itself gate-rejected).
+
+Boundary: single task, one seed per lane, contended wall clocks; static forensics
+plus parser ground truth, no playtest claims; directional evidence only —
+distributional claims require P0.
+
+### 10.3 Decision
+
+Per the pre-declared interpretation map, A″ converged mechanically, not
+acceptively: stop iterating single-seed arm tuning. Next step is the P0 paired
+measurement — the harness was merged and the nine-task corpus frozen on 2026-09-23
+(runner defaults: 20 seeds/task; timeout documented as a wall-clock hang guard;
+fewer than 20 seeds refused unless labeled directional). Agreed post-hoc survivor
+procedure: oracle-passing candidates are Runtime-valid tier only, and promotion
+claims additionally require the canonical three-question gate — tiers are never
+mixed. Follow-ups parked until after P0 (none approved): critic refinement
+policy, a stronger-model comparison arm, task-slice difficulty analysis.
