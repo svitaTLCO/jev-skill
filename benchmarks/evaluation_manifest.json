@@ -36,7 +36,7 @@
       "language": "python",
       "scenario": "integration",
       "candidate_file": "format_parse_roundtrip.py",
-      "prompt": "Implement exactly two Python functions: parse_pair(text), which parses one comma-separated pair of non-empty fields into a tuple, and format_pair(left, right), which joins two fields with one comma. Return only complete Python source code. Do not add imports, tests, prose, classes, or other functions.",
+      "prompt": "Implement exactly two Python functions: parse_pair(text), which parses one comma-separated pair of non-empty fields into a tuple by splitting at the first comma only and preserving both fields exactly, including any internal spaces and commas, and format_pair(left, right), which joins two fields with one comma. Return only complete Python source code. Do not add imports, tests, prose, classes, or other functions.",
       "tests": "assert parse_pair('alpha,beta') == ('alpha', 'beta')\nassert format_pair('alpha', 'beta') == 'alpha,beta'\nassert parse_pair(format_pair('one', 'two')) == ('one', 'two')",
       "hidden_tests": "assert parse_pair(format_pair(' spaces ', 'x,y')) == (' spaces ', 'x,y')\nassert parse_pair('left,right,tail') == ('left', 'right,tail')",
       "constraints": {"top_level_functions": ["parse_pair", "format_pair"], "forbid_imports": true}

@@ -155,7 +155,13 @@ labeled directional evidence with `--allow-directional`. The nine-task corpus �
 including its hidden test suites, prompt-injection probe, multi-file integration
 tasks, browser holdout tasks, and Jev's `implementation_shape` Choice contract —
 is frozen as of 2026-09-23; changing any task or criterion starts a new corpus
-version that must be re-baselined. Candidates that pass the oracle sandboxes are
+version that must be re-baselined. Corpus v1 (the original nine-task
+definitions) was frozen on that date. After the first directional smoke run
+(`paired-20260923T141351Z`, see study doc §11), exactly one prompt was
+clarified — `format_parse_roundtrip` now states that parsing splits at the
+first comma only and preserves fields verbatim — making the corpus **v2**;
+no P0 baseline existed yet, so the full P0 program is baselined on v2 with no
+other task, test, oracle, or criterion changed. Candidates that pass the oracle sandboxes are
 Runtime-valid-tier evidence only: before any promotion claim, surviving
 candidates also pass the demo's canonical three-question Jev gate, and those two
 tiers of labels are never mixed.

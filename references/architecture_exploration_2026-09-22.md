@@ -379,3 +379,90 @@ procedure: oracle-passing candidates are Runtime-valid tier only, and promotion
 claims additionally require the canonical three-question gate — tiers are never
 mixed. Follow-ups parked until after P0 (none approved): critic refinement
 policy, a stronger-model comparison arm, task-slice difficulty analysis.
+
+## 11. P0 directional smoke — first live paired run (`paired-20260923T141351Z-45f8a2f9`, 2026-09-23)
+
+Run shape: 3 paired seeds × frozen nine-task corpus × 2 arms (direct vs guided
+with Jev's `implementation_shape` Choice), digest-pinned `qwen3.5:4b`
+(`2a654d98e6fb…`, Q4_K_M), temperature 0.2, think off, generation uncapped
+(`num_predict` absent from all payloads), 2400 s wall-clock hang guard per
+worker request, `evidence_class = directional`. Wall clock ≈ 51 min total.
+Artifacts: `benchmark-runs/paired-20260923T141351Z-45f8a2f9.{ndjson,json}` and
+raw candidates under `benchmark-runs/raw/` (both git-ignored).
+
+### 11.1 Pipeline verdict: PASS
+
+The harness had never been exercised live before this run. All 54 arm runs
+completed with **zero** generation, infrastructure, Jev-orchestration, or
+assembly failures: worker reachability through `host.docker.internal:11434`,
+the TypeSafe secret mount at `/run/secrets/typesafe.env`, network-disabled
+Docker sandboxes for Python/package/browser oracles, digest pinning via
+`/api/tags`, NDJSON ledgering, and the bootstrap-CI report were all proven end
+to end. The six recorded timeouts are candidate/oracle events, not harness
+faults: one candidate infinite loop hit the 15 s sandbox cap on
+`sum_positive_integers`, and five browser candidates timed out waiting for the
+"Increase" button locator. One operational gotcha surfaced and was fixed: the
+local benchmark image predated the merged runner (it lacked
+`--allow-directional`) and had to be rebuilt from HEAD; the rule is now
+rebuild-when-`scripts/`-changes. Recorded caveat: Ollama does not echo the
+requested seed back, so `provider_seed_confirmed=false` in every record and
+pair identity rests on the requested seed parameter.
+
+### 11.2 Directional results (n = 3 pairs/task — NOT distributional evidence)
+
+Per-task oracle passes (direct / guided, of 3 pairs each):
+
+| Task | Direct | Guided | Reading |
+|---|---|---|---|
+| clamp_value | 3 | 3 | saturated — no signal possible |
+| dedupe_preserving_order | 3 | 3 | saturated |
+| literal_first_line | 3 | 3 | saturated |
+| merge_sorted_lists | 3 | 3 | saturated |
+| sum_positive_integers | 2 | 3 | one direct candidate hung |
+| accessible_counter_browser | 0 | 1 | spec includes keyboard activation |
+| format_parse_roundtrip | 0 | 0 | uniform hidden-edge failure (see 11.3) |
+| normalize_ascii_slug | 0 | 0 | uniform visible-assert failure |
+| record_app_package | 0 | 0 | uniform visible-assert failure |
+
+Aggregate pass@1: direct 14/27 vs guided 16/27; mean paired delta
+(guided − direct) **+0.074**, bootstrap 95% CI [0.00, 0.19]. Wall-clock p50
+≈ 22–23 s/arm (p95 dominated by browser oracle). Mean output ≈ 158 tokens.
+Directionally consistent with race #6: the guided arm leads exactly where
+difficulty bites (sum_positive, browser) while the saturated quartet carries no
+signal at all.
+
+### 11.3 Calibration pass over all nine prompts and oracles
+
+Every prompt and oracle was read against the failure traces before any P0
+commitment. Verdicts:
+
+- `normalize_ascii_slug` and `record_app_package` are fully specified literally
+  (visible asserts included) and candidates failed even the visible suite —
+  clean model-capacity evidence. Kept unchanged.
+- `accessible_counter_browser` names its buttons, title, and initial text, and
+  requires keyboard activation plus zero external requests — precise; kept
+  unchanged.
+- `format_parse_roundtrip` was the single under-specification found: its hidden
+  asserts require split-at-first-comma and verbatim field preservation (internal
+  spaces and commas) that the original prompt never stated; all twelve
+  candidates passed the visible suite and died uniformly on the hidden edge.
+  That mixed "implicit-spec inference" into what P0 should measure as generation
+  quality.
+
+Decision (operator-approved 2026-09-23): the prompt now states the contract
+explicitly ("splitting at the first comma only and preserving both fields
+exactly, including any internal spaces and commas"). No tests, oracles, other
+tasks, or criteria changed. Per the freeze procedure this is **corpus v2**:
+v1 (original definitions) was frozen 2026-09-23, no P0 baseline exists yet, so
+re-baselining costs nothing and the full P0 run starts on v2.
+
+### 11.4 Next step (queued for post-reboot 2026-09-23)
+
+Launch the full P0 run: 20 paired seeds × v2 corpus, identical arm config to
+this smoke, `evidence_class = p0` (seed floor enforced by the runner), expected
+≈ 6 h serialized (27 pairs took ~51 min); machine must stay awake and the
+Windows-side Ollama worker must be running with the same model digest. If the
+run dies mid-flight it resumes via `--resume-ledger` with the identical
+configuration (already-recorded arms — including failures — are not retried).
+Afterwards: parse the report, classify all failures, and make the invest/stop
+decision on Jev orchestration per the promotion standard.
