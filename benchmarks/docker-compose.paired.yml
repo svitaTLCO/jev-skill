@@ -4,10 +4,9 @@ services:
       context: ..
       dockerfile: benchmarks/Dockerfile
     environment:
-      JEV_BENCHMARK_PROVIDER: ${JEV_BENCHMARK_PROVIDER:-openai}
-      JEV_BENCHMARK_WORKER_URL: ${JEV_BENCHMARK_WORKER_URL:-https://api-tlco.elettra.ai/v1}
+      JEV_BENCHMARK_WORKER_URL: ${JEV_BENCHMARK_WORKER_URL:-http://host.docker.internal:11434/api/generate}
+      JEV_BROWSER_SANDBOX_IMAGE: ${JEV_BROWSER_SANDBOX_IMAGE:-jev-skill-browser-sandbox:1.63.0}
       JEV_PAIRED_TYPESAFE_ENV_FILE: /run/secrets/typesafe.env
-      JEV_PAIRED_GALENE_ENV_FILE: /run/secrets/galene.env
       JEV_GIT_REVISION: ${JEV_GIT_REVISION:-unknown}
       JEV_SANDBOX_TMPDIR: /workspace/benchmark-runs/.sandbox
       JEV_SANDBOX_HOST_DIR: ${JEV_SANDBOX_HOST_DIR:?Set this to the absolute host path of benchmark-runs/.sandbox}
@@ -17,9 +16,19 @@ services:
     volumes:
       - ../benchmark-runs:/workspace/benchmark-runs
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/adminmatto/progetti/rd/radix-db-exporter/.env:/run/secrets/typesafe.env:ro
-      - /home/adminmatto/progetti/rd/repo-security-scan/repo_guardian/.env:/run/secrets/galene.env:ro
+      - /home/adminmatto/progetti/prodotti/radix-db-exporter/.env:/run/secrets/typesafe.env:ro
+    # The --timeout below is a wall-clock hang guard per worker request
+    # (queue wait plus full uncapped generation); it is never a content budget.
     command: >-
       python scripts/run_paired_benchmark.py
       --model ${JEV_BENCHMARK_MODEL:?Set JEV_BENCHMARK_MODEL to an exact model identifier or digest}
       --seed ${JEV_BENCHMARK_SEED:-1}
+      --seed-count ${JEV_BENCHMARK_SEED_COUNT:-20}
+      --timeout ${JEV_BENCHMARK_TIMEOUT:-2400}
+
+  browser-sandbox:
+    image: ${JEV_BROWSER_SANDBOX_IMAGE:-jev-skill-browser-sandbox:1.63.0}
+    build:
+      context: ..
+      dockerfile: benchmarks/Dockerfile.browser
+    profiles: ["benchmark-build"]

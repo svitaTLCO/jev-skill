@@ -135,26 +135,56 @@ Syntax validation is not a runtime pass. Unsupported runtime languages fail clos
 
 ### Paired direct vs Jev experiment
 
-`benchmarks/docker-compose.paired.yml` runs one seed of the first controlled
-experiment: the direct and Jev-Choice-guided arms invoke the same worker with
-the same decoding settings and use the same Docker sandbox oracle. It stores
-redacted records and raw candidates in the ignored `benchmark-runs/` directory.
-The container mounts the Docker socket only to execute the existing
-network-disabled candidate sandbox; run it only on a trusted development host.
+`benchmarks/docker-compose.paired.yml` runs the P0 paired experiment against the
+Windows-hosted Ollama worker. The nine-task corpus covers development and holdout
+micro-contracts, scope creep, prompt-injection inputs, multi-file integration, and
+a real browser interaction. The runner defaults to 20 seeds per task. Both arms use
+the same exact model digest, temperature, think setting, and seed; the guided arm
+adds only Jev's implementation-shape Choice. Generation is uncapped. The runner
+warms the model before measurement, alternates arm order by seed, evaluates hidden
+oracle tests in network-disabled Docker sandboxes, and reports paired pass deltas
+with bootstrap confidence intervals, latency percentiles, token counts, timeouts,
+and truncations. Redacted records and raw candidates are written to the ignored
+`benchmark-runs/` directory. The runner mounts the Docker socket only to execute
+isolated candidates; run it only on a trusted development host.
+
+The per-request timeout is a wall-clock hang guard (queue wait plus full uncapped
+generation), never a content budget, and the standalone CLI default matches it
+(2400 s). Runs below 20 paired seeds per task are refused unless explicitly
+labeled directional evidence with `--allow-directional`. The nine-task corpus —
+including its hidden test suites, prompt-injection probe, multi-file integration
+tasks, browser holdout tasks, and Jev's `implementation_shape` Choice contract —
+is frozen as of 2026-09-23; changing any task or criterion starts a new corpus
+version that must be re-baselined. Candidates that pass the oracle sandboxes are
+Runtime-valid-tier evidence only: before any promotion claim, surviving
+candidates also pass the demo's canonical three-question Jev gate, and those two
+tiers of labels are never mixed.
 
 ```bash
-JEV_BENCHMARK_MODEL="Galene/LLM" JEV_BENCHMARK_SEED=1 JEV_GIT_REVISION="$(git rev-parse HEAD)" \
+JEV_BENCHMARK_MODEL="qwen3.5:4b" JEV_BENCHMARK_SEED=1 JEV_BENCHMARK_SEED_COUNT=20 \
+JEV_GIT_REVISION="$(git rev-parse HEAD)" \
+JEV_SANDBOX_HOST_DIR="$PWD/benchmark-runs/.sandbox" \
+JEV_BROWSER_SANDBOX_IMAGE="jev-skill-browser-sandbox:1.63.0" \
+  docker compose -f benchmarks/docker-compose.paired.yml --profile benchmark-build build browser-sandbox paired-benchmark
+```
+
+Then start the 20-seed paired run:
+
+```bash
+JEV_BENCHMARK_MODEL="qwen3.5:4b" JEV_BENCHMARK_SEED=1 JEV_BENCHMARK_SEED_COUNT=20 \
+JEV_GIT_REVISION="$(git rev-parse HEAD)" \
 JEV_SANDBOX_HOST_DIR="$PWD/benchmark-runs/.sandbox" \
   docker compose -f benchmarks/docker-compose.paired.yml run --rm paired-benchmark
 ```
 
-Repeat with paired seeds (for example 1 through 20) before claiming a quality
-or latency difference. A provider that does not echo the seed is recorded as
-`provider_seed_confirmed: false`; do not call that run reproducible.
-
-The default worker is the configured Galene OpenAI-compatible provider. To use
-a host-local Ollama proxy instead, set `JEV_BENCHMARK_PROVIDER=ollama` and
-`JEV_BENCHMARK_WORKER_URL=http://127.0.0.1:11434/api/generate`.
+The runner resolves and records Ollama's immutable model digest. Requested seeds
+are paired across arms even if Ollama does not echo the seed in its response; the
+report keeps both the requested seed and whether the provider echoed it. A single
+20-seed run is still limited to this task corpus and does not establish general
+swarm superiority. Each completed arm is checkpointed to NDJSON. If the runner
+container is interrupted, resume the same configuration without repeating saved
+arms by adding `--resume-ledger benchmark-runs/<run-id>.ndjson` to the `run` command;
+the runner rejects a changed model digest, source, manifest, seed range, or settings.
 
 ### WSL local SLM baseline
 

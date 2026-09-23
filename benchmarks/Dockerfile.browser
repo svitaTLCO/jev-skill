@@ -1,0 +1,7 @@
+FROM mcr.microsoft.com/playwright/python:v1.63.0-noble
+
+# Keep the Playwright client version aligned with the pinned browser image.
+RUN python -m pip install --no-cache-dir playwright==1.63.0
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+WORKDIR /work
