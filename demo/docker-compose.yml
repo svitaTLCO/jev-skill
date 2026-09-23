@@ -13,5 +13,5 @@ services:
       JEV_DEMO_GALENE_ENV_FILE: /run/secrets/galene.env
     volumes:
       - ./runs:/app/demo/runs
-      - /home/adminmatto/progetti/rd/radix-db-exporter/.env:/run/secrets/typesafe.env:ro
+      - /home/adminmatto/progetti/prodotti/radix-db-exporter/.env:/run/secrets/typesafe.env:ro
       - /home/adminmatto/progetti/rd/repo-security-scan/repo_guardian/.env:/run/secrets/galene.env:ro
