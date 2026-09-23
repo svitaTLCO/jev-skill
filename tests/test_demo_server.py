@@ -36,7 +36,7 @@ class DemoServerTests(unittest.TestCase):
         self.assertEqual(thread.call_count, 2)
 
     @patch("scripts.demo_server.urllib.request.urlopen")
-    def test_ollama_adapter_uses_native_generate_endpoint(self, urlopen):
+    def test_ollama_adapter_is_cap_free_and_uses_native_generate_endpoint(self, urlopen):
         urlopen.return_value.__enter__.return_value.read.return_value = b'{"response":"<!doctype html><html></html>","eval_count":12}'
         content, tokens = demo_server.ollama_generate("make a game", thinking=False)
         self.assertEqual(tokens, 12)
@@ -44,8 +44,27 @@ class DemoServerTests(unittest.TestCase):
         request = urlopen.call_args.args[0]
         self.assertTrue(request.full_url.endswith("/api/generate"))
         self.assertIn(b'"think": false', request.data)
-        self.assertIn(b'"num_predict": 8192', request.data)
+        # Cap-free policy (2026-09-22): no token ceiling in the payload; the
+        # client deadline is a wall-clock hang guard, not a content budget.
+        self.assertNotIn(b"num_predict", request.data)
         self.assertEqual(urlopen.call_args.kwargs["timeout"], 2400)
+
+    def test_v2_requirement_has_no_size_language(self):
+        text = demo_server.GUIDED_REQUIREMENT_V2.lower()
+        self.assertNotIn("token", text)
+        self.assertNotIn("compact", text)
+        self.assertIn("<!doctype html>", text)
+
+    @patch("scripts.demo_server.threading.Thread")
+    def test_create_run_accepts_requested_lane_subset(self, thread):
+        run = demo_server.create_run(["guided", "guided_v2"])
+        self.assertEqual(set(run["lanes"]), {"guided", "guided_v2"})
+        self.assertEqual(thread.call_count, 2)
+
+    @patch("scripts.demo_server.threading.Thread")
+    def test_create_run_rejects_unknown_lane(self, thread):
+        with self.assertRaises(ValueError):
+            demo_server.create_run(["direct", "warp"])
 
     def test_persist_raw_writes_gitignored_run_ledger(self):
         with tempfile.TemporaryDirectory() as tmp:

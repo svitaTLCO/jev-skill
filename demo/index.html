@@ -14,6 +14,7 @@
     header { padding: 16px 18px; border-bottom: 1px solid #243650; } h2 { margin: 0; font-size: 1.05rem; } .meta, .status { font: .85rem ui-monospace, SFMono-Regular, Menlo, monospace; color: #8da3c1; }
     .status { display: block; padding: 14px 18px; min-height: 21px; white-space: pre-wrap; } iframe { width: 100%; height: 410px; border: 0; background: white; display: none; }
     .ready iframe { display: block; } .ready .status { color: #54f0b0; } .failed .status { color: #ff9aa8; }
+    .skipped { opacity: .5; } .skipped .status { color: #5a6f8f; }
     .note { font-size: .83rem; } @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -25,6 +26,7 @@
   <section class="grid">
     <article id="direct"><header><h2>Direct local Qwen</h2><div class="meta">one broad prompt · thinking enabled</div></header><span class="status">Waiting to start.</span><iframe title="Direct Qwen result" sandbox="allow-scripts"></iframe></article>
     <article id="guided"><header><h2>Jev-guided local Qwen</h2><div class="meta">Choice → constrained no-think generation → Noul/Score gate</div></header><span class="status">Waiting to start.</span><iframe title="Jev-guided result" sandbox="allow-scripts"></iframe></article>
+    <article id="guided_v2" class="skipped"><header><h2>Jev-guided v2 · no limits</h2><div class="meta">Choice → interface contract → uncapped no-think generation → Noul/Score gate</div></header><span class="status">Not part of the default two-lane race. Request it via POST /api/runs {"lanes":["guided","guided_v2"]}.</span><iframe title="Jev-guided v2 result" sandbox="allow-scripts"></iframe></article>
   </section>
   <script>
     const button = document.querySelector('#start');
@@ -32,20 +34,21 @@
     let timer;
     function renderLane(id, lane) {
       const card = document.querySelector(`#${id}`); const status = card.querySelector('.status'); const frame = card.querySelector('iframe');
-      card.classList.remove('ready', 'failed');
+      card.classList.remove('ready', 'failed', 'skipped');
+      if (!lane) { card.classList.add('skipped'); status.textContent = 'NOT IN THIS RUN'; return; }
       status.textContent = `${lane.status.toUpperCase()} · ${lane.elapsed_seconds.toFixed(1)}s${lane.detail ? `\n${lane.detail}` : ''}`;
       if (lane.status === 'ready') { card.classList.add('ready'); if (frame.dataset.artifact !== lane.artifact_url) { frame.src = lane.artifact_url; frame.dataset.artifact = lane.artifact_url; } }
       if (lane.status === 'failed') card.classList.add('failed');
     }
     async function poll(runId) {
       const response = await fetch(`/api/runs/${runId}`); const run = await response.json();
-      renderLane('direct', run.lanes.direct); renderLane('guided', run.lanes.guided);
+      for (const id of ['direct', 'guided', 'guided_v2']) renderLane(id, run.lanes[id]);
       if (run.status === 'running') { timer = setTimeout(() => poll(runId), 800); return; }
       button.disabled = false; button.textContent = 'Run again';
     }
     button.addEventListener('click', async () => {
       clearTimeout(timer); button.disabled = true; button.textContent = 'Starting sessions…';
-      for (const card of document.querySelectorAll('article')) { card.classList.remove('ready', 'failed'); const frame = card.querySelector('iframe'); frame.removeAttribute('src'); delete frame.dataset.artifact; }
+      for (const card of document.querySelectorAll('article')) { card.classList.remove('ready', 'failed', 'skipped'); const frame = card.querySelector('iframe'); frame.removeAttribute('src'); delete frame.dataset.artifact; }
       const response = await fetch('/api/runs', { method: 'POST' }); const run = await response.json();
       config.textContent = `Model: ${run.model} · Endpoint: ${run.provider_url}`; poll(run.id);
     });

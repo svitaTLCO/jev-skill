@@ -31,6 +31,31 @@ GUIDED_REQUIREMENT = """Output only a compact, complete <!doctype html> Canvas F
 Use one canvas, an emoji pig, Space/click flap, gravity, moving pipes, collision, score, and restart.
 No libraries, assets, CSS framework, comments, or explanations."""
 
+# Arm B (Guided-v2): the de-compressed requirement. No size language at all —
+# cap-free policy (2026-09-22): generation arms set no soft prompt targets.
+GUIDED_REQUIREMENT_V2 = """Output only a complete <!doctype html> Canvas Flappy Pig game.
+Use one canvas, an emoji pig, Space/click flap, gravity, moving pipes, collision, score, and restart.
+No libraries, assets, CSS framework, or explanations."""
+
+# Per AGENTS.md invariant #1 the worker receives concise interface declarations,
+# not accumulated prose. Contracts are deterministic so paired seeds stay
+# comparable across runs; the Choice step picks the architecture they instantiate.
+INTERFACE_CONTRACTS = {
+    "canvas_state_machine": """state: one gameState variable holding START | PLAYING | GAME_OVER.
+pig: object with x, y, vy; methods draw(), update(), flap() where flap sets an upward velocity change.
+pipes: list of obstacles, each with x and gapY; spawn() appends an obstacle on a fixed frame interval, update() moves them left, draw() renders the top and bottom rectangles, collides(pig) returns bool.
+score: integer incremented when the player passes an obstacle; collision sets gameState to GAME_OVER; input in that state resets score and returns to START.
+input: window keydown for Space plus mousedown and touchstart trigger flap, or start/restart depending on gameState.
+loop: requestAnimationFrame-driven gameLoop that updates the current state, draws the background, entities, and the HUD.""",
+    "framework": """structure: plain single-file modules without any framework.
+state machine: object holding START | PLAYING | GAME_OVER with event-driven transitions.
+pig entity: object with x, y, vy plus draw(), update(), flap() methods where flap applies an upward velocity change.
+pipes manager: spawn() appends obstacles with x and gapY on a fixed interval, update() moves them left, draw() renders top/bottom rectangles, collides(pig) returns bool.
+score counter: integer incremented per passed obstacle; collision triggers GAME_OVER; restart resets score and state to START.
+shared input dispatch: one handler binding Space keydown, mousedown, and touchstart routes to the current state's action.
+game loop: one requestAnimationFrame callback updating the state machine then rendering background, entities, and HUD each tick.""",
+}
+
 
 def read_env_file_value(file_variable: str, key: str) -> str | None:
     """Read exactly one dotenv value from an explicitly mounted read-only secret file."""
@@ -58,21 +83,23 @@ def extract_html(raw: str) -> str:
     return match.group(1).strip()
 
 
-def ollama_generate(prompt: str, thinking: bool, max_tokens: int | None = None) -> tuple[str, int]:
+def ollama_generate(prompt: str, thinking: bool) -> tuple[str, int]:
     """Call the local worker directly so Qwen's think control is unambiguous."""
     payload = {
         "model": MODEL,
         "prompt": prompt,
         "stream": False,
         "think": thinking,
-        # Probe 2026-09-22: the direct lane with think ON consumed 4202 tokens
-        # end-to-end (reasoning channel included) and stopped with a complete
-        # document, so 8192 leaves 2x headroom over the measured requirement.
-        "options": {"temperature": 0.2, "num_predict": max_tokens or 8192},
+        # Cap-free policy (2026-09-22): no num_predict ceiling in any
+        # experimental payload; the worker generates until its own stop token.
+        # (The probe of that day measured a natural stop at 4202 tokens for the
+        # think-on task; there is deliberately no budget derived from it.)
+        "options": {"temperature": 0.2},
     }
-    # The iGPU-backed worker sustains ~5 tok/s and the lanes share one
+    # The iGPU-backed worker sustains ~3.4 tok/s and the lanes share one
     # inference slot serially, so a slow lane can hold the other in Ollama's
-    # queue; the client deadline must cover queue wait plus full generation.
+    # queue. The 2400 s client deadline is a wall-clock hang guard only: it
+    # covers queue wait plus full generation and never limits content length.
     request = urllib.request.Request(
         f"{WORKER_BASE_URL}/api/generate", data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"}, method="POST"
@@ -121,7 +148,9 @@ def openai_generate(prompt: str, reasoning_effort: str = "none", max_tokens: int
 
 def worker_generate(prompt: str, thinking: bool, max_tokens: int | None = None) -> tuple[str, int]:
     if WORKER_PROVIDER == "ollama":
-        return ollama_generate(prompt, thinking, max_tokens)
+        # Ollama path is cap-free by policy; max_tokens applies only to the
+        # optional OpenAI-compatible path, which demo lanes never set.
+        return ollama_generate(prompt, thinking)
     if WORKER_PROVIDER == "openai":
         return openai_generate(prompt, "high" if thinking else "none", max_tokens)
     raise ValueError(f"Unsupported JEV_DEMO_WORKER_PROVIDER: {WORKER_PROVIDER!r}")
@@ -153,6 +182,9 @@ def run_direct(run_id: str) -> None:
     try:
         update_lane(run_id, "direct", status="generating", detail="Sending one broad prompt to local Qwen with thinking enabled…")
         raw, tokens = worker_generate(GAME_REQUIREMENT, thinking=True)
+        # Record tokens as soon as generation completes so failed lanes keep
+        # their cost evidence (extraction/gate failures must not lose it).
+        update_lane(run_id, "direct", tokens=tokens)
         try:
             artifact_url = persist_artifact(run_id, "direct", extract_html(raw))
         except ValueError:
@@ -179,6 +211,7 @@ def run_guided(run_id: str) -> None:
         update_lane(run_id, "guided", status="generating", detail=f"Jev selected {blueprint}; local Qwen is generating constrained code…", jev_seconds=round(plan_seconds, 2))
         prompt = f"{GUIDED_REQUIREMENT}\n\nChosen blueprint: {blueprint}."
         raw, tokens = worker_generate(prompt, thinking=False)
+        update_lane(run_id, "guided", tokens=tokens)
         try:
             html = extract_html(raw)
         except ValueError:
@@ -198,12 +231,71 @@ def run_guided(run_id: str) -> None:
         quality = float(answers["quality"]["score"])
         if contract < 0.70 or scope < 0.70 or quality < 1.0:
             persist_raw(run_id, "guided", html)
-            raise ValueError(f"Jev gate rejected candidate: contract={contract:.2f}, scope={scope:.2f}, quality={quality:.2f}")
+            raise ValueError(
+                f"Jev gate rejected candidate ({tokens} eval tokens): "
+                f"contract={contract:.2f}, scope={scope:.2f}, quality={quality:.2f}")
         artifact_url = persist_artifact(run_id, "guided", html)
         update_lane(run_id, "guided", status="ready", tokens=tokens, artifact_url=artifact_url, detail=(
             f"Generated {tokens} tokens; Jev {plan_seconds + review_seconds:.2f}s; contract={contract:.2f}, scope={scope:.2f}, quality={quality:.2f}."))
     except Exception as exc:
         update_lane(run_id, "guided", status="failed", detail=str(exc))
+    finish_run_if_complete(run_id)
+
+
+def run_guided_v2(run_id: str) -> None:
+    """Arm B (Guided-v2): same Jev planning, de-compressed cap-free generation."""
+    try:
+        update_lane(run_id, "guided_v2", status="planning", detail="Jev is selecting a game architecture…")
+        jev = JevClient(api_key=TYPESAFE_KEY, url=TYPESAFE_URL)
+        answers, plan_seconds = jev.evaluate(GAME_REQUIREMENT, {
+            "blueprint": {"type": "choice", "instructions": "Choose the most reliable compact implementation plan.", "criteria": {
+                "canvas_state_machine": "One Canvas file with explicit start, playing and game-over states.",
+                "framework": "A framework-based multi-file game.",
+            }},
+            "scope": {"type": "noul", "instructions": "Can this be safely completed as one asset-free HTML file?"},
+        })
+        blueprint = answers["blueprint"]["choice"]
+        # The output format is always one self-contained HTML document, so any
+        # blueprint outside the single-file contracts maps to the state-machine
+        # one; the mapping is recorded in the lane detail for the study record.
+        contract_key = blueprint if blueprint in INTERFACE_CONTRACTS else "canvas_state_machine"
+        fallback_note = "" if contract_key == blueprint else f" (blueprint {blueprint!r} mapped to single-file contract {contract_key!r})"
+        contract = INTERFACE_CONTRACTS[contract_key]
+        update_lane(run_id, "guided_v2", status="generating",
+                    detail=f"Jev selected {blueprint}{fallback_note}; local Qwen implements the interface contract, no size limits…",
+                    jev_seconds=round(plan_seconds, 2))
+        prompt = (f"{GUIDED_REQUIREMENT_V2}\n\nImplement exactly this interface contract:\n{contract}\n\n"
+                  "Return only the complete HTML document.")
+        raw, tokens = worker_generate(prompt, thinking=False)
+        update_lane(run_id, "guided_v2", tokens=tokens)
+        try:
+            html = extract_html(raw)
+        except ValueError:
+            persist_raw(run_id, "guided_v2", raw)
+            raise ValueError(f"model response did not contain a complete HTML document ({len(raw)} chars, {tokens} eval tokens)")
+        update_lane(run_id, "guided_v2", status="reviewing", detail="Jev is checking contract compliance and scope against the cap-free requirement…")
+        answers, review_seconds = jev.evaluate(
+            f"## Trusted requirement\n{GUIDED_REQUIREMENT_V2}\n\n## Untrusted candidate\n```html\n{html}\n```",
+            {
+                "contract": {"type": "noul", "instructions": "Does the candidate satisfy every stated game requirement?"},
+                "scope": {"type": "noul", "instructions": "Does the candidate avoid external dependencies and unrequested scope?"},
+                "quality": {"type": "score", "instructions": "Rate functional clarity and maintainability from 0 to 3.", "criteria": ["broken", "rough", "solid", "excellent"]},
+            },
+        )
+        contract_score = float(answers["contract"]["noul"])
+        scope_score = float(answers["scope"]["noul"])
+        quality_score = float(answers["quality"]["score"])
+        if contract_score < 0.70 or scope_score < 0.70 or quality_score < 1.0:
+            persist_raw(run_id, "guided_v2", html)
+            raise ValueError(
+                f"Jev gate rejected candidate ({tokens} eval tokens): "
+                f"contract={contract_score:.2f}, scope={scope_score:.2f}, quality={quality_score:.2f}")
+        artifact_url = persist_artifact(run_id, "guided_v2", html)
+        update_lane(run_id, "guided_v2", status="ready", tokens=tokens, artifact_url=artifact_url, detail=(
+            f"Cap-free arm · blueprint={blueprint}: generated {tokens} tokens; Jev {plan_seconds + review_seconds:.2f}s; "
+            f"contract={contract_score:.2f}, scope={scope_score:.2f}, quality={quality_score:.2f}."))
+    except Exception as exc:
+        update_lane(run_id, "guided_v2", status="failed", detail=str(exc))
     finish_run_if_complete(run_id)
 
 
@@ -214,17 +306,29 @@ def finish_run_if_complete(run_id: str) -> None:
             run["status"] = "complete"
 
 
-def create_run() -> dict:
+LANE_ORDER = ("direct", "guided", "guided_v2")
+LANE_RUNNERS = {"direct": run_direct, "guided": run_guided, "guided_v2": run_guided_v2}
+
+
+def create_run(lanes: list[str] | None = None) -> dict:
+    """Start a race. Defaults to the historical direct/guided pair; research
+    probes may request subsets (e.g. ["guided", "guided_v2"]) to control the
+    serial-slot wall clock."""
+    selected = list(dict.fromkeys(lanes)) if lanes else list(LANE_ORDER[:2])
+    unknown = [lane for lane in selected if lane not in LANE_RUNNERS]
+    if not selected or unknown:
+        raise ValueError(f"unsupported lanes: {', '.join(unknown) if unknown else 'none requested'}")
+    ordered = [lane for lane in LANE_ORDER if lane in selected]
     run_id = uuid.uuid4().hex
     now = time.perf_counter()
     run = {"id": run_id, "status": "running", "model": MODEL, "provider_url": WORKER_BASE_URL, "lanes": {
         lane: {"status": "queued", "detail": "Queued.", "elapsed_seconds": 0.0, "started_at": now, "tokens": 0}
-        for lane in ("direct", "guided")
+        for lane in ordered
     }}
     with LOCK:
         RUNS[run_id] = run
-    threading.Thread(target=run_direct, args=(run_id,), daemon=True).start()
-    threading.Thread(target=run_guided, args=(run_id,), daemon=True).start()
+    for lane in ordered:
+        threading.Thread(target=LANE_RUNNERS[lane], args=(run_id,), daemon=True).start()
     return public_run(run)
 
 
@@ -242,11 +346,28 @@ class DemoHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(DEMO_ROOT), **kwargs)
 
+    def _read_json_body(self) -> dict:
+        length = int(self.headers.get("Content-Length") or 0)
+        if not length:
+            return {}
+        try:
+            parsed = json.loads(self.rfile.read(length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise ValueError("malformed JSON body")
+        if not isinstance(parsed, dict):
+            raise ValueError("body must be a JSON object")
+        return parsed
+
     def do_POST(self):
         if self.path != "/api/runs":
             self.send_error(HTTPStatus.NOT_FOUND)
             return
-        self.send_json(HTTPStatus.CREATED, create_run())
+        try:
+            payload = create_run(self._read_json_body().get("lanes"))
+        except (TypeError, ValueError) as exc:
+            self.send_error(HTTPStatus.BAD_REQUEST, f"body must be JSON like {{\"lanes\": [\"direct\", \"guided\"]}} ({exc})")
+            return
+        self.send_json(HTTPStatus.CREATED, payload)
 
     def do_GET(self):
         match = re.fullmatch(r"/api/runs/([a-f0-9]{32})", self.path)
