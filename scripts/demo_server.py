@@ -322,7 +322,9 @@ def restore_runs() -> None:
     for path in RUN_ROOT.glob("*/run.json"):
         try:
             run = json.loads(path.read_text(encoding="utf-8"))
-            if not isinstance(run, dict) or not isinstance(run.get("lanes"), dict):
+            if (not isinstance(run, dict) or not re.fullmatch(r"[a-f0-9]{32}", str(run.get("id", "")))
+                    or path.parent.name != run["id"] or not isinstance(run.get("lanes"), dict)
+                    or not all(isinstance(lane, dict) for lane in run["lanes"].values())):
                 continue
             interrupted = False
             for lane in run["lanes"].values():
@@ -607,11 +609,12 @@ def run_guided_aa(run_id: str) -> None:
                 break
 
             update_lane(run_id, "guided_aa", status="reviewing" if rnd == 0 else "repairing",
-                        detail="Jev is identifying a concrete semantic defect…")
+                        history=copy.deepcopy(history), detail="Jev is identifying a concrete semantic defect…")
             defect, critic_seconds = name_semantic_defect(jev, candidate)
             history[-1]["named_defect"] = defect
             history[-1]["gate_latency_seconds"] = round(gate_seconds, 3)
             history[-1]["critic_latency_seconds"] = round(critic_seconds, 3)
+            update_lane(run_id, "guided_aa", history=copy.deepcopy(history))
             if defect == "no_named_defect":
                 break
 
@@ -645,6 +648,8 @@ def run_guided_aa(run_id: str) -> None:
             raw_arena, arena_tokens = worker_generate(prompt, thinking=False)
             total_tokens += arena_tokens
             persist_raw(run_id, f"guided_aa.arena{idx}", raw_arena)
+            update_lane(run_id, "guided_aa", tokens=total_tokens,
+                        detail=f"Arena candidate {idx}/{MAX_ARENA_CANDIDATES} generated; checking syntax and gate…")
             try:
                 arena_html = extract_html(raw_arena)
             except ValueError:
@@ -657,6 +662,9 @@ def run_guided_aa(run_id: str) -> None:
                             "syntax_error": None if syntax_ok else syntax_error,
                             "contract": round(gate_contract, 2), "scope": round(gate_scope, 2),
                             "quality": round(gate_quality, 2)})
+            update_lane(run_id, "guided_aa", history=copy.deepcopy(history),
+                        detail=f"Arena candidate {idx}/{MAX_ARENA_CANDIDATES}: syntax={'pass' if syntax_ok else 'fail'}, "
+                               f"gate={'pass' if gate_passed(gate_contract, gate_scope, gate_quality) else 'reject'}.")
             if passed:
                 eligible.append(((gate_contract, gate_scope, gate_quality), arena_html, idx))
         if not eligible:

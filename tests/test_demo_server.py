@@ -83,8 +83,9 @@ class DemoServerTests(unittest.TestCase):
     def test_run_checkpoint_survives_restart_and_marks_active_lanes_interrupted(self):
         with tempfile.TemporaryDirectory() as tmp:
             with patch.object(demo_server, "RUN_ROOT", Path(tmp)):
+                run_id = "a" * 32
                 run = {
-                    "id": "abc123",
+                    "id": run_id,
                     "status": "running",
                     "model": "qwen3.5:4b",
                     "lanes": {
@@ -93,11 +94,11 @@ class DemoServerTests(unittest.TestCase):
                     },
                 }
                 demo_server.persist_run(run)
-                snapshot = json.loads((Path(tmp) / "abc123" / "run.json").read_text(encoding="utf-8"))
+                snapshot = json.loads((Path(tmp) / run_id / "run.json").read_text(encoding="utf-8"))
                 self.assertNotIn("started_at", snapshot["lanes"]["guided_aa"])
                 demo_server.RUNS.clear()
                 demo_server.restore_runs()
-                restored = demo_server.RUNS["abc123"]
+                restored = demo_server.RUNS[run_id]
                 self.assertEqual(restored["status"], "interrupted")
                 self.assertEqual(restored["lanes"]["guided_aa"]["status"], "failed")
                 self.assertIn("raw artifacts", restored["lanes"]["guided_aa"]["detail"])
