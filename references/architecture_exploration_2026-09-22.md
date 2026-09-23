@@ -171,3 +171,80 @@ be frozen so all arms use identical configuration across ≥20 paired seeds.
 - No runtime/playtest claims; parser + static review only.
 - Raw ledgers stay gitignored (`demo/runs/`, `benchmark-runs/`); loopback-only Ollama
   binding maintained; `codex-galene-swarm/` excluded from all operations.
+
+## 8. Race #5 — first A′ measurement (run `f7cd21ce`, 2026-09-23)
+
+Lanes `["guided_v2", "guided_a"]`: v2 re-run as an in-session drift control against
+race #4; A′ = B-style seed generation → canonical gate → critic repair loop
+(MAX_REPAIR_ROUNDS=3 declared cost governance). Implementation: `SUBCONTRACT_BATTERY`
+(6 per-sub-contract Noul probes in one Jev call per round; diagnostic only — the
+canonical three-question gate remains the sole acceptor), layered issue block with the
+gate-feedback line always first, MINIMAL localized-edit repair prompt returning the full
+HTML document, fixed-point short-circuit, `syntax_check` Tier-0 mechanical check
+(node `vm.Script` on every non-empty script block, now installed in the demo image).
+
+| Lane / stage | Wall s | Eval tokens | Gate (contract/scope/quality) | Syntax ground truth (node vm.Script) | Outcome |
+| :--- | ---: | ---: | :--- | :--- | :--- |
+| `guided_v2` (drift control) | 317.4 | 1764 | 0.57 / 0.77 / 1.85 → rejected | **valid**, zero external refs | Generated · Syntax-valid · Gate-rejected |
+| `guided_a` seed | (shared slot) | 1888 | 0.40 / 0.71 / 1.91 → rejected | **valid** (confirmed in-container and host-side) | Generated · Syntax-valid · Gate-rejected |
+| `guided_a` repair r1 | 1257.0 total | 3776 total | — (short-circuited) | valid — **byte-identical to seed** (same SHA-256) | lane label: **Repair-stalled-Fixed-point-R1-Gate-rejected** |
+
+Battery state at round 1: **6/6 sub-contracts satisfied**, parse_ok true — so the issue
+block handed to the worker contained *only* the generic gate-feedback line ("one or more
+stated requirements are missing or wrong").
+
+### 8.1 Forensics (static source reading + parser ground truth; no playtest claimed)
+
+- **v2 control candidate**: the pipe collision tests read `p.l`, a property that is
+  never assigned (spawn pushes `{x, y, width, gap, passed}`); every comparison against
+  `undefined` yields NaN ⇒ both collision branches are permanently false. Pipes are drawn
+  and scored but never collide — the core obstacle mechanic is dead code. Additionally
+  the START state runs `pig.update()` under gravity, so the pig falls to the floor within
+  ≈1 s of load and auto-triggers GAME_OVER; reaching PLAYING depends on pressing during
+  that window. contract=0.57 reads as "feature presence without wiring".
+- **A′ seed candidate**: collision geometry inconsistent with drawing. The visible gap
+  spans `[p.y − gapHeight, p.y + gapHeight]` (top pipe ends at `p.y − gapHeight`, bottom
+  pipe starts at `p.y + gapHeight`), but the bottom-pipe branch flags any pig with
+  `pigTop ≥ p.y` — making the lower half of the visually open gap lethal. Restart takes
+  two inputs (GAME_OVER→START→PLAYING), which matches the interface contract wording
+  ("returns to START"), hence scope stays near-passing (0.71).
+
+### 8.2 Findings
+
+1. **Drift control confirms the B profile and isolates the failure dimension.** Across
+   two independent seeds the contract dimension is the consistent rejection cause
+   (0.30 → 0.57, both < 0.70); scope improved 0.63 → 0.77 (passing on this seed) and
+   quality holds at 1.85. B alone remains below the gate, but its deficit is now a
+   stable, nameable quantity rather than structural corruption.
+2. **Critic localisation gap (key finding).** The fine-grained yes/no battery reported
+   6/6 satisfied on a document whose holistic contract score is 0.40. Feature-presence
+   probing cannot see magnitude/geometry/wiring defects (a lethal region inside a drawn
+   gap, a dead NaN-guarded collision test): the holistic question catches them while the
+   decomposed ones pass. Decomposition enumerates *missing features*; it does not
+   guarantee *semantic-consistency* detection.
+3. **Fixed-point law refined.** The information delta between rounds was ≈0 even though
+   the inputs were not byte-identical: with nothing named, the repair prompt degenerated
+   to an unnamed global complaint and the worker returned the document unchanged. Fixed
+   points are driven by *information* deltas, not input repetition. Design rule: a
+   repair dispatch must carry at least one *named* violation or its expected gain is
+   zero (the short-circuit saved ~2 further full regenerations of GPU time here).
+4. **Cost.** A′ consumed 3776 eval tokens / 1257 s wall (contended slot), including one
+   full-document regeneration (~1888 tokens) bought for zero information; the control
+   spent 1764 / 317 s. Until the critic names something, A′ costs more than B and adds
+   no acceptance.
+
+### 8.3 Decision point
+
+Per the pre-declared interpretation map, A′ did not converge within its bound on this
+seed. The forensics, however, identify a concrete design fix before invoking the arena
+fallback: make the critic **naming-based instead of boolean** — Jev must identify the
+specific violated requirement (choice over the requirement dimensions plus an explicit
+"state exactly what is broken" instruction), and repairs dispatch only when at least one
+violation is named; if none can be named, fall back to fresh regeneration (arena-lite)
+rather than a guaranteed-zero repair round. This successor is designated **A″**.
+Candidate directions: (i) implement A″ naming-critic; (ii) invoke fallback C (arena
+K=3, same-failure-distribution risk noted in §6); (iii) go straight to P0 paired
+measurement to size the current arms' distributions first.
+
+Boundaries for §8: single seed per arm (directional evidence only); contended-slot
+wall clocks; defect diagnoses are high-confidence static readings, not executed playtests.
