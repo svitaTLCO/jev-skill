@@ -248,3 +248,41 @@ measurement to size the current arms' distributions first.
 
 Boundaries for §8: single seed per arm (directional evidence only); contended-slot
 wall clocks; defect diagnoses are high-confidence static readings, not executed playtests.
+
+## 9. A″ fresh-generation arena follow-up (2026-09-23)
+
+The first live run (`9ef4c28177f54bbebba41ab626a5f5ce`) re-ran `guided_v2` as a
+control and started A″. The control was gate-rejected (contract 0.54, scope 0.67,
+quality 1.91; 2265 eval tokens). A″ reached the three-candidate fallback, but the demo
+container was recreated while the lane was running. Its in-memory API state was lost;
+only the seed and arena candidates 1–2 had been written to disk, so the original lane
+selection and candidate-3 outcome are **not recoverable**. Do not treat that run as a
+completed arena or promote anything from it.
+
+The two saved arena candidates were independently rechecked with the same syntax check
+and canonical Jev gate (diagnostic re-evaluation, not the original lane ledger):
+
+| Candidate | Syntax | Gate (contract/scope/quality) | Outcome |
+| :--- | :--- | :--- | :--- |
+| Arena 1 | valid | 0.57 / 0.68 / 2.05 | rejected (contract and scope below 0.70) |
+| Arena 2 | valid | 0.55 / 0.67 / 2.04 | rejected (contract and scope below 0.70) |
+
+Arena 1 was also exercised in the pinned, network-disabled Chromium sandbox. With a
+deterministic safe pipe gap it started on Space, remained alive through pipe passage,
+incremented the visible score, reached Game Over, cleared that state on click, and
+started again on Space. The browser observed no uncaught JS errors or external requests.
+This is a playable smoke test, not proof of balanced difficulty or complete collision
+coverage; the Jev gate still rejects this candidate. Arena 2's source has a clear
+collision-geometry defect: its vertical test compares the pig against the single
+`gapY` boundary with an `OR`, making almost every pipe overlap lethal.
+
+The demo now atomically checkpoints each run to `demo/runs/<id>/run.json` and reloads
+completed runs on startup. Any nonterminal lane found after a container restart is
+marked `failed` with an explicit interruption detail; raw candidates and progress fields
+remain available. A″ was restarted as a single-lane run
+(`be0f8eb8f96c4aecb3a15ab6d6d34d4b`) to avoid repeat queue contention; its terminal
+result will be recorded here when available.
+
+P0 remains outstanding: run the fixed nine-task corpus for at least 20 paired seeds
+per task (180 task-seed pairs, 360 live generations) and inspect the resulting
+ledger/report before making comparative claims.

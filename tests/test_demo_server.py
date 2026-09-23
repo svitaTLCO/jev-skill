@@ -102,6 +102,34 @@ class DemoServerTests(unittest.TestCase):
                 self.assertEqual(restored["status"], "interrupted")
                 self.assertEqual(restored["lanes"]["guided_aa"]["status"], "failed")
                 self.assertIn("raw artifacts", restored["lanes"]["guided_aa"]["detail"])
+                demo_server.update_lane("a" * 32, "guided_aa", status="reviewing")
+
+    def test_guided_aa_resume_reuses_saved_seed_and_preserves_token_count(self):
+        run_id = "b" * 32
+        run_dir = Path(self.run_tmp.name) / run_id
+        run_dir.mkdir()
+        (run_dir / "guided_aa.seed.raw.txt").write_text(
+            "<!doctype html><html><script>function game(){}</script></html>", encoding="utf-8")
+        demo_server.RUNS[run_id] = {
+            "id": run_id, "status": "interrupted", "model": "qwen3.5:4b", "lanes": {
+                "guided_aa": {"status": "failed", "detail": "interrupted", "started_at": demo_server.time.perf_counter(),
+                              "elapsed_seconds": 30.0, "tokens": 123,
+                              "history": [{"round": 0, "named_defect": "collision_geometry"}]},
+            },
+        }
+        with patch("scripts.demo_server.JevClient", return_value=object()), \
+             patch("scripts.demo_server.guided_plan", return_value=("canvas_state_machine", 0.01)), \
+             patch("scripts.demo_server.guided_generation_prompt", return_value=("prompt", "")), \
+             patch("scripts.demo_server.syntax_check", return_value=(True, "all script blocks parse")), \
+             patch("scripts.demo_server.canonical_gate", return_value=(0.8, 0.8, 1.5, 0.01)), \
+             patch("scripts.demo_server.worker_generate") as generate:
+            demo_server.run_guided_aa(run_id, resume_seed=True)
+        lane = demo_server.RUNS[run_id]["lanes"]["guided_aa"]
+        self.assertEqual(demo_server.RUNS[run_id]["status"], "complete")
+        self.assertTrue(lane["resumed_from_saved_seed"])
+        self.assertEqual(lane["tokens"], 123)
+        generate.assert_not_called()
+        self.assertTrue((run_dir / "guided_aa.html").is_file())
 
     def test_gate_feedback_names_only_failing_dimensions(self):
         text = demo_server.gate_feedback(0.30, 0.63, 1.69)

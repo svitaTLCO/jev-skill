@@ -328,6 +328,7 @@ def restore_runs() -> None:
                 continue
             interrupted = False
             for lane in run["lanes"].values():
+                lane["started_at"] = time.perf_counter() - float(lane.get("elapsed_seconds", 0.0))
                 if lane.get("status") not in {"ready", "failed"}:
                     lane["status"] = "failed"
                     lane["detail"] = "Demo container restarted during this lane; inspect saved raw artifacts."
@@ -569,7 +570,7 @@ def run_guided_a(run_id: str) -> None:
     finish_run_if_complete(run_id)
 
 
-def run_guided_aa(run_id: str) -> None:
+def run_guided_aa(run_id: str, resume_seed: bool = False) -> None:
     """Arm A″: named semantic repair, with a three-sample fallback on abstention.
 
     A repair request is sent only when Jev names a concrete defect category. If Jev
@@ -579,18 +580,38 @@ def run_guided_aa(run_id: str) -> None:
     history: list[dict] = []
     total_tokens = 0
     try:
-        update_lane(run_id, "guided_aa", status="planning", detail="Jev is selecting a game architecture…")
+        previous_history = []
+        if resume_seed:
+            with LOCK:
+                run = RUNS[run_id]
+                lane = run["lanes"]["guided_aa"]
+                previous_history = copy.deepcopy(lane.get("history", []))
+                total_tokens = int(lane.get("tokens", 0))
+                run["status"] = "running"
+                persist_run(run)
+        update_lane(run_id, "guided_aa", status="planning",
+                    detail="Reusing saved seed artifact; selecting the architecture for any fallback…" if resume_seed
+                    else "Jev is selecting a game architecture…")
         jev = JevClient(api_key=TYPESAFE_KEY, url=TYPESAFE_URL)
         blueprint, plan_seconds = guided_plan(jev)
         prompt, fallback_note = guided_generation_prompt(blueprint)
-        update_lane(run_id, "guided_aa", status="generating",
-                    detail=f"Jev selected {blueprint}{fallback_note}; generating an uncapped candidate…",
+        update_lane(run_id, "guided_aa", status="reviewing" if resume_seed else "generating",
+                    blueprint=blueprint, resumed_from_saved_seed=resume_seed,
+                    previous_history=previous_history,
+                    detail=(f"Jev selected {blueprint}{fallback_note}; rechecking the saved seed…" if resume_seed
+                            else f"Jev selected {blueprint}{fallback_note}; generating an uncapped candidate…"),
                     jev_seconds=round(plan_seconds, 2))
-        raw, tokens = worker_generate(prompt, thinking=False)
-        total_tokens += tokens
-        update_lane(run_id, "guided_aa", tokens=total_tokens)
-        candidate = extract_html(raw)
-        persist_raw(run_id, "guided_aa.seed", raw)
+        if resume_seed:
+            raw = (RUN_ROOT / run_id / "guided_aa.seed.raw.txt").read_text(encoding="utf-8")
+            candidate = extract_html(raw)
+            update_lane(run_id, "guided_aa", tokens=total_tokens,
+                        detail="Rechecking the saved seed with the canonical syntax and Jev gates…")
+        else:
+            raw, tokens = worker_generate(prompt, thinking=False)
+            total_tokens += tokens
+            update_lane(run_id, "guided_aa", tokens=total_tokens)
+            candidate = extract_html(raw)
+            persist_raw(run_id, "guided_aa.seed", raw)
 
         for rnd in range(0, MAX_REPAIR_ROUNDS + 1):
             parse_ok, parse_error = syntax_check(candidate)
