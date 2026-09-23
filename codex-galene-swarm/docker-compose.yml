@@ -1,0 +1,43 @@
+services:
+  server:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      SWARM_DB_PATH: /data/swarm.sqlite3
+    volumes:
+      - swarm-data:/data
+    stdin_open: true
+
+  test:
+    build: .
+    entrypoint: ["python", "-m", "unittest", "discover", "-s", "tests", "-v"]
+    environment:
+      PYTHONPATH: /app/src
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+
+  server-verified:
+    profiles: ["verified"]
+    build: .
+    image: codex-galene-swarm:local
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      SWARM_DB_PATH: /data/swarm.sqlite3
+      SWARM_REPOSITORY_PATH: /workspace
+      SWARM_VERIFIER_IMAGE: ${SWARM_VERIFIER_IMAGE:-codex-galene-swarm:local}
+      SWARM_VERIFIER_TIMEOUT: ${SWARM_VERIFIER_TIMEOUT:-300}
+    group_add:
+      - ${DOCKER_GID:-0}
+    volumes:
+      - swarm-data:/data
+      - ../:/workspace:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    stdin_open: true
+
+volumes:
+  swarm-data:
