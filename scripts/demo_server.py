@@ -2,6 +2,7 @@
 """Live, evidence-first comparison between direct and Jev-guided local generation."""
 
 import json
+import copy
 import os
 import re
 import threading
@@ -70,6 +71,24 @@ SUBCONTRACT_BATTERY = {
     "scoring": "Is the score incremented when a pipe is passed and visible on screen during play?",
     "restart": "After game over, does the specified input reset the game so it can be played again from zero?",
     "asset_freedom": "Does the game run entirely without external libraries, asset files, or network requests?",
+}
+MAX_ARENA_CANDIDATES = 3  # cost governance; each candidate remains uncapped
+SEMANTIC_DEFECTS = {
+    "start_transition": "A demonstrable defect is that initial Space/click/tap input does not transition the initial state into active play. Inspect actual event handlers and state assignments.",
+    "motion_and_gravity": "A demonstrable defect is that gravity does not update the player or obstacles do not move during active play. Trace the actual per-frame update path.",
+    "collision_geometry": "A demonstrable defect is that collision checks do not match the visible pipe rectangles and open gap, so a clear path is lethal or an actual pipe hit is ignored. Compare drawn bounds with collision bounds and traced values.",
+    "scoring": "A demonstrable defect is that passing an obstacle does not increment the visible score exactly once. Trace the pass condition and score state update.",
+    "restart": "A demonstrable defect is that input after game over does not reset the player, obstacles, score, and state so a new game can begin. Trace the complete restart flow.",
+    "asset_freedom": "A demonstrable defect is a network request, external library, or external asset required to run the game.",
+    "no_named_defect": "No specific defect can be demonstrated from the candidate source; do not invent one.",
+}
+SEMANTIC_NAMING_QUESTION = {
+    "type": "choice",
+    "instructions": (
+        "Inspect the candidate source against the trusted requirements. Select the single most important defect that is demonstrably present in the implementation, not merely a feature whose name is absent. "
+        "For collision, trace the actual numeric values and compare drawn geometry with collision geometry. For every option, cite the concrete source behavior mentally before choosing. Select no_named_defect only when none of the listed defects can be demonstrated."
+    ),
+    "criteria": SEMANTIC_DEFECTS,
 }
 REPAIR_PROMPT_TEMPLATE = """You are repairing a JavaScript game inside a single-file HTML document. Make MINIMAL localized edits that fix the listed issues while preserving everything that already works.
 
@@ -255,6 +274,18 @@ def battery_violations(jev: JevClient, html: str) -> tuple[list[str], int, float
     return violations, len(SUBCONTRACT_BATTERY) - len(violations), seconds
 
 
+def name_semantic_defect(jev: JevClient, html: str) -> tuple[str, float]:
+    """Return Jev's selected concrete defect class, or the explicit no-defect option."""
+    answers, seconds = jev.evaluate(
+        f"## Trusted requirement\n{GUIDED_REQUIREMENT_V2}\n\n## Untrusted candidate\n```html\n{html}\n```",
+        {"defect": SEMANTIC_NAMING_QUESTION},
+    )
+    selected = answers.get("defect", {}).get("choice")
+    if selected not in SEMANTIC_DEFECTS:
+        raise ValueError(f"semantic critic returned unknown defect choice: {selected!r}")
+    return selected, seconds
+
+
 def assemble_repair_issues(gate_summary: str, violations: list[str], parse_ok: bool, parse_err: str) -> str:
     """Layered issue block for a repair prompt: gate feedback always first (a fresh,
     guaranteed signal even when the battery and parser have nothing new to report)."""
@@ -270,6 +301,43 @@ def update_lane(run_id: str, lane_id: str, **changes: object) -> None:
         lane = RUNS[run_id]["lanes"][lane_id]
         lane.update(changes)
         lane["elapsed_seconds"] = round(time.perf_counter() - lane["started_at"], 2)
+        persist_run(RUNS[run_id])
+
+
+def persist_run(run: dict) -> None:
+    """Atomically checkpoint run state beside its raw candidate artifacts."""
+    run_dir = RUN_ROOT / run["id"]
+    run_dir.mkdir(parents=True, exist_ok=True)
+    snapshot = copy.deepcopy(run)
+    for lane in snapshot["lanes"].values():
+        lane.pop("started_at", None)
+    path = run_dir / "run.json"
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(snapshot, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def restore_runs() -> None:
+    """Reload checkpoints and mark nonterminal lanes interrupted after restart."""
+    for path in RUN_ROOT.glob("*/run.json"):
+        try:
+            run = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(run, dict) or not isinstance(run.get("lanes"), dict):
+                continue
+            interrupted = False
+            for lane in run["lanes"].values():
+                if lane.get("status") not in {"ready", "failed"}:
+                    lane["status"] = "failed"
+                    lane["detail"] = "Demo container restarted during this lane; inspect saved raw artifacts."
+                    interrupted = True
+            if interrupted:
+                run["status"] = "interrupted"
+            elif run["lanes"] and all(lane.get("status") in {"ready", "failed"} for lane in run["lanes"].values()):
+                run["status"] = "complete"
+            with LOCK:
+                RUNS[run["id"]] = run
+        except (OSError, json.JSONDecodeError, TypeError):
+            continue
 
 
 def persist_artifact(run_id: str, lane_id: str, html: str) -> str:
@@ -499,15 +567,123 @@ def run_guided_a(run_id: str) -> None:
     finish_run_if_complete(run_id)
 
 
+def run_guided_aa(run_id: str) -> None:
+    """Arm A″: named semantic repair, with a three-sample fallback on abstention.
+
+    A repair request is sent only when Jev names a concrete defect category. If Jev
+    cannot identify one while the holistic gate still fails, sample fresh candidates
+    and promote only candidates that pass both syntax and the canonical gate.
+    """
+    history: list[dict] = []
+    total_tokens = 0
+    try:
+        update_lane(run_id, "guided_aa", status="planning", detail="Jev is selecting a game architecture…")
+        jev = JevClient(api_key=TYPESAFE_KEY, url=TYPESAFE_URL)
+        blueprint, plan_seconds = guided_plan(jev)
+        prompt, fallback_note = guided_generation_prompt(blueprint)
+        update_lane(run_id, "guided_aa", status="generating",
+                    detail=f"Jev selected {blueprint}{fallback_note}; generating an uncapped candidate…",
+                    jev_seconds=round(plan_seconds, 2))
+        raw, tokens = worker_generate(prompt, thinking=False)
+        total_tokens += tokens
+        update_lane(run_id, "guided_aa", tokens=total_tokens)
+        candidate = extract_html(raw)
+        persist_raw(run_id, "guided_aa.seed", raw)
+
+        for rnd in range(0, MAX_REPAIR_ROUNDS + 1):
+            parse_ok, parse_error = syntax_check(candidate)
+            contract, scope, quality, gate_seconds = canonical_gate(jev, candidate)
+            history.append({"round": rnd, "contract": round(contract, 2), "scope": round(scope, 2),
+                            "quality": round(quality, 2), "syntax_ok": parse_ok})
+            if parse_ok and gate_passed(contract, scope, quality):
+                artifact_url = persist_artifact(run_id, "guided_aa", candidate)
+                update_lane(run_id, "guided_aa", status="ready", tokens=total_tokens, artifact_url=artifact_url,
+                            detail=(f"Objective syntax check and Jev gate passed; repairs={rnd}; {total_tokens} tokens; "
+                                    f"contract={contract:.2f}, scope={scope:.2f}, quality={quality:.2f}; "
+                                    f"history={json.dumps(history)}"))
+                finish_run_if_complete(run_id)
+                return
+            if rnd == MAX_REPAIR_ROUNDS:
+                break
+
+            update_lane(run_id, "guided_aa", status="reviewing" if rnd == 0 else "repairing",
+                        detail="Jev is identifying a concrete semantic defect…")
+            defect, critic_seconds = name_semantic_defect(jev, candidate)
+            history[-1]["named_defect"] = defect
+            history[-1]["gate_latency_seconds"] = round(gate_seconds, 3)
+            history[-1]["critic_latency_seconds"] = round(critic_seconds, 3)
+            if defect == "no_named_defect":
+                break
+
+            issues = assemble_repair_issues(
+                gate_feedback(contract, scope, quality),
+                [SEMANTIC_DEFECTS[defect]], parse_ok, parse_error,
+            )
+            update_lane(run_id, "guided_aa", status="repairing",
+                        detail=f"Repair round {rnd + 1}/{MAX_REPAIR_ROUNDS}: Jev named {defect}.")
+            repair_prompt = REPAIR_PROMPT_TEMPLATE.format(
+                round=rnd + 1, max_rounds=MAX_REPAIR_ROUNDS, issues=issues, doc=candidate,
+            )
+            previous = candidate
+            raw_repair, repair_tokens = worker_generate(repair_prompt, thinking=False)
+            total_tokens += repair_tokens
+            update_lane(run_id, "guided_aa", tokens=total_tokens)
+            persist_raw(run_id, f"guided_aa.r{rnd + 1}", raw_repair)
+            candidate = extract_html(raw_repair)
+            if candidate.strip() == previous.strip():
+                history[-1]["repair_fixed_point"] = True
+                break
+            history[-1]["repair_fixed_point"] = False
+
+        # Critic abstention or stalled repair: arena fallback. All candidates use
+        # the same prompt/config; only syntax-valid and gate-passing candidates are
+        # eligible. A Jev score never overrides parser failure or a gate rejection.
+        update_lane(run_id, "guided_aa", status="generating",
+                    detail=f"No named repair defect or repair stalled; sampling up to {MAX_ARENA_CANDIDATES} fresh candidates…")
+        eligible: list[tuple[tuple[float, float, float], str, int]] = []
+        for idx in range(1, MAX_ARENA_CANDIDATES + 1):
+            raw_arena, arena_tokens = worker_generate(prompt, thinking=False)
+            total_tokens += arena_tokens
+            persist_raw(run_id, f"guided_aa.arena{idx}", raw_arena)
+            try:
+                arena_html = extract_html(raw_arena)
+            except ValueError:
+                history.append({"arena_candidate": idx, "eligible": False, "reason": "incomplete HTML"})
+                continue
+            syntax_ok, syntax_error = syntax_check(arena_html)
+            gate_contract, gate_scope, gate_quality, _ = canonical_gate(jev, arena_html)
+            passed = syntax_ok and gate_passed(gate_contract, gate_scope, gate_quality)
+            history.append({"arena_candidate": idx, "eligible": passed, "syntax_ok": syntax_ok,
+                            "syntax_error": None if syntax_ok else syntax_error,
+                            "contract": round(gate_contract, 2), "scope": round(gate_scope, 2),
+                            "quality": round(gate_quality, 2)})
+            if passed:
+                eligible.append(((gate_contract, gate_scope, gate_quality), arena_html, idx))
+        if not eligible:
+            persist_raw(run_id, "guided_aa", candidate)
+            raise ValueError(f"named repair and arena fallback found no syntax-valid gate-passing candidate; history={json.dumps(history)}")
+        (contract, scope, quality), candidate, selected_idx = max(eligible, key=lambda item: item[0])
+        artifact_url = persist_artifact(run_id, "guided_aa", candidate)
+        update_lane(run_id, "guided_aa", status="ready", tokens=total_tokens, artifact_url=artifact_url,
+                    detail=(f"Arena fallback selected candidate {selected_idx}/{MAX_ARENA_CANDIDATES}; "
+                            f"syntax-valid and Jev-gate passed; {total_tokens} tokens; "
+                            f"contract={contract:.2f}, scope={scope:.2f}, quality={quality:.2f}; "
+                            f"history={json.dumps(history)}"))
+    except Exception as exc:
+        update_lane(run_id, "guided_aa", status="failed", tokens=total_tokens, detail=str(exc))
+    finish_run_if_complete(run_id)
+
+
 def finish_run_if_complete(run_id: str) -> None:
     with LOCK:
         run = RUNS[run_id]
         if all(lane["status"] in {"ready", "failed"} for lane in run["lanes"].values()):
             run["status"] = "complete"
+            persist_run(run)
 
 
-LANE_ORDER = ("direct", "guided", "guided_v2", "guided_a")
-LANE_RUNNERS = {"direct": run_direct, "guided": run_guided, "guided_v2": run_guided_v2, "guided_a": run_guided_a}
+LANE_ORDER = ("direct", "guided", "guided_v2", "guided_a", "guided_aa")
+LANE_RUNNERS = {"direct": run_direct, "guided": run_guided, "guided_v2": run_guided_v2, "guided_a": run_guided_a, "guided_aa": run_guided_aa}
 
 
 def create_run(lanes: list[str] | None = None) -> dict:
@@ -527,6 +703,7 @@ def create_run(lanes: list[str] | None = None) -> dict:
     }}
     with LOCK:
         RUNS[run_id] = run
+        persist_run(run)
     for lane in ordered:
         threading.Thread(target=LANE_RUNNERS[lane], args=(run_id,), daemon=True).start()
     return public_run(run)
@@ -595,5 +772,6 @@ class DemoHandler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     RUN_ROOT.mkdir(parents=True, exist_ok=True)
+    restore_runs()
     print(f"Jev demo: http://0.0.0.0:{PORT} · provider={WORKER_PROVIDER} · model={MODEL} · worker={WORKER_BASE_URL}")
     ThreadingHTTPServer(("0.0.0.0", PORT), DemoHandler).serve_forever()

@@ -1,4 +1,5 @@
 import shutil
+import json
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -11,6 +12,11 @@ from scripts import demo_server
 class DemoServerTests(unittest.TestCase):
     def setUp(self):
         demo_server.RUNS.clear()
+        self.run_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.run_tmp.cleanup)
+        patcher = patch.object(demo_server, "RUN_ROOT", Path(self.run_tmp.name))
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_extract_html_requires_complete_document(self):
         self.assertEqual(demo_server.extract_html("text <!doctype html><html>x</html>"), "<!doctype html><html>x</html>")
@@ -74,6 +80,28 @@ class DemoServerTests(unittest.TestCase):
                 ledger = Path(tmp) / "abc123" / "direct.raw.txt"
                 self.assertEqual(ledger.read_text(encoding="utf-8"), "<truncated output>")
 
+    def test_run_checkpoint_survives_restart_and_marks_active_lanes_interrupted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(demo_server, "RUN_ROOT", Path(tmp)):
+                run = {
+                    "id": "abc123",
+                    "status": "running",
+                    "model": "qwen3.5:4b",
+                    "lanes": {
+                        "guided_aa": {"status": "generating", "detail": "sampling", "started_at": 1.0,
+                                      "elapsed_seconds": 12.0, "tokens": 100},
+                    },
+                }
+                demo_server.persist_run(run)
+                snapshot = json.loads((Path(tmp) / "abc123" / "run.json").read_text(encoding="utf-8"))
+                self.assertNotIn("started_at", snapshot["lanes"]["guided_aa"])
+                demo_server.RUNS.clear()
+                demo_server.restore_runs()
+                restored = demo_server.RUNS["abc123"]
+                self.assertEqual(restored["status"], "interrupted")
+                self.assertEqual(restored["lanes"]["guided_aa"]["status"], "failed")
+                self.assertIn("raw artifacts", restored["lanes"]["guided_aa"]["detail"])
+
     def test_gate_feedback_names_only_failing_dimensions(self):
         text = demo_server.gate_feedback(0.30, 0.63, 1.69)
         self.assertIn("contract=0.30", text)
@@ -100,6 +128,33 @@ class DemoServerTests(unittest.TestCase):
         run = demo_server.create_run(["guided_v2", "guided_a"])
         self.assertEqual(set(run["lanes"]), {"guided_v2", "guided_a"})
         self.assertEqual(thread.call_count, 2)
+
+    @patch("scripts.demo_server.threading.Thread")
+    def test_create_run_accepts_guided_aa_lane_subset(self, thread):
+        run = demo_server.create_run(["guided_v2", "guided_aa"])
+        self.assertEqual(set(run["lanes"]), {"guided_v2", "guided_aa"})
+        self.assertEqual(thread.call_count, 2)
+
+    def test_semantic_critic_accepts_only_named_defect_options(self):
+        class FakeJev:
+            def evaluate(self, state, questions):
+                self.asserted_state = state
+                self.asserted_questions = questions
+                return {"defect": {"choice": "collision_geometry"}}, 0.25
+
+        jev = FakeJev()
+        choice, elapsed = demo_server.name_semantic_defect(jev, "<html>candidate</html>")
+        self.assertEqual(choice, "collision_geometry")
+        self.assertEqual(elapsed, 0.25)
+        self.assertIn("Trusted requirement", jev.asserted_state)
+        self.assertIn("collision_geometry", jev.asserted_questions["defect"]["criteria"])
+
+        class InvalidJev:
+            def evaluate(self, state, questions):
+                return {"defect": {"choice": "invented_issue"}}, 0.0
+
+        with self.assertRaisesRegex(ValueError, "unknown defect choice"):
+            demo_server.name_semantic_defect(InvalidJev(), "<html>candidate</html>")
 
     @unittest.skipUnless(shutil.which("node"), "node not available on PATH")
     def test_syntax_check_flags_unparseable_and_missing_script_blocks(self):
